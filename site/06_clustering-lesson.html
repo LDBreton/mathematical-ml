@@ -1,0 +1,100 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Clustering: lesson · Mathematical ML</title><link rel="stylesheet" href="style.css"><script>window.MathJax={tex:{inlineMath:[['$','$'],['\\(','\\)']]}};</script><script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script></head><body><a class="skip" href="#main">Skip to content</a><header><a href="index.html">∑ Mathematical ML</a><nav aria-label="Course"><a href="index.html#lectures">Lectures</a><a href="setup.html">Getting started</a><a href="datasets.html">Datasets</a><a href="instructor.html">Teaching guide</a></nav></header><main id="main"><div class="eyebrow">Lecture 06 / lesson</div><div class="actions"><a href="06_clustering.html">← Lecture guide</a><a href="downloads/06_clustering/lesson.ipynb" download>Download notebook</a></div><article class="reading"><section class="cell"><h1>Lecture 06 — Clustering: K-means and PCA geometry</h1>
+<p>Synthetic customer summaries illustrate distance, local optimization, scaling, and visualization. Truth labels stay out of clustering and selection.</p></section><section class="cell"><h2>1. Alternating minimization</h2>
+<p>K-means minimizes $J=\sum_i\|z_i-\mu_{c_i}\|^2$. With centers fixed, nearest-center assignment minimizes each row's term. With assignments fixed, the gradient is $2|C_j|\mu_j-2\sum_{i\in C_j}z_i$, so the minimum is the arithmetic mean. These steps decrease objective, but the joint problem is nonconvex; initialization can find a local optimum. Multiple starts help without proving global optimality.</p></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>from pathlib import Path
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
+from sklearn.cluster import KMeans
+from sklearn.metrics import silhouette_score, adjusted_rand_score
+
+
+def repo_root(start=Path.cwd()):
+    for path in (start, *start.parents):
+        if (path / &quot;data&quot; / &quot;customer_segments.csv&quot;).exists():
+            return path
+    raise FileNotFoundError(&quot;Could not find data/customer_segments.csv&quot;)
+
+
+ROOT = repo_root()
+customers = pd.read_csv(ROOT / &quot;data&quot; / &quot;customer_segments.csv&quot;)
+features = [
+    &quot;recency_days&quot;,
+    &quot;orders_12m&quot;,
+    &quot;average_order_value&quot;,
+    &quot;annual_spend&quot;,
+    &quot;web_share&quot;,
+    &quot;tenure_months&quot;,
+    &quot;support_contacts_12m&quot;,
+]
+X = customers[features]
+truth = customers[&quot;segment_truth&quot;]  # Keep out of every fit and selection step.
+display(X.describe().round(2))
+scaler = StandardScaler()
+Z = scaler.fit_transform(X)
+print(&quot;means:&quot;, np.round(Z.mean(axis=0), 3), &quot;stds:&quot;, np.round(Z.std(axis=0), 3))</code></pre></section><section class="cell"><h2>2. Scaling defines distance</h2>
+<p>Large-scale raw features dominate Euclidean distance. Standardizing $z_{ij}=(x_{ij}-\bar x_j)/s_j$ makes one standard deviation the unit for every feature. This is a modeling choice about feature weights; skew and outliers remain.</p></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>model = KMeans(
+    n_clusters=4,
+    init=&quot;k-means++&quot;,
+    n_init=30,
+    max_iter=300,
+    random_state=606,
+    algorithm=&quot;lloyd&quot;,
+)
+labels = model.fit_predict(Z)
+print(&quot;inertia:&quot;, model.inertia_)
+print(&quot;sizes:&quot;, np.bincount(labels))
+centers = scaler.inverse_transform(model.cluster_centers_)
+display(pd.DataFrame(centers, columns=features).round(2))</code></pre></section><section class="cell"><h2>3. PCA from the Rayleigh quotient</h2>
+<p>The first PCA direction maximizes $v^TZ^TZv$ subject to $v^Tv=1$. A Lagrange multiplier gives $Z^TZv=\lambda v$, the leading eigenvector or right singular vector. The next code projects only for display. K-means fits all seven standardized original features; two dimensions can hide structure.</p>
+<p>For centered $Z=U\Sigma V^T$, the columns of $V$ are principal directions. Scores in $r$ dimensions are $ZV_r=U_r\Sigma_r$, and the sample variance of component $j$ is $s_j^2/(n-1)$. Its explained-variance fraction is $s_j^2/\sum_l s_l^2$. The reconstruction $ZV_rV_r^T$ minimizes squared Frobenius reconstruction error among rank-$r$ matrices, with error $\sum_{j&gt;r}s_j^2$. A component's sign is arbitrary; tied singular values allow rotations within the tied subspace. Neither sign flips nor rotations inside that subspace change the represented geometry.</p></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>pca = PCA(n_components=2, svd_solver=&quot;full&quot;)
+Z_2d = pca.fit_transform(Z)
+print(&quot;explained variance fractions:&quot;, pca.explained_variance_ratio_.round(3))
+points = plt.scatter(Z_2d[:, 0], Z_2d[:, 1], c=labels, cmap=&quot;tab10&quot;, s=16, alpha=0.75)
+plt.xlabel(&quot;PC 1&quot;)
+plt.ylabel(&quot;PC 2&quot;)
+plt.title(&quot;7-D clusters displayed in PCA 2-D&quot;)
+plt.colorbar(points, label=&quot;cluster label&quot;)
+plt.tight_layout()</code></pre></section><section class="cell"><h2>4. Internal diagnostics and label invariance</h2>
+<p>The globally minimal inertia cannot increase with $k$, because an added center can reproduce the previous solution. A finite randomized run can still wiggle across k when it reaches different local optima, so inspect the observed curve. An elbow remains heuristic. Silhouette compares within distance $a(i)$ to nearest other-cluster distance $b(i)$: $(b-a)/\max(a,b)$. It favors compact separated groups in this metric and can mislead for nonconvex or uneven-density patterns. Cluster IDs are arbitrary; adjusted Rand index (ARI) compares co-membership invariantly under label permutation. Use truth only after choices are fixed.</p>
+<p>For a non-singleton cluster, $a(i)$ is the mean distance from point $i$ to the other points in its own cluster. For each other cluster, compute the mean distance from $i$ to its members; $b(i)$ is the smallest of those means. The silhouette is $(b(i)-a(i))/\max\{a(i),b(i)\}$ when the denominator is positive. Implementations assign silhouette zero to singleton clusters. This is a diagnostic of the chosen distance geometry, not external evidence that the partition is economically meaningful.</p></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>rows, fitted = [], {}
+for k in range(2, 9):
+    estimator = KMeans(
+        n_clusters=k,
+        init=&quot;k-means++&quot;,
+        n_init=20,
+        max_iter=300,
+        random_state=606,
+        algorithm=&quot;lloyd&quot;,
+    )
+    labels = estimator.fit_predict(Z)
+    fitted[k] = estimator
+    rows.append(
+        {
+            &quot;k&quot;: k,
+            &quot;inertia&quot;: estimator.inertia_,
+            &quot;silhouette&quot;: silhouette_score(Z, labels),
+        }
+    )
+diagnostics = pd.DataFrame(rows).set_index(&quot;k&quot;)
+display(diagnostics.round(3))
+fig, axes = plt.subplots(1, 2, figsize=(10, 4))
+diagnostics[&quot;inertia&quot;].plot(marker=&quot;o&quot;, ax=axes[0])
+axes[0].set(xlabel=&quot;k&quot;, ylabel=&quot;within-cluster sum of squares&quot;, title=&quot;Inertia&quot;)
+diagnostics[&quot;silhouette&quot;].plot(marker=&quot;o&quot;, ax=axes[1])
+axes[1].set(xlabel=&quot;k&quot;, ylabel=&quot;mean silhouette&quot;, title=&quot;Internal diagnostic&quot;)
+plt.tight_layout()</code></pre></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>chosen_k = int(diagnostics[&quot;silhouette&quot;].idxmax())
+chosen = fitted[chosen_k]
+print(&quot;post-hoc synthetic ARI:&quot;, adjusted_rand_score(truth, chosen.labels_))
+repeat = KMeans(
+    n_clusters=chosen_k,
+    n_init=1,
+    init=&quot;random&quot;,
+    random_state=17,
+    max_iter=300,
+    algorithm=&quot;lloyd&quot;,
+).fit(Z)
+print(&quot;ARI across starts:&quot;, adjusted_rand_score(chosen.labels_, repeat.labels_))
+print(&quot;inertias:&quot;, chosen.inertia_, repeat.inertia_)</code></pre></section><section class="cell"><h2>Limits</h2>
+<p>K-means favors roughly spherical groups under Euclidean distance and can be sensitive to outliers, scaling, and initialization. A partition is not proof of natural or actionable customer types.</p></section></article><nav class="actions" aria-label="Study sequence"><a href="05_text_classification.html">← 05: Text classification</a><a href="index.html#lectures">All lectures</a><a href="07_time_series.html">07: Time-series forecasting →</a></nav></main><footer>Eight practical lectures for mathematicians · Local, reproducible, CPU-friendly · Synthetic teaching data</footer></body></html>

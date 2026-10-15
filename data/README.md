@@ -27,3 +27,11 @@ $$\max\{5,35+5T-.12(T-23)^2-.45H-.8W+80e^{-((h-8)/2)^2}+110e^{-((h-17)/2.5)^2}+2
 The nonlinear rush-hour terms motivate trees. Random splits are appropriate for these independent scenarios; real forecasts require chronological splits and features available at prediction time.
 
 CSV values are rounded to four decimal places. Sources: authored for this repository, not downloaded datasets. Inspect `scripts/generate_data.py` for the precise generation order.
+
+## Additional datasets for lectures 04–07
+
+- [Fraud and customer-segmentation data](tabular_extensions.md): rare Bernoulli outcomes and unlabeled customer geometry.
+- [Support-ticket corpus](text_dataset.md): authored message families with template-group identifiers for honest splits.
+- [Chronological daily sales](sales_dataset.md): a time-indexed stochastic process for rolling one-step forecasts.
+
+Run `python scripts/generate_all_data.py` from the repository root to regenerate all fixtures. The original generator remains available separately, and each extension generator uses an independent seed. The committed CSV files remain the canonical classroom inputs.

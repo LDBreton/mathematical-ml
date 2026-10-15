@@ -1,0 +1,59 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Text classification: exercises · Mathematical ML</title><link rel="stylesheet" href="style.css"><script>window.MathJax={tex:{inlineMath:[['$','$'],['\\(','\\)']]}};</script><script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script></head><body><a class="skip" href="#main">Skip to content</a><header><a href="index.html">∑ Mathematical ML</a><nav aria-label="Course"><a href="index.html#lectures">Lectures</a><a href="setup.html">Getting started</a><a href="datasets.html">Datasets</a><a href="instructor.html">Teaching guide</a></nav></header><main id="main"><div class="eyebrow">Lecture 05 / exercises</div><div class="actions"><a href="05_text_classification.html">← Lecture guide</a><a href="downloads/05_text_classification/exercises.ipynb" download>Download notebook</a></div><article class="reading"><section class="cell"><h1>05 — Exercises: text classification</h1>
+<p>Work through these after the lesson. The code cells load the data and provide a train-only vectorizer preview. Write your derivations in Markdown cells and replace the clearly marked exercise expressions in your own copy. The notebook remains runnable with the starter values. Then compare with <code>solutions.ipynb</code>.</p></section><section class="cell"><h2>Exercise 1 — Smoothed IDF and normalized rows</h2>
+<p>A term occurs in 3 of 10 training documents. Derive its scikit-learn smoothed IDF. Compute the IDF of a term in all 10 documents. Explain why smoothing prevents an infinite value when the term is absent from every training document. For a raw weighted vector $(3,4)$, normalize it and verify its norm.</p></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>import numpy as np
+
+# TODO: Replace these starter values in your own copy after deriving them.
+n_documents = 10
+document_frequency = 3
+idf = np.log((1 + n_documents) / (1 + document_frequency)) + 1
+weighted_vector = np.array([3.0, 4.0])
+normalized_vector = weighted_vector / np.linalg.norm(weighted_vector)
+print(
+    &quot;IDF:&quot;,
+    idf,
+    &quot;normalized vector:&quot;,
+    normalized_vector,
+    &quot;norm:&quot;,
+    np.linalg.norm(normalized_vector),
+)</code></pre></section><section class="cell"><h2>Exercise 2 — Cosine similarity</h2>
+<p>For two nonzero documents, show that cosine similarity is the dot product after both vectors have L2 norm one. Calculate the cosine similarity of $(1,0,1)$ and $(1,1,0)$. Why does a normalized sparse representation make the calculation efficient?</p></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>u = np.array([1.0, 0.0, 1.0])
+v = np.array([1.0, 1.0, 0.0])
+# TODO: replace the placeholder with your cosine calculation.
+cosine = np.dot(u, v) / (np.linalg.norm(u) * np.linalg.norm(v))
+print(&quot;cosine:&quot;, cosine)</code></pre></section><section class="cell"><h2>Exercise 3 — Softmax cross-entropy derivative</h2>
+<p>For one example with $K$ logits, softmax probabilities $p_k$, and one-hot target $y_k$, derive $\partial[-\sum_r y_r\log p_r]/\partial z_k=p_k-y_k$. Then state the batch gradient with feature vector $x_i$. Explain in words how an L2 penalty changes the fitted weights.</p></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code># Numerical check for one target class (category index 1).
+logits = np.array([0.2, -0.1, 0.7])
+probabilities = np.exp(logits - logits.max())
+probabilities /= probabilities.sum()
+y = np.array([0.0, 1.0, 0.0])
+analytic_gradient = probabilities - y
+print(&quot;probabilities:&quot;, probabilities)
+print(&quot;softmax-cross-entropy gradient with respect to logits:&quot;, analytic_gradient)</code></pre></section><section class="cell"><h2>Exercise 4 — Make a group-aware split</h2>
+<p>Load <code>data/support_tickets.csv</code>. Build train, validation, and test group lists with the fixed 8/2/2 groups per category rule from the lesson. Verify that group sets do not overlap and each split has the same row count per category. In one sentence, explain why a random row split would be optimistic for this fixture.</p></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>from pathlib import Path
+import random
+import pandas as pd
+
+for candidate in (Path.cwd(), *Path.cwd().parents):
+    data_path = candidate / &quot;data&quot; / &quot;support_tickets.csv&quot;
+    if data_path.exists():
+        break
+else:
+    raise FileNotFoundError(&quot;Run from the repository or one of its subfolders.&quot;)
+tickets = pd.read_csv(data_path)
+# TODO: construct split_groups using whole template_group values.
+# Starter: list all categories; then shuffle each category&#x27;s groups with random.Random(2026).
+categories = sorted(tickets.category.unique())
+print(&quot;categories:&quot;, categories)
+print(
+    &quot;groups per category:&quot;,
+    tickets.groupby(&quot;category&quot;).template_group.nunique().to_dict(),
+)</code></pre></section><section class="cell"><h2>Exercise 5 — Validation selection and a frozen test</h2>
+<p>Build a <code>Pipeline</code> with the default <code>TfidfVectorizer</code> followed by <code>LogisticRegression(solver="lbfgs", max_iter=1500)</code>. Compare <code>C</code> values 0.05, 0.2, 1, 5, and 20 using validation macro-F1. Select the best value without consulting test scores, refit on train plus validation, and evaluate test once. Report accuracy and macro-F1, then inspect two errors or explain why the model made none.</p></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import f1_score
+from sklearn.pipeline import Pipeline
+
+# TODO: fit candidate pipelines on training only and score validation.
+# Keep TfidfVectorizer inside each Pipeline so its vocabulary and IDF are train-only.
+print(&quot;Use the lesson&#x27;s validation-selection pattern after completing Exercise 4.&quot;)</code></pre></section><section class="cell"><h2>Exercise 6 — Interpret a coefficient carefully</h2>
+<p>After fitting the final pipeline, list the five largest coefficients for one category. Explain the pairwise log-odds meaning of a coefficient contrast and why it is not causal evidence. Identify one additional evaluation concern that the synthetic test set cannot answer.</p></section></article><nav class="actions" aria-label="Study sequence"><a href="04_imbalanced_learning.html">← 04: Imbalanced learning</a><a href="index.html#lectures">All lectures</a><a href="06_clustering.html">06: Clustering →</a></nav></main><footer>Eight practical lectures for mathematicians · Local, reproducible, CPU-friendly · Synthetic teaching data</footer></body></html>

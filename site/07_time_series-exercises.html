@@ -1,0 +1,142 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Time-series forecasting: exercises · Mathematical ML</title><link rel="stylesheet" href="style.css"><script>window.MathJax={tex:{inlineMath:[['$','$'],['\\(','\\)']]}};</script><script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script></head><body><a class="skip" href="#main">Skip to content</a><header><a href="index.html">∑ Mathematical ML</a><nav aria-label="Course"><a href="index.html#lectures">Lectures</a><a href="setup.html">Getting started</a><a href="datasets.html">Datasets</a><a href="instructor.html">Teaching guide</a></nav></header><main id="main"><div class="eyebrow">Lecture 07 / exercises</div><div class="actions"><a href="07_time_series.html">← Lecture guide</a><a href="downloads/07_time_series/exercises.ipynb" download>Download notebook</a></div><article class="reading"><section class="cell"><h1>Lecture 07 exercises — Forecasting with past information</h1>
+<p>Run the cells in order. Data loading, feature construction, and chronological boundaries are provided so you can focus on the forecast design. Try each prompt before opening <code>solutions.ipynb</code>. The code cells are runnable as written.</p></section><section class="cell"><h2>1. Information at the origin</h2>
+<p>In your own words, explain why $\mathbb E[Y_{t+1}\mid\mathcal F_t]$ is measurable with respect to information available at $t$. Name one feature in our table that is known for tomorrow and one value that is not.</p></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>from pathlib import Path
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+
+def find_data_file(filename):
+    &quot;&quot;&quot;Search this directory and its parents for a file under data/.&quot;&quot;&quot;
+    for directory in (Path.cwd(), *Path.cwd().parents):
+        candidate = directory / &quot;data&quot; / filename
+        if candidate.exists():
+            return candidate
+    raise FileNotFoundError(f&quot;Could not find data/{filename} from {Path.cwd()}&quot;)
+
+
+sales_data = pd.read_csv(find_data_file(&quot;daily_sales.csv&quot;), parse_dates=[&quot;date&quot;])
+sales_data = sales_data.sort_values(&quot;date&quot;).reset_index(drop=True)
+assert sales_data[&quot;date&quot;].is_monotonic_increasing and sales_data[&quot;date&quot;].is_unique
+sales_data.head()</code></pre></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>def make_forecasting_features(data):
+    &quot;&quot;&quot;Build rolling one-step predictors using only observations before each date.&quot;&quot;&quot;
+    frame = data[[&quot;date&quot;, &quot;sales&quot;]].copy().sort_values(&quot;date&quot;).reset_index(drop=True)
+    day = frame[&quot;date&quot;].dt.dayofweek.to_numpy()
+    frame[&quot;weekday_sin&quot;] = np.sin(2 * np.pi * day / 7)
+    frame[&quot;weekday_cos&quot;] = np.cos(2 * np.pi * day / 7)
+    frame[&quot;year_day_sin&quot;] = np.sin(2 * np.pi * frame[&quot;date&quot;].dt.dayofyear / 365.25)
+    frame[&quot;year_day_cos&quot;] = np.cos(2 * np.pi * frame[&quot;date&quot;].dt.dayofyear / 365.25)
+    for lag in (1, 2, 7, 14, 28):
+        frame[f&quot;lag_{lag}&quot;] = frame[&quot;sales&quot;].shift(lag)
+    frame[&quot;mean_7_before&quot;] = frame[&quot;sales&quot;].shift(1).rolling(7).mean()
+    frame[&quot;mean_28_before&quot;] = frame[&quot;sales&quot;].shift(1).rolling(28).mean()
+    return frame.dropna().reset_index(drop=True)
+
+
+feature_data = make_forecasting_features(sales_data)
+feature_columns = [
+    column for column in feature_data.columns if column not in (&quot;date&quot;, &quot;sales&quot;)
+]
+feature_data[[&quot;date&quot;, &quot;sales&quot;, &quot;lag_1&quot;, &quot;lag_7&quot;, &quot;mean_7_before&quot;, &quot;weekday_sin&quot;]].head()</code></pre></section><section class="cell"><h2>2. Check the lag window</h2>
+<p>Complete the written explanation: why must the rolling mean use <code>shift(1)</code> before <code>rolling(7)</code>? The assertions below give you a concrete boundary to inspect.</p></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>row = feature_data.iloc[100]
+expected_lag_7 = sales_data.loc[28 + 100 - 7, &quot;sales&quot;]
+expected_mean = sales_data.loc[121:127, &quot;sales&quot;].mean()
+assert row[&quot;lag_7&quot;] == expected_lag_7
+assert np.isclose(row[&quot;mean_7_before&quot;], expected_mean)
+print(
+    &quot;For&quot;,
+    row[&quot;date&quot;].date(),
+    &quot;lag_7 is&quot;,
+    row[&quot;lag_7&quot;],
+    &quot;and the preceding-week mean is&quot;,
+    round(row[&quot;mean_7_before&quot;], 2),
+)</code></pre></section><section class="cell"><h2>Leakage property check</h2>
+<p>Change sales strictly after one origin. Its lag and rolling features at that earlier origin must stay the same.</p></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>origin_raw_index = 200
+origin_feature_index = origin_raw_index - 28
+future_perturbation = sales_data.copy()
+future_perturbation.loc[origin_raw_index + 1 :, &quot;sales&quot;] += 10000
+perturbed_features = make_forecasting_features(future_perturbation)
+predictor_columns = [
+    column for column in feature_data.columns if column not in (&quot;date&quot;, &quot;sales&quot;)
+]
+np.testing.assert_allclose(
+    feature_data.loc[origin_feature_index, predictor_columns].to_numpy(dtype=float),
+    perturbed_features.loc[origin_feature_index, predictor_columns].to_numpy(
+        dtype=float
+    ),
+)
+print(&quot;Future perturbations leave origin features unchanged.&quot;)</code></pre></section><section class="cell"><h2>3. Preserve chronological boundaries</h2>
+<p>Create the same 70%/15%/15% split and report the first and last date in each partition. Then explain why shuffling before this split changes the question being evaluated.</p></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>n_rows = len(feature_data)
+train_end = int(0.70 * n_rows)
+validation_end = int(0.85 * n_rows)
+train_data = feature_data.iloc[:train_end].copy()
+validation_data = feature_data.iloc[train_end:validation_end].copy()
+test_data = feature_data.iloc[validation_end:].copy()
+pd.DataFrame(
+    {
+        &quot;partition&quot;: [&quot;train&quot;, &quot;validation&quot;, &quot;test&quot;],
+        &quot;first&quot;: [
+            part.date.min().date() for part in (train_data, validation_data, test_data)
+        ],
+        &quot;last&quot;: [
+            part.date.max().date() for part in (train_data, validation_data, test_data)
+        ],
+    }
+)</code></pre></section><section class="cell"><h2>4. Compare with a seasonal-naive rule</h2>
+<p>For each test origin, predict from the same weekday one week earlier using <code>lag_7</code>. Compute MAE and RMSE. Why is this baseline a meaningful competitor for data with weekly recurrence?</p></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>from sklearn.metrics import mean_absolute_error, mean_squared_error
+
+actual = test_data[&quot;sales&quot;].to_numpy()
+seasonal_prediction = test_data[&quot;lag_7&quot;].to_numpy()
+seasonal_scores = {
+    &quot;MAE&quot;: mean_absolute_error(actual, seasonal_prediction),
+    &quot;RMSE&quot;: mean_squared_error(actual, seasonal_prediction) ** 0.5,
+}
+seasonal_scores</code></pre></section><section class="cell"><h2>5. Fit and assess a tree model</h2>
+<p>Fit an <code>XGBRegressor</code> on training rows, select the number of trees with the validation block, and compare the selected model with the baseline on test. The test features are valid for rolling one-step evaluation because each origin uses only previously observed actuals. How would the feature updates differ for a fixed-origin multi-day forecast?</p></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>from xgboost import XGBRegressor
+
+feature_columns = [
+    column for column in feature_data.columns if column not in (&quot;date&quot;, &quot;sales&quot;)
+]
+forecast_model = XGBRegressor(
+    objective=&quot;reg:squarederror&quot;,
+    n_estimators=500,
+    learning_rate=0.035,
+    max_depth=3,
+    min_child_weight=5,
+    reg_lambda=5.0,
+    early_stopping_rounds=25,
+    eval_metric=&quot;rmse&quot;,
+    random_state=17,
+    n_jobs=2,
+)
+forecast_model.fit(
+    train_data[feature_columns],
+    train_data[&quot;sales&quot;],
+    eval_set=[(validation_data[feature_columns], validation_data[&quot;sales&quot;])],
+    verbose=False,
+)
+model_prediction = forecast_model.predict(test_data[feature_columns])
+comparison = pd.DataFrame(
+    {
+        &quot;seasonal naive&quot;: {
+            &quot;MAE&quot;: mean_absolute_error(actual, seasonal_prediction),
+            &quot;RMSE&quot;: mean_squared_error(actual, seasonal_prediction) ** 0.5,
+        },
+        &quot;XGBoost&quot;: {
+            &quot;MAE&quot;: mean_absolute_error(actual, model_prediction),
+            &quot;RMSE&quot;: mean_squared_error(actual, model_prediction) ** 0.5,
+        },
+    }
+).T
+comparison</code></pre></section><section class="cell"><h2>6. Inspect the forecast errors</h2>
+<p>Plot test predictions and residuals over time. Look for runs of same-sign residuals, which may reveal a misspecified trend or seasonality even if the average score looks reasonable.</p></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>residuals = actual - model_prediction
+fig, axes = plt.subplots(2, 1, figsize=(10, 5), sharex=True, layout=&quot;constrained&quot;)
+axes[0].plot(test_data[&quot;date&quot;], actual, label=&quot;actual&quot;, color=&quot;black&quot;)
+axes[0].plot(test_data[&quot;date&quot;], model_prediction, label=&quot;XGBoost&quot;)
+axes[0].legend(frameon=False)
+axes[1].scatter(test_data[&quot;date&quot;], residuals, s=12)
+axes[1].axhline(0, color=&quot;black&quot;, lw=1)
+axes[1].set(ylabel=&quot;actual - predicted&quot;, xlabel=&quot;date&quot;)
+fig.autofmt_xdate()
+plt.show()</code></pre></section><section class="cell"><h2>7. Evaluation design in one sentence</h2>
+<p>State the origin, horizon, parameter-update schedule, and observation-update schedule represented by the final test score. Then describe what must change to evaluate a fixed-origin 14-day forecast without seeing actuals from those 14 days.</p></section></article><nav class="actions" aria-label="Study sequence"><a href="06_clustering.html">← 06: Clustering</a><a href="index.html#lectures">All lectures</a><a href="08_deployment.html">08: From model to service →</a></nav></main><footer>Eight practical lectures for mathematicians · Local, reproducible, CPU-friendly · Synthetic teaching data</footer></body></html>

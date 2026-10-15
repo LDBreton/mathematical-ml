@@ -1,0 +1,149 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>tabular_extensions · Mathematical ML</title><link rel="stylesheet" href="style.css"><script>window.MathJax={tex:{inlineMath:[['$','$'],['\\(','\\)']]}};</script><script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script></head><body><a class="skip" href="#main">Skip to content</a><header><a href="index.html">∑ Mathematical ML</a><nav aria-label="Course"><a href="index.html#lectures">Lectures</a><a href="setup.html">Getting started</a><a href="datasets.html">Datasets</a><a href="instructor.html">Teaching guide</a></nav></header><main id="main"><article class="reading"><h1>Tabular extension datasets</h1>
+<p>Both files are synthetic, deterministic teaching fixtures. Regenerate the CSVs from the repository root with <code>.venv/Scripts/python.exe scripts/generate_tabular_extensions.py</code>. The fraud and customer generators use independent NumPy random generators with seeds 404 and 606. The generator writes only the two CSV files; this note documents their committed versions.</p>
+<p>Monetary features use arbitrary currency units. The merchant-risk score is an artificial predictor, not an externally validated probability.</p>
+<h2><code>fraud.csv</code></h2>
+<p>The table has 5,000 independent transaction scenarios. NumPy lognormal parameters below are the mean and standard deviation of the underlying normal variable. Amount is clipped to [2, 1800]; continuous fields are rounded to five decimals in the CSV.</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Synthetic generation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>amount</code></td>
+<td>LogNormal(3.45, 0.85), clipped to [2, 1800]</td>
+</tr>
+<tr>
+<td><code>hour</code></td>
+<td>Uniform integer from 0 through 23</td>
+</tr>
+<tr>
+<td><code>card_present</code></td>
+<td>Bernoulli(0.72)</td>
+</tr>
+<tr>
+<td><code>international</code></td>
+<td>Bernoulli(0.11)</td>
+</tr>
+<tr>
+<td><code>account_age_days</code></td>
+<td>Uniform integer from 3 through 3650</td>
+</tr>
+<tr>
+<td><code>transactions_24h</code></td>
+<td>Poisson(1.5)</td>
+</tr>
+<tr>
+<td><code>merchant_risk</code></td>
+<td>Beta(2, 5)</td>
+</tr>
+<tr>
+<td><code>fraud</code></td>
+<td>Bernoulli with probability below</td>
+</tr>
+</tbody>
+</table>
+<p>Let <code>night</code> equal one when <code>hour &lt;= 5</code> or <code>hour &gt;= 23</code>. The label probability is $\sigma(\eta)=1/(1+e^{-\eta})$, with</p>
+<p>$$
+\eta=-4.35+0.58\log(1+\mathrm{amount}/40)+0.82\,\mathrm{international}+0.72(1-\mathrm{card\_present})+0.43\,\mathrm{night}+0.16\,\mathrm{transactions\_24h}+1.15\,\mathrm{merchant\_risk}-0.12\log(1+\mathrm{account\_age\_days}/90).
+$$</p>
+<p>The committed seed-404 sample has 217 positives among 5,000 rows (4.34%). Split before any resampling or fitted preprocessing; the lessons do not resample.</p>
+<h2><code>customer_segments.csv</code></h2>
+<p>This table has 1,200 rows and four hidden generator groups. Feature centers are shown in original units. Values are sampled independently conditional on group using the distributions below, then clipped and rounded. In particular, annual spend is generated independently of order count and average order value, so these fields are artificial feature proxies rather than an accounting-consistent transaction ledger.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: right;"><code>segment_truth</code></th>
+<th style="text-align: right;">Rows</th>
+<th style="text-align: right;">Recency days</th>
+<th style="text-align: right;">Orders / 12 months</th>
+<th style="text-align: right;">Average order value</th>
+<th style="text-align: right;">Annual spend</th>
+<th style="text-align: right;">Web share</th>
+<th style="text-align: right;">Tenure months</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">320</td>
+<td style="text-align: right;">78</td>
+<td style="text-align: right;">2.2</td>
+<td style="text-align: right;">180</td>
+<td style="text-align: right;">470</td>
+<td style="text-align: right;">0.20</td>
+<td style="text-align: right;">30</td>
+</tr>
+<tr>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">300</td>
+<td style="text-align: right;">30</td>
+<td style="text-align: right;">10.5</td>
+<td style="text-align: right;">360</td>
+<td style="text-align: right;">980</td>
+<td style="text-align: right;">0.62</td>
+<td style="text-align: right;">22</td>
+</tr>
+<tr>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">300</td>
+<td style="text-align: right;">115</td>
+<td style="text-align: right;">1.4</td>
+<td style="text-align: right;">95</td>
+<td style="text-align: right;">260</td>
+<td style="text-align: right;">0.35</td>
+<td style="text-align: right;">48</td>
+</tr>
+<tr>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">280</td>
+<td style="text-align: right;">18</td>
+<td style="text-align: right;">16</td>
+<td style="text-align: right;">520</td>
+<td style="text-align: right;">1450</td>
+<td style="text-align: right;">0.78</td>
+<td style="text-align: right;">9</td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Conditional distribution and stored range</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>recency_days</code></td>
+<td>Normal(center, SD 12; group 3 uses SD 6), clipped to [1, 180], rounded to integer</td>
+</tr>
+<tr>
+<td><code>orders_12m</code></td>
+<td>Poisson(group center), clipped below at 0, integer</td>
+</tr>
+<tr>
+<td><code>average_order_value</code></td>
+<td>LogNormal(log(center), 0.27), clipped below at 10, rounded to cents</td>
+</tr>
+<tr>
+<td><code>annual_spend</code></td>
+<td>LogNormal(log(center), 0.22), clipped below at 20, rounded to cents</td>
+</tr>
+<tr>
+<td><code>web_share</code></td>
+<td>Beta(max(1.2, 12q), max(1.2, 12(1-q))), clipped to [0, 1], rounded to 4 decimals</td>
+</tr>
+<tr>
+<td><code>tenure_months</code></td>
+<td>Normal(center, SD 8), clipped to [1, 72], rounded to integer</td>
+</tr>
+<tr>
+<td><code>support_contacts_12m</code></td>
+<td>Poisson(0.6 + 0.12 times group order center), clipped below at 0, integer</td>
+</tr>
+</tbody>
+</table>
+<p><code>segment_truth</code> records the generator group for post-hoc ARI analysis only. Exclude it from scaling, PCA, K-means, silhouette, and cluster-count selection. No real or personal records are included, and the synthetic relationships do not justify real decisions.</p></article></main><footer>Eight practical lectures for mathematicians · Local, reproducible, CPU-friendly · Synthetic teaching data</footer></body></html>

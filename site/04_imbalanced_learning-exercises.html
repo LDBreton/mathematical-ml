@@ -1,0 +1,104 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Imbalanced learning: exercises · Mathematical ML</title><link rel="stylesheet" href="style.css"><script>window.MathJax={tex:{inlineMath:[['$','$'],['\\(','\\)']]}};</script><script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script></head><body><a class="skip" href="#main">Skip to content</a><header><a href="index.html">∑ Mathematical ML</a><nav aria-label="Course"><a href="index.html#lectures">Lectures</a><a href="setup.html">Getting started</a><a href="datasets.html">Datasets</a><a href="instructor.html">Teaching guide</a></nav></header><main id="main"><div class="eyebrow">Lecture 04 / exercises</div><div class="actions"><a href="04_imbalanced_learning.html">← Lecture guide</a><a href="downloads/04_imbalanced_learning/exercises.ipynb" download>Download notebook</a></div><article class="reading"><section class="cell"><h1>Lecture 04 exercises — Imbalanced learning</h1>
+<p>Starter cells run. Answer prompts in Markdown; TODO cells are safe extension points.</p></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>from pathlib import Path
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import make_pipeline
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import (
+    average_precision_score,
+    precision_recall_curve,
+    auc,
+    roc_auc_score,
+    confusion_matrix,
+    precision_score,
+    recall_score,
+    brier_score_loss,
+)
+from xgboost import XGBClassifier
+
+
+def repo_root(start=Path.cwd()):
+    for path in (start, *start.parents):
+        if (path / &quot;data&quot; / &quot;fraud.csv&quot;).exists():
+            return path
+    raise FileNotFoundError(&quot;Could not find data/fraud.csv&quot;)
+
+
+ROOT = repo_root()
+data = pd.read_csv(ROOT / &quot;data&quot; / &quot;fraud.csv&quot;)
+features = [
+    &quot;amount&quot;,
+    &quot;hour&quot;,
+    &quot;card_present&quot;,
+    &quot;international&quot;,
+    &quot;account_age_days&quot;,
+    &quot;transactions_24h&quot;,
+    &quot;merchant_risk&quot;,
+]
+X, y = data[features], data[&quot;fraud&quot;].astype(int)
+print(f&quot;rows={len(data)}, positives={y.sum()}, prevalence={y.mean():.3%}&quot;)
+# Split first. The test rows remain untouched until all choices are frozen.
+X_dev, X_test, y_dev, y_test = train_test_split(
+    X, y, test_size=0.20, random_state=14, stratify=y
+)
+X_train, X_valid, y_train, y_valid = train_test_split(
+    X_dev, y_dev, test_size=0.25, random_state=15, stratify=y_dev
+)
+print(&quot;sizes:&quot;, len(X_train), len(X_valid), len(X_test))
+
+
+def empirical_cost(actual, scores, threshold, c_fn=20.0, c_fp=1.0):
+    predicted = scores &gt;= threshold
+    false_negative = np.sum((actual.to_numpy() == 1) &amp; ~predicted)
+    false_positive = np.sum((actual.to_numpy() == 0) &amp; predicted)
+    return c_fn * false_negative + c_fp * false_positive</code></pre></section><section class="cell"><h2>Exercise 1 — Majority baseline</h2>
+<p>Calculate test prevalence, accuracy and recall for an always-negative rule. Explain the misleading accuracy.</p></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>negative, positive = np.bincount(y_test, minlength=2)
+print(
+    {
+        &quot;prevalence&quot;: positive / len(y_test),
+        &quot;accuracy&quot;: negative / len(y_test),
+        &quot;recall&quot;: 0.0,
+    }
+)
+# TODO: add an interpretation in a Markdown cell.</code></pre></section><section class="cell"><h2>Exercise 2 — Posterior shift</h2>
+<p>Derive $q/(1-q)=(w_1/w_0)p/(1-p)$. Find the natural probability for which weighted $q=1/2$.</p></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>p = np.linspace(0.001, 0.2, 100)
+w0, w1 = 1.0, 10.0
+q = w1 * p / (w1 * p + w0 * (1 - p))
+plt.plot(p, q)
+plt.axhline(0.5, color=&quot;black&quot;, linestyle=&quot;--&quot;)
+plt.axvline(w0 / (w0 + w1), color=&quot;black&quot;, linestyle=&quot;:&quot;)
+plt.xlabel(&quot;natural probability p&quot;)
+plt.ylabel(&quot;weighted-risk q&quot;)
+# TODO: explain why q=.5 differs from p=.5.</code></pre></section><section class="cell"><h2>Exercise 3 — Compare metrics</h2>
+<p>Fit weighted and unweighted logistic regression. Compare AP, trapezoidal PR area, ROC-AUC and Brier on validation.</p></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>estimators = {
+    &quot;unweighted&quot;: make_pipeline(
+        StandardScaler(), LogisticRegression(max_iter=2000, random_state=14)
+    ),
+    &quot;balanced&quot;: make_pipeline(
+        StandardScaler(),
+        LogisticRegression(class_weight=&quot;balanced&quot;, max_iter=2000, random_state=14),
+    ),
+}
+for estimator in estimators.values():
+    estimator.fit(X_train, y_train)
+for name, estimator in estimators.items():
+    scores = estimator.predict_proba(X_valid)[:, 1]
+    precision, recall, _ = precision_recall_curve(y_valid, scores)
+    print(
+        name,
+        {
+            &quot;AP&quot;: average_precision_score(y_valid, scores),
+            &quot;trapezoid&quot;: auc(recall[::-1], precision[::-1]),
+            &quot;ROC_AUC&quot;: roc_auc_score(y_valid, scores),
+            &quot;Brier&quot;: brier_score_loss(y_valid, scores),
+        },
+    )</code></pre></section><section class="cell"><h2>Exercise 4 — Threshold policy</h2>
+<p>Choose a threshold for false-negative cost 20 and false-positive cost 1 using validation. Freeze it and inspect test once; explain why test cannot choose it.</p></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>scores = estimators[&quot;unweighted&quot;].predict_proba(X_valid)[:, 1]
+grid = np.unique(np.r_[0.0, np.linspace(0.01, 0.99, 197), 1.0])
+costs = [empirical_cost(y_valid, scores, t, 20, 1) for t in grid]
+threshold = float(grid[int(np.argmin(costs))])
+print(&quot;validation threshold:&quot;, threshold, &quot;formula if calibrated:&quot;, 1 / 21)
+# TODO: report the test confusion matrix using this frozen threshold.</code></pre></section></article><nav class="actions" aria-label="Study sequence"><a href="03_xgboost.html">← 03: XGBoost</a><a href="index.html#lectures">All lectures</a><a href="05_text_classification.html">05: Text classification →</a></nav></main><footer>Eight practical lectures for mathematicians · Local, reproducible, CPU-friendly · Synthetic teaching data</footer></body></html>

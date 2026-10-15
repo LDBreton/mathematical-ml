@@ -1,0 +1,204 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Text classification: lesson · Mathematical ML</title><link rel="stylesheet" href="style.css"><script>window.MathJax={tex:{inlineMath:[['$','$'],['\\(','\\)']]}};</script><script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script></head><body><a class="skip" href="#main">Skip to content</a><header><a href="index.html">∑ Mathematical ML</a><nav aria-label="Course"><a href="index.html#lectures">Lectures</a><a href="setup.html">Getting started</a><a href="datasets.html">Datasets</a><a href="instructor.html">Teaching guide</a></nav></header><main id="main"><div class="eyebrow">Lecture 05 / lesson</div><div class="actions"><a href="05_text_classification.html">← Lecture guide</a><a href="downloads/05_text_classification/lesson.ipynb" download>Download notebook</a></div><article class="reading"><section class="cell"><h1>05 — Text classification with TF-IDF and logistic regression</h1>
+<p>A support team wants to route a short message to one of five queues. We will turn text into sparse vectors, derive what the vectorizer computes, fit a regularized multinomial logistic model, and examine the mistakes. The data are authored synthetic templates; the final score is a lesson result, not a claim about real support traffic.</p></section><section class="cell"><h2>1. Load the fixture and keep template families together</h2>
+<p>Rows from one authored template are related examples. If one sibling lands in training and another in testing, the test can reward recognition of a template rather than generalization to a new one. We therefore assign whole groups within each category. The rule is fixed before fitting: 8 groups per category for training, 2 for validation, and 2 for the final test. Each group contains eight rows, so every split is balanced.</p></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>from pathlib import Path
+import random
+import pandas as pd
+
+for candidate in (Path.cwd(), *Path.cwd().parents):
+    data_path = candidate / &quot;data&quot; / &quot;support_tickets.csv&quot;
+    if data_path.exists():
+        ROOT = candidate
+        break
+else:
+    raise FileNotFoundError(
+        &quot;Run this notebook from the repository or one of its subfolders.&quot;
+    )
+
+tickets = pd.read_csv(data_path)
+print(
+    f&quot;Loaded {len(tickets)} tickets from {tickets[&#x27;template_group&#x27;].nunique()} template groups.&quot;
+)
+tickets.head(3)</code></pre></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>required = {&quot;ticket_id&quot;, &quot;category&quot;, &quot;template_group&quot;, &quot;text&quot;}
+assert required &lt;= set(tickets.columns)
+assert tickets[list(required)].notna().all().all()
+assert tickets.groupby(&quot;template_group&quot;)[&quot;category&quot;].nunique().max() == 1
+assert tickets.groupby(&quot;template_group&quot;).size().nunique() == 1
+
+categories = sorted(tickets[&quot;category&quot;].unique())
+rng = random.Random(2026)
+split_groups = {&quot;train&quot;: [], &quot;validation&quot;: [], &quot;test&quot;: []}
+for category in categories:
+    groups = sorted(
+        tickets.loc[tickets.category == category, &quot;template_group&quot;].unique()
+    )
+    rng.shuffle(groups)
+    split_groups[&quot;train&quot;].extend(groups[:8])
+    split_groups[&quot;validation&quot;].extend(groups[8:10])
+    split_groups[&quot;test&quot;].extend(groups[10:12])
+
+splits = {
+    name: tickets[tickets.template_group.isin(group_ids)].reset_index(drop=True)
+    for name, group_ids in split_groups.items()
+}
+assert set(split_groups[&quot;train&quot;]).isdisjoint(split_groups[&quot;validation&quot;])
+assert set(split_groups[&quot;train&quot;]).isdisjoint(split_groups[&quot;test&quot;])
+assert set(split_groups[&quot;validation&quot;]).isdisjoint(split_groups[&quot;test&quot;])
+for name, frame in splits.items():
+    counts = frame.category.value_counts().reindex(categories, fill_value=0)
+    assert (counts &gt; 0).all() and counts.nunique() == 1
+    print(
+        f&quot;{name:10s}: {len(frame):3d} rows; &quot;
+        + &quot;, &quot;.join(f&quot;{k}={v}&quot; for k, v in counts.items())
+    )</code></pre></section><section class="cell"><h2>2. TF-IDF as a weighted sparse vector</h2>
+<p>Fix a vocabulary of $p$ terms and let $x_i\in\mathbb{R}^p$ contain the raw count of each term in document $i$. For term $j$, document frequency is $df_j=\#\{i:x_{ij}&gt;0\}$. With scikit-learn's default <code>smooth_idf=True</code>, the inverse document frequency is</p>
+<p>$$\operatorname{idf}_j=\log\!\left(\frac{1+n}{1+df_j}\right)+1.$$</p>
+<p>The added one in numerator and denominator smooths document frequency. A term in every fitted document has weight one. The learned vocabulary contains only terms observed in the fitting corpus, so a genuinely unseen term is not assigned a column. The default word analyzer lowercases text, uses unigrams, and keeps tokens matching <code>(?u)\b\w\w+\b</code> (Unicode word characters, at least two characters). It uses no stop-word list or accent stripping. The default <code>sublinear_tf=False</code> leaves term frequency as the raw count. <code>TfidfVectorizer</code> multiplies count by IDF and, by default, applies L2 normalization to each row. A nonempty document vector $v$ becomes $v/\|v\|_2$; its coordinates therefore have sum of squares one.</p>
+<p>With L2-normalized rows $u$ and $v$, cosine similarity is</p>
+<p>$$\cos(u,v)=\frac{u^Tv}{\|u\|_2\|v\|_2}=u^Tv.$$</p>
+<p>The representation is sparse because any document uses only a small fraction of all vocabulary terms. We will inspect the exact fitted convention. The vocabulary and IDF must be learned from training text only; putting the vectorizer inside a pipeline enforces that rule during fitting.</p></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>from sklearn.feature_extraction.text import TfidfVectorizer
+
+vectorizer = TfidfVectorizer()
+X_train_preview = vectorizer.fit_transform(splits[&quot;train&quot;].text)
+print(&quot;shape:&quot;, X_train_preview.shape)
+print(&quot;sparse type:&quot;, type(X_train_preview).__name__)
+print(
+    &quot;density:&quot;,
+    X_train_preview.nnz / (X_train_preview.shape[0] * X_train_preview.shape[1]),
+)
+print(
+    &quot;norms of first three rows:&quot;,
+    (X_train_preview[:3].multiply(X_train_preview[:3]).sum(axis=1).A1) ** 0.5,
+)
+print(
+    {
+        name: getattr(vectorizer, name)
+        for name in [
+            &quot;lowercase&quot;,
+            &quot;strip_accents&quot;,
+            &quot;ngram_range&quot;,
+            &quot;stop_words&quot;,
+            &quot;token_pattern&quot;,
+            &quot;use_idf&quot;,
+            &quot;smooth_idf&quot;,
+            &quot;sublinear_tf&quot;,
+            &quot;norm&quot;,
+        ]
+    }
+)</code></pre></section><section class="cell"><h3>One worked IDF calculation</h3>
+<p>Suppose a vocabulary term occurs in 2 of 8 fitted documents. The smoothed IDF is $\log(9/3)+1=\log 3+1$. A ubiquitous term has $df=8$ and receives $\log(9/9)+1=1$. Run the cell to check scikit-learn's stored value for the first case.</p></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>import numpy as np
+from sklearn.feature_extraction.text import TfidfVectorizer
+
+documents = [&quot;common rare&quot;, &quot;common rare&quot;] + [&quot;common&quot;] * 6
+idf_vectorizer = TfidfVectorizer()
+idf_vectorizer.fit(documents)
+idf_by_term = dict(zip(idf_vectorizer.get_feature_names_out(), idf_vectorizer.idf_))
+n_documents = len(documents)
+document_frequency = sum(&quot;rare&quot; in document.split() for document in documents)
+manual_idf = np.log((1 + n_documents) / (1 + document_frequency)) + 1
+print(&quot;manual smoothed IDF:&quot;, manual_idf)
+print(&quot;scikit-learn stored IDF:&quot;, idf_by_term[&quot;rare&quot;])
+print(&quot;ubiquitous term IDF:&quot;, idf_by_term[&quot;common&quot;])
+assert np.isclose(manual_idf, idf_by_term[&quot;rare&quot;])
+assert np.isclose(idf_by_term[&quot;common&quot;], 1.0)</code></pre></section><section class="cell"><h2>3. Multinomial logistic regression</h2>
+<p>For a document vector $x_i$ and $K$ categories, assign a coefficient vector $w_k$ and intercept $b_k$ to each category. Its score is $z_{ik}=w_k^Tx_i+b_k$. Softmax converts scores to probabilities:</p>
+<p>$$p_{ik}=\frac{e^{z_{ik}}}{\sum_{r=1}^{K}e^{z_{ir}}}.$$</p>
+<p>For one-hot labels $y_{ik}$, average cross-entropy is</p>
+<p>$$L(W,b)=-\frac{1}{n}\sum_i\sum_k y_{ik}\log p_{ik}.$$</p>
+<p>Differentiating the softmax-cross-entropy composition gives $\nabla_{w_k}L=\frac{1}{n}\sum_i(p_{ik}-y_{ik})x_i$. Scikit-learn's L2-regularized objective also penalizes large coefficient vectors; in <code>LogisticRegression</code>, larger <code>C</code> means weaker regularization. The <code>lbfgs</code> solver handles the multiclass softmax objective. We set <code>max_iter</code> high enough for this sparse, small problem and inspect convergence as needed.</p>
+<p>Softmax probabilities are unchanged if the same coefficient vector and intercept are added to every category, so a single class coefficient has no absolute interpretation. The pairwise log-odds are <code>log(p_k/p_l) = (w_k - w_l)^T x + (b_k - b_l)</code>. Correlated terms and regularization affect these contrasts, which describe the fitted model rather than causes.</p></section><section class="cell"><h2>4. Select regularization on validation, then test once</h2>
+<p>Macro-F1 computes an F1 score separately for every category, then averages those five scores equally. It is useful when categories deserve equal attention, while ordinary accuracy weights rows. We compare a short, declared list of <code>C</code> values on validation only. After choosing <code>C</code>, we refit the same pipeline on training plus validation and evaluate the held-out test set once. We also compare a <code>DummyClassifier(strategy="most_frequent")</code> fitted on train plus validation. It ignores text and supplies a simple reference on the same frozen test rows.</p></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import f1_score
+from sklearn.pipeline import Pipeline
+
+X_train = splits[&quot;train&quot;].text
+y_train = splits[&quot;train&quot;].category
+X_validation = splits[&quot;validation&quot;].text
+y_validation = splits[&quot;validation&quot;].category
+
+candidate_C = [0.05, 0.2, 1.0, 5.0, 20.0]
+validation_rows = []
+for C in candidate_C:
+    candidate = Pipeline(
+        [
+            (&quot;tfidf&quot;, TfidfVectorizer()),
+            (&quot;logistic&quot;, LogisticRegression(C=C, solver=&quot;lbfgs&quot;, max_iter=1500)),
+        ]
+    )
+    candidate.fit(X_train, y_train)
+    prediction = candidate.predict(X_validation)
+    validation_rows.append(
+        {&quot;C&quot;: C, &quot;macro_f1&quot;: f1_score(y_validation, prediction, average=&quot;macro&quot;)}
+    )
+
+validation_scores = pd.DataFrame(validation_rows)
+display(validation_scores)
+best_C = float(
+    validation_scores.sort_values([&quot;macro_f1&quot;, &quot;C&quot;], ascending=[False, True]).iloc[0].C
+)
+print(&quot;Selected C using validation macro-F1:&quot;, best_C)</code></pre></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>from sklearn.dummy import DummyClassifier
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+
+train_validation = pd.concat([splits[&quot;train&quot;], splits[&quot;validation&quot;]], ignore_index=True)
+final_model = Pipeline(
+    [
+        (&quot;tfidf&quot;, TfidfVectorizer()),
+        (&quot;logistic&quot;, LogisticRegression(C=best_C, solver=&quot;lbfgs&quot;, max_iter=1500)),
+    ]
+)
+final_model.fit(train_validation.text, train_validation.category)
+
+# This is the one final test evaluation after model selection is frozen.
+test_prediction = final_model.predict(splits[&quot;test&quot;].text)
+test_macro_f1 = f1_score(splits[&quot;test&quot;].category, test_prediction, average=&quot;macro&quot;)
+print(&quot;test accuracy:&quot;, accuracy_score(splits[&quot;test&quot;].category, test_prediction))
+print(&quot;test macro-F1:&quot;, test_macro_f1)
+
+baseline = DummyClassifier(strategy=&quot;most_frequent&quot;)
+baseline.fit(train_validation.text, train_validation.category)
+baseline_prediction = baseline.predict(splits[&quot;test&quot;].text)
+print(
+    &quot;most-frequent baseline accuracy:&quot;,
+    accuracy_score(splits[&quot;test&quot;].category, baseline_prediction),
+)
+print(
+    &quot;most-frequent baseline macro-F1:&quot;,
+    f1_score(splits[&quot;test&quot;].category, baseline_prediction, average=&quot;macro&quot;),
+)
+print(
+    classification_report(
+        splits[&quot;test&quot;].category, test_prediction, labels=categories, zero_division=0
+    )
+)
+confusion = pd.DataFrame(
+    confusion_matrix(splits[&quot;test&quot;].category, test_prediction, labels=categories),
+    index=[f&quot;actual: {c}&quot; for c in categories],
+    columns=[f&quot;predicted: {c}&quot; for c in categories],
+)
+display(confusion)</code></pre></section><section class="cell"><h2>5. Read mistakes and coefficients</h2>
+<p>A confusion matrix counts actual rows in its rows and predictions in its columns. Off-diagonal cells identify category pairs worth inspecting. Error review asks whether a ticket really fits one queue, whether a phrase is ambiguous, and whether the model relies on a shared template cue. The synthetic test examples remain related to the same small set of authored situations, even though their groups were withheld.</p></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>test_review = splits[&quot;test&quot;][[&quot;ticket_id&quot;, &quot;template_group&quot;, &quot;category&quot;, &quot;text&quot;]].copy()
+test_review[&quot;predicted&quot;] = test_prediction
+errors = test_review[test_review.category != test_review.predicted].copy()
+print(f&quot;{len(errors)} errors among {len(test_review)} held-out rows.&quot;)
+if errors.empty:
+    print(&quot;There are no test errors to inspect in this run.&quot;)
+else:
+    errors[&quot;actual/predicted&quot;] = errors.category + &quot; -&gt; &quot; + errors.predicted
+    display(
+        errors[[&quot;ticket_id&quot;, &quot;template_group&quot;, &quot;actual/predicted&quot;, &quot;text&quot;]].head(12)
+    )</code></pre></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>fitted_tfidf = final_model.named_steps[&quot;tfidf&quot;]
+fitted_logistic = final_model.named_steps[&quot;logistic&quot;]
+feature_names = fitted_tfidf.get_feature_names_out()
+
+for category_index, category in enumerate(fitted_logistic.classes_):
+    weights = fitted_logistic.coef_[category_index]
+    highest = np.argsort(weights)[-8:][::-1]
+    lowest = np.argsort(weights)[:5]
+    print(f&quot;\n{category}: terms most associated with its logit&quot;)
+    print([(feature_names[i], round(weights[i], 3)) for i in highest])
+    print(
+        &quot;terms lowering its logit:&quot;,
+        [(feature_names[i], round(weights[i], 3)) for i in lowest],
+    )</code></pre></section><section class="cell"><h2>6. What this lesson does and does not establish</h2>
+<p>TF-IDF plus a linear classifier is a clear supervised baseline: it is fast, sparse, inspectable, and often a useful first comparison. A pretrained embedding model uses dense vectors designed to encode semantic relationships, which may help match paraphrases with few shared words; performance depends on the model, domain, and evaluation. Embeddings do not remove the need for labels, group-aware evaluation, or error review when the task is supervised routing; adapting or scoring a model still needs a defensible evaluation. This course uses no external model and downloads no pretrained weights.</p>
+<p>Our split tests new authored template families from the same generator. It prevents sibling leakage but cannot reveal performance on naturally written, evolving, multilingual, imbalanced, or sensitive customer messages. A real deployment study would require appropriately governed representative data, a time-aware or source-aware evaluation, operational costs, and human review.</p></section></article><nav class="actions" aria-label="Study sequence"><a href="04_imbalanced_learning.html">← 04: Imbalanced learning</a><a href="index.html#lectures">All lectures</a><a href="06_clustering.html">06: Clustering →</a></nav></main><footer>Eight practical lectures for mathematicians · Local, reproducible, CPU-friendly · Synthetic teaching data</footer></body></html>

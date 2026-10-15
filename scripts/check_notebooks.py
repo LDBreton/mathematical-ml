@@ -31,6 +31,17 @@ if __name__ == "__main__":
     for path in paths:
         notebook = nbformat.read(path, as_version=4)
         nbformat.validate(notebook)
+        for cell in notebook.cells:
+            if cell.cell_type == "markdown":
+                unexpected_controls = [
+                    character for character in cell.source
+                    if ord(character) < 32 and character != "\n"
+                ]
+                if unexpected_controls or "\nabla" in cell.source:
+                    raise ValueError(
+                        f"Possible broken TeX escapes in {path.name}, cell {cell.id}. "
+                        "Use raw strings when generating mathematical Markdown."
+                    )
         NotebookClient(notebook, timeout=300, kernel_name="python3",
                        resources={"metadata": {"path": str(path.parent)}}).execute()
         nbformat.write(notebook, output / f"{path.parent.name}_{path.name}")

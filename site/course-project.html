@@ -1,0 +1,22 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>course-project · Mathematical ML</title><link rel="stylesheet" href="style.css"><script>window.MathJax={tex:{inlineMath:[['$','$'],['\\(','\\)']]}};</script><script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script></head><body><a class="skip" href="#main">Skip to content</a><header><a href="index.html">∑ Mathematical ML</a><nav aria-label="Course"><a href="index.html#lectures">Lectures</a><a href="setup.html">Getting started</a><a href="datasets.html">Datasets</a><a href="instructor.html">Teaching guide</a></nav></header><main id="main"><article class="reading"><h1>Final course project</h1>
+<p>Choose one problem from lectures 01–07 and turn the lesson into an independently justified experiment. The purpose is to connect the mathematics to the assumptions, code, and evaluation. Use the supplied synthetic data or an instructor-approved public dataset with documented provenance. Do not collect private records for this assignment.</p>
+<h2>Required report</h2>
+<ol>
+<li><strong>Problem and information:</strong> define the response, prediction unit, intended decision, and what information is available at prediction time. For clustering, define the geometry and intended interpretation instead of inventing a target.</li>
+<li><strong>Mathematical model:</strong> write the objective and explain each term. Derive at least one update, gradient, projection, or decision rule. Separate the model assumptions from conclusions that actually follow from them.</li>
+<li><strong>Data and validation:</strong> document schema, units, provenance, missingness, and sampling structure. Justify independent, group-aware, or chronological splitting. State which observations are used for preprocessing, parameter selection, threshold selection, and final evaluation.</li>
+<li><strong>Baseline and model:</strong> build a transparent baseline and at least one justified alternative. For clustering, compare a prespecified set of cluster counts or geometries instead. Keep learned transformations together with the estimator where appropriate.</li>
+<li><strong>Results and errors:</strong> choose metrics tied to the problem, show a useful diagnostic plot, and analyze concrete failure cases. Explain uncertainty and data limitations. Avoid choosing a procedure based on the final test scores.</li>
+<li><strong>Reproducibility:</strong> supply a notebook that runs from a fresh kernel, fixed inputs and seeds, dependency instructions, and a short command to reproduce the result. State where exact floating-point reproducibility is not guaranteed.</li>
+</ol>
+<h2>Suggested extensions</h2>
+<ul>
+<li>Fraud: compare an unweighted probability model with a weighted ranking model; derive the implications for alert costs and probability interpretation.</li>
+<li>Text: compare unigram and bigram features while preserving message-family groups; inspect errors and vocabulary limitations.</li>
+<li>Clustering: study how scaling, initialization, and the number of clusters affect assignments; explain whether the interpretation remains stable.</li>
+<li>Forecasting: compare seasonal persistence, a linear autoregressive model, and XGBoost using the same rolling one-step origins; explain how evaluation would change for a seven-day fixed-origin forecast.</li>
+</ul>
+<h2>Optional software handoff</h2>
+<p>Use lecture 08 to persist a fitted pipeline and validate reload behavior. Its supplied API serves the churn schema specifically. A different model needs a matching request schema, response meaning, preprocessing map, and tests; replacing only the artifact is not sufficient. Forecasting additionally needs an explicit way to supply or maintain the observed history. An offline batch prediction command is an acceptable handoff when it fits the task better than an HTTP service.</p>
+<h2>Assessment</h2>
+<p>Apply the instructor-guide rubric: 30% mathematical reasoning, 25% validation design, 25% readable runnable implementation, and 20% interpretation. A well-explained negative result can earn full credit. The highest test score alone cannot.</p></article></main><footer>Eight practical lectures for mathematicians · Local, reproducible, CPU-friendly · Synthetic teaching data</footer></body></html>

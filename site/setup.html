@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>README · Mathematical ML</title><link rel="stylesheet" href="style.css"><script>window.MathJax={tex:{inlineMath:[['$','$'],['\\(','\\)']]}};</script><script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script></head><body><a class="skip" href="#main">Skip to content</a><header><a href="index.html">∑ Mathematical ML</a><nav aria-label="Course"><a href="index.html#lectures">Lectures</a><a href="setup.html">Getting started</a><a href="datasets.html">Datasets</a><a href="instructor.html">Teaching guide</a></nav></header><main id="main"><article class="reading"><p><a class="button" href="downloads/course.zip" download>Download the complete course</a></p><h1>Machine learning for mathematicians</h1>
-<p>Four hands-on lectures connecting probability, optimization, and linear algebra to readable Python and a working prediction service. Start with <strong>01 → 02 → 03 → 08</strong>; numbering reserves space for future lectures.</p>
+<p>Eight hands-on lectures connecting probability, optimization, linear algebra, and temporal reasoning to readable Python and a working prediction service. Follow <strong>01 → 02 → 03 → 04 → 05 → 06 → 07 → 08</strong>.</p>
 <p>Prerequisites: basic Python functions and arrays, linear algebra, derivatives, conditional probability, and elementary statistics. No prior machine-learning experience is assumed. All datasets are small, synthetic, included locally, and documented in <a href="datasets.html">datasets.html</a>. No accounts, paid APIs, GPU, or downloads of external data are needed.</p>
 <h2>Setup once</h2>
 <p>Use Python 3.11 or 3.12. In a terminal opened at the repository root:</p>
@@ -40,6 +40,30 @@ python -m jupyterlab
 <td>A baseline-controlled boosting experiment</td>
 </tr>
 <tr>
+<td><a href="04_imbalanced_learning.html">04: Imbalanced learning</a></td>
+<td>How do we detect rare fraud?</td>
+<td>Prevalence, precision–recall, weighted risk, decision costs</td>
+<td>A validation-selected alert policy</td>
+</tr>
+<tr>
+<td><a href="05_text_classification.html">05: Text classification</a></td>
+<td>How do we route support messages?</td>
+<td>Sparse TF-IDF vectors, cosine geometry, multinomial likelihood</td>
+<td>A text classification pipeline evaluated by template family</td>
+</tr>
+<tr>
+<td><a href="06_clustering.html">06: Clustering</a></td>
+<td>How do we segment customers without labels?</td>
+<td>K-means minimization, PCA, internal validation</td>
+<td>Interpretable clusters and stability diagnostics</td>
+</tr>
+<tr>
+<td><a href="07_time_series.html">07: Time-series forecasting</a></td>
+<td>How do we forecast tomorrow's sales?</td>
+<td>Information sets, lagged features, rolling-origin evaluation</td>
+<td>Seasonal baseline and XGBoost one-step forecasts</td>
+</tr>
+<tr>
 <td><a href="08_deployment.html">08: Deployment</a></td>
 <td>How does a fitted model become a service?</td>
 <td>Statistical versus software contracts, reproducibility</td>
@@ -59,8 +83,11 @@ python scripts/check_notebooks.py
 </code></pre>
 <p>The notebook runner executes all lessons, exercises, and solutions using separate kernels and writes results under ignored <code>.verification/</code>. It checks execution, not completion of student answers. The committed notebooks keep clean outputs so students generate their own figures.</p>
 <p>The latest local checks and their limitations are recorded in <a href="verification.html">verification.md</a>. To validate the website after rebuilding, run <code>python scripts/check_site.py</code>.</p>
+<p>Run <code>python scripts/check_data.py</code> to check that the generators reproduce the committed CSV bytes in the current environment without overwriting them. Exact byte reproduction is a stronger condition than statistical equivalence and may depend on numerical-library versions.</p>
 <h2>Reproducibility and teaching</h2>
-<p>CSV fixtures are committed. Regenerate them with <code>python scripts/generate_data.py</code> only when intentionally updating the classroom inputs. Dependency ranges describe compatible installations; <code>requirements-lock.txt</code> records the environment used for verification. For an exact classroom environment install that file before <code>python -m pip install --no-deps -e .</code>. Lock versions target the verified Python version and platform; CI additionally checks a fresh installation from declared ranges.</p>
+<p>CSV fixtures are committed. Regenerate all fixtures with <code>python scripts/generate_all_data.py</code> only when intentionally updating the classroom inputs. <code>generate_data.py</code> regenerates the original housing, churn, and bike data; the extension generators can be run separately. Each dataset has its own documented sampling model. Dependency ranges describe compatible installations; <code>requirements-lock.txt</code> records the environment used for verification. For an exact classroom environment install that file before <code>python -m pip install --no-deps -e .</code>. Lock versions target the verified Python version and platform; CI additionally checks a fresh installation from declared ranges.</p>
+<p>Lectures 04–07 add no dependencies. Text classification uses local sparse TF-IDF features; pretrained embeddings are discussed without requiring model downloads. Forecasting uses genuine chronological data and explicitly evaluates rolling one-step predictions, unlike the independent hourly scenarios in lecture 03.</p>
 <p>See <a href="instructor.html">instructor guide</a> for learning outcomes, suggested timing, and assessment. Data models are deliberately simplified. Performance on these fixtures does not establish real-world accuracy, causal effects, fairness, or production readiness. The API is a local teaching service.</p>
+<p>Finish with the <a href="course-project.html">course project</a>, which asks you to justify a complete experiment and an optional software handoff. The deployment API serves churn specifically; other tasks require their own input contract.</p>
 <p>This folder is a GitHub-ready source repository. To publish, create an empty GitHub repository, add its remote, and push the local branch. No remote is created or uploaded automatically.</p>
-<p>For GitHub Pages, select <strong>GitHub Actions</strong> as the Pages source in repository settings, then manually run <strong>Publish course navigator</strong> under Actions. The workflow builds the <code>site/</code> directory and publishes it. The verification workflow runs tests and all notebooks on pushes and pull requests. Select a code/content license before distributing the course publicly.</p></article></main><footer>Four practical lectures for mathematicians · Local, reproducible, CPU-friendly · Synthetic teaching data</footer></body></html>
+<p>For GitHub Pages, select <strong>GitHub Actions</strong> as the Pages source in repository settings, then manually run <strong>Publish course navigator</strong> under Actions. The workflow builds the <code>site/</code> directory and publishes it. The verification workflow runs tests and all notebooks on pushes and pull requests. Select a code/content license before distributing the course publicly.</p></article></main><footer>Eight practical lectures for mathematicians · Local, reproducible, CPU-friendly · Synthetic teaching data</footer></body></html>

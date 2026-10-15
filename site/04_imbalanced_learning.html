@@ -1,0 +1,20 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Imbalanced learning · Mathematical ML</title><link rel="stylesheet" href="style.css"><script>window.MathJax={tex:{inlineMath:[['$','$'],['\\(','\\)']]}};</script><script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script></head><body><a class="skip" href="#main">Skip to content</a><header><a href="index.html">∑ Mathematical ML</a><nav aria-label="Course"><a href="index.html#lectures">Lectures</a><a href="setup.html">Getting started</a><a href="datasets.html">Datasets</a><a href="instructor.html">Teaching guide</a></nav></header><main id="main"><div class="eyebrow">Lecture 04</div><h1>Imbalanced learning</h1><p class="intro">Rare events, precision–recall, and alert costs</p><div class="actions"><a class="button" href="04_imbalanced_learning-lesson.html">Lesson</a><a class="button" href="04_imbalanced_learning-exercises.html">Exercises</a><a class="button" href="04_imbalanced_learning-solutions.html">Solutions</a></div><article class="reading"><h1>04 — Imbalanced learning: rare-event decisions</h1>
+<p>This lecture uses a locally generated transaction table and rare binary label; it represents no real bank or fraud process.</p>
+<h2>Learning objectives</h2>
+<ul>
+<li>Explain why accuracy hides minority-class failure and calculate prevalence.</li>
+<li>Derive logistic likelihood and interpret class-weighted risk.</li>
+<li>Compare unweighted and weighted logistic and XGBoost on common held-out rows.</li>
+<li>Distinguish AP, trapezoid PR area, ROC-AUC, prevalence, and calibration.</li>
+<li>Choose a threshold from validation costs and evaluate a frozen policy once on test.</li>
+<li>Explain class weighting's posterior-scale shift.</li>
+</ul>
+<h2>Mathematical route</h2>
+<p>For $p_i=\sigma(x_i^T\beta)$, logistic negative log likelihood is $-\sum_i[y_i\log p_i+(1-y_i)\log(1-p_i)]$. Class weighting multiplies each term by $w_{y_i}$. Under ideal constant weights, the weighted optimum obeys $q/(1-q)=(w_1/w_0)p/(1-p)$, shifting odds and probabilities. AP weights precision by recall increments; trapezoid PR area interpolates curve points and generally differs. A no-skill PR precision reference is prevalence. ROC-AUC is a ranking summary, not a decision rule. For calibrated natural probability and constant costs, the Bayes threshold is $C_{FP}/(C_{FP}+C_{FN})$.</p>
+<h2>Study steps</h2>
+<ol>
+<li>Read the course <a href="setup.html">setup</a>, then read this README once before opening Jupyter.</li>
+<li>Run <code>lesson.ipynb</code> top to bottom. Inspect prevalence before fitting and keep the test partition aside.</li>
+<li>In <code>exercises.ipynb</code>, derive the weighted-posterior shift and compare metrics before reading solutions.</li>
+<li>Use <code>solutions.ipynb</code> to compare calculations. Thresholds minimize the stated validation cost; test is evaluated once.</li>
+</ol></article><nav class="actions" aria-label="Study sequence"><a href="03_xgboost.html">← 03: XGBoost</a><a href="index.html#lectures">All lectures</a><a href="05_text_classification.html">05: Text classification →</a></nav></main><footer>Eight practical lectures for mathematicians · Local, reproducible, CPU-friendly · Synthetic teaching data</footer></body></html>

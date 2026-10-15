@@ -1,0 +1,20 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Clustering · Mathematical ML</title><link rel="stylesheet" href="style.css"><script>window.MathJax={tex:{inlineMath:[['$','$'],['\\(','\\)']]}};</script><script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script></head><body><a class="skip" href="#main">Skip to content</a><header><a href="index.html">∑ Mathematical ML</a><nav aria-label="Course"><a href="index.html#lectures">Lectures</a><a href="setup.html">Getting started</a><a href="datasets.html">Datasets</a><a href="instructor.html">Teaching guide</a></nav></header><main id="main"><div class="eyebrow">Lecture 06</div><h1>Clustering</h1><p class="intro">Centroids, principal components, and customer segmentation</p><div class="actions"><a class="button" href="06_clustering-lesson.html">Lesson</a><a class="button" href="06_clustering-exercises.html">Exercises</a><a class="button" href="06_clustering-solutions.html">Solutions</a></div><article class="reading"><h1>06 — Clustering: geometry, scaling, and PCA</h1>
+<p>This lesson clusters generated customer summaries. <code>segment_truth</code> is hidden from fitting and selection, and appears only in a post-hoc synthetic check.</p>
+<h2>Learning objectives</h2>
+<ul>
+<li>Derive K-means assignment and centroid steps and understand local minima.</li>
+<li>Explain how scaling changes distance geometry.</li>
+<li>Derive PCA's direction from a Rayleigh quotient and SVD.</li>
+<li>Use inertia and silhouette with their limits for selecting $k$.</li>
+<li>Separate full standardized-space clustering from PCA 2-D visualization.</li>
+<li>Explain label permutation and use ARI as post-hoc validation only.</li>
+</ul>
+<h2>Mathematical route</h2>
+<p>K-means minimizes $\sum_i\|z_i-\mu_{c_i}\|^2$. Nearest-center assignment minimizes each row's term; differentiating the fixed-membership objective gives the cluster mean. Alternating decreases objective but the joint problem is nonconvex. The globally minimal inertia cannot rise with $k$ because an added center can reproduce an earlier solution. Finite randomized fits may still wiggle across $k$ when they reach different local optima. For centered $Z$, PCA's first direction maximizes $v^TZ^TZv$ under $v^Tv=1$, yielding the top eigenvector or right singular vector. Clustering here uses every standardized feature; PCA only supplies a display projection.</p>
+<h2>Study steps</h2>
+<ol>
+<li>Follow <a href="setup.html">course setup</a>, then read this guide before opening Jupyter.</li>
+<li>Run <code>lesson.ipynb</code> in order. First inspect units, then fit clusters in all standardized dimensions.</li>
+<li>Use PCA only for the two-dimensional display; inspect the k diagnostics before using any truth label.</li>
+<li>Attempt <code>exercises.ipynb</code>, then compare with <code>solutions.ipynb</code>. The final ARI is post-hoc because this fixture is synthetic.</li>
+</ol></article><nav class="actions" aria-label="Study sequence"><a href="05_text_classification.html">← 05: Text classification</a><a href="index.html#lectures">All lectures</a><a href="07_time_series.html">07: Time-series forecasting →</a></nav></main><footer>Eight practical lectures for mathematicians · Local, reproducible, CPU-friendly · Synthetic teaching data</footer></body></html>
