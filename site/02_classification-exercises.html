@@ -1,164 +1,172 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Eight guided machine learning lectures for mathematicians: theory, readable Python, exercises and worked solutions."><title>Classification: exercises · Mathematical ML</title><link rel="stylesheet" href="style.css"><script defer src="site.js"></script><script>window.MathJax={tex:{inlineMath:[['$','$'],['\\(','\\)']]}};</script><script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script></head><body><a class="skip" href="#main">Skip to content</a><header><button class="menu" aria-controls="sidebar" aria-expanded="false" aria-label="Toggle course navigation">☰</button><a class="brand" href="index.html">∑ <span>Mathematical ML</span></a><nav aria-label="Quick links"><a href="setup.html">Get started</a><a href="index.html#lectures">Lectures</a><button id="theme" aria-label="Switch color theme">◐</button></nav></header><div class="layout"><aside id="sidebar" aria-label="Course navigation"><a href="index.html">Course overview</a><h3>Start here</h3><a href="setup.html">Installation &amp; first steps</a><a href="first-steps.html">New to ML? Start here</a><h3>The lectures</h3><details><summary><a href="01_regression.html">01 · Regression</a></summary><a class="sub" href="01_regression-lesson.html">Lesson</a><a class="sub" href="01_regression-exercises.html">Exercises</a><a class="sub" href="01_regression-solutions.html">Solutions</a></details><details><summary><a href="02_classification.html">02 · Classification</a></summary><a class="sub" href="02_classification-lesson.html">Lesson</a><a class="sub" href="02_classification-exercises.html">Exercises</a><a class="sub" href="02_classification-solutions.html">Solutions</a></details><details><summary><a href="03_xgboost.html">03 · XGBoost</a></summary><a class="sub" href="03_xgboost-lesson.html">Lesson</a><a class="sub" href="03_xgboost-exercises.html">Exercises</a><a class="sub" href="03_xgboost-solutions.html">Solutions</a></details><details><summary><a href="04_imbalanced_learning.html">04 · Imbalanced learning</a></summary><a class="sub" href="04_imbalanced_learning-lesson.html">Lesson</a><a class="sub" href="04_imbalanced_learning-exercises.html">Exercises</a><a class="sub" href="04_imbalanced_learning-solutions.html">Solutions</a></details><details><summary><a href="05_text_classification.html">05 · Text classification</a></summary><a class="sub" href="05_text_classification-lesson.html">Lesson</a><a class="sub" href="05_text_classification-exercises.html">Exercises</a><a class="sub" href="05_text_classification-solutions.html">Solutions</a></details><details><summary><a href="06_clustering.html">06 · Clustering</a></summary><a class="sub" href="06_clustering-lesson.html">Lesson</a><a class="sub" href="06_clustering-exercises.html">Exercises</a><a class="sub" href="06_clustering-solutions.html">Solutions</a></details><details><summary><a href="07_time_series.html">07 · Time-series forecasting</a></summary><a class="sub" href="07_time_series-lesson.html">Lesson</a><a class="sub" href="07_time_series-exercises.html">Exercises</a><a class="sub" href="07_time_series-solutions.html">Solutions</a></details><details><summary><a href="08_deployment.html">08 · From model to service</a></summary><a class="sub" href="08_deployment-lesson.html">Lesson</a><a class="sub" href="08_deployment-exercises.html">Exercises</a><a class="sub" href="08_deployment-solutions.html">Solutions</a></details><h3>Resources</h3><a href="datasets.html">Datasets</a><a href="course-project.html">Course project</a><a href="instructor.html">Teaching guide</a><a href="verification.html">Verification</a></aside><main id="main"><div class="eyebrow">Lecture 02 / exercises</div><div class="actions"><a href="02_classification.html">← Lecture guide</a><a href="downloads/02_classification/exercises.ipynb" download>Download notebook</a></div><p class="note">This page is a reading view. To execute Python, download the complete course and open this notebook in Jupyter. <a href="first-steps.html">First notebook walkthrough →</a></p><details class="contents"><summary>On this page</summary><nav aria-label="Page contents"><a href="#section-1">Setup</a><a href="#section-2">Exercise 1 — Baseline and logistic model</a><a href="#section-3">Exercise 2 — Cost and threshold on validation</a><a href="#section-4">Exercise 3 — Explain metrics</a><a href="#section-5">Exercise 4 — Cross-validation</a><a href="#section-6">Exercise 5 — Limits</a></nav></details><article class="reading"><section class="cell"><h1>02 — Exercises: binary classification</h1>
-<p>The churn examples are synthetic. Complete the written analysis as well as the code. These notebooks use separate training, validation, and final test sets: do not choose a model setting or threshold by looking at final test outcomes.</p></section><section class="cell"><h2 id="section-1">Setup</h2>
-<p>Training data fit the model, validation data support choices, and the final test set is reserved for one assessment after the model and threshold are frozen.</p></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>from pathlib import Path
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Eight guided machine learning lectures for mathematicians: theory, readable Python, exercises and worked solutions."><title>Classification: exercises · Mathematical ML</title><link rel="stylesheet" href="style.css"><script defer src="site.js"></script><script>window.MathJax={tex:{inlineMath:[['$','$'],['\\(','\\)']]}};</script><script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script></head><body><a class="skip" href="#main">Skip to content</a><header><button class="menu" aria-controls="sidebar" aria-expanded="false" aria-label="Toggle course navigation">☰</button><a class="brand" href="index.html">∑ <span>Mathematical ML</span></a><nav aria-label="Quick links"><a href="setup.html">Get started</a><a href="index.html#lectures">Lectures</a><button id="theme" aria-label="Switch color theme">◐</button></nav></header><div class="layout"><aside id="sidebar" aria-label="Course navigation"><a href="index.html">Course overview</a><h3>Start here</h3><a href="setup.html">Installation &amp; first steps</a><a href="first-steps.html">New to ML? Start here</a><h3>The lectures</h3><details><summary><a href="01_regression.html">01 · Regression</a></summary><a class="sub" href="01_regression-lesson.html">Lesson</a><a class="sub" href="01_regression-exercises.html">Exercises</a><a class="sub" href="01_regression-solutions.html">Solutions</a></details><details><summary><a href="02_classification.html">02 · Classification</a></summary><a class="sub" href="02_classification-lesson.html">Lesson</a><a class="sub" href="02_classification-exercises.html">Exercises</a><a class="sub" href="02_classification-solutions.html">Solutions</a></details><details><summary><a href="03_xgboost.html">03 · XGBoost</a></summary><a class="sub" href="03_xgboost-lesson.html">Lesson</a><a class="sub" href="03_xgboost-exercises.html">Exercises</a><a class="sub" href="03_xgboost-solutions.html">Solutions</a></details><details><summary><a href="04_imbalanced_learning.html">04 · Imbalanced learning</a></summary><a class="sub" href="04_imbalanced_learning-lesson.html">Lesson</a><a class="sub" href="04_imbalanced_learning-exercises.html">Exercises</a><a class="sub" href="04_imbalanced_learning-solutions.html">Solutions</a></details><details><summary><a href="05_text_classification.html">05 · Text classification</a></summary><a class="sub" href="05_text_classification-lesson.html">Lesson</a><a class="sub" href="05_text_classification-exercises.html">Exercises</a><a class="sub" href="05_text_classification-solutions.html">Solutions</a></details><details><summary><a href="06_clustering.html">06 · Clustering</a></summary><a class="sub" href="06_clustering-lesson.html">Lesson</a><a class="sub" href="06_clustering-exercises.html">Exercises</a><a class="sub" href="06_clustering-solutions.html">Solutions</a></details><details><summary><a href="07_time_series.html">07 · Time-series forecasting</a></summary><a class="sub" href="07_time_series-lesson.html">Lesson</a><a class="sub" href="07_time_series-exercises.html">Exercises</a><a class="sub" href="07_time_series-solutions.html">Solutions</a></details><details><summary><a href="08_deployment.html">08 · From model to service</a></summary><a class="sub" href="08_deployment-lesson.html">Lesson</a><a class="sub" href="08_deployment-exercises.html">Exercises</a><a class="sub" href="08_deployment-solutions.html">Solutions</a></details><h3>Resources</h3><a href="results.html">Executed result galleries</a><a href="datasets.html">Datasets</a><a href="course-project.html">Course project</a><a href="instructor.html">Teaching guide</a><a href="verification.html">Verification</a></aside><main id="main"><div class="eyebrow">Lecture 02 / exercises</div><div class="actions"><a href="02_classification.html">← Lecture guide</a><a href="downloads/02_classification/exercises.ipynb" download>Download notebook</a></div><p class="note">This page is a reading view. To execute Python, download the complete course and open this notebook in Jupyter. <a href="first-steps.html">First notebook walkthrough →</a></p><details class="contents"><summary>On this page</summary><nav aria-label="Page contents"><a href="#section-1">Setup</a><a href="#section-2">Exercise 1 — Baseline and logistic model</a><a href="#section-3">Exercise 2 — Cost and threshold on validation</a><a href="#section-4">Exercise 3 — Explain metrics</a><a href="#section-5">Exercise 4 — Cross-validation</a><a href="#section-6">Exercise 5 — Limits</a></nav></details><article class="reading"><section class="cell" id="cell-cell-000"><h1>02 — Exercises: binary classification</h1>
+<p>The churn examples are synthetic. Complete the written analysis as well as the code. These notebooks use separate training, validation, and final test sets: do not choose a model setting or threshold by looking at final test outcomes.</p></section><section class="cell" id="cell-cell-001"><h2 id="section-1">Setup</h2>
+<p>Training data fit the model, validation data support choices, and the final test set is reserved for one assessment after the model and threshold are frozen.</p></section><section class="cell" id="cell-cell-002"><div class="cell-label">Python · run in the notebook</div><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 
-import numpy as np
-import pandas as pd
-from sklearn.compose import ColumnTransformer
-from sklearn.dummy import DummyClassifier
-from sklearn.impute import SimpleImputer
-from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import (
-    accuracy_score,
-    confusion_matrix,
-    f1_score,
-    precision_score,
-    recall_score,
-    roc_auc_score,
-)
-from sklearn.model_selection import train_test_split
-from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import OneHotEncoder, StandardScaler
-
-
-def find_data_file(filename):
-    for directory in (Path.cwd(), *Path.cwd().parents):
-        data_path = directory / &quot;data&quot; / filename
-        if data_path.is_file():
-            return data_path
-    raise FileNotFoundError(f&quot;Could not find data/{filename}&quot;)
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.compose</span><span class="w"> </span><span class="kn">import</span> <span class="n">ColumnTransformer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.dummy</span><span class="w"> </span><span class="kn">import</span> <span class="n">DummyClassifier</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.impute</span><span class="w"> </span><span class="kn">import</span> <span class="n">SimpleImputer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.linear_model</span><span class="w"> </span><span class="kn">import</span> <span class="n">LogisticRegression</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">accuracy_score</span><span class="p">,</span>
+    <span class="n">confusion_matrix</span><span class="p">,</span>
+    <span class="n">f1_score</span><span class="p">,</span>
+    <span class="n">precision_score</span><span class="p">,</span>
+    <span class="n">recall_score</span><span class="p">,</span>
+    <span class="n">roc_auc_score</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.model_selection</span><span class="w"> </span><span class="kn">import</span> <span class="n">train_test_split</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.pipeline</span><span class="w"> </span><span class="kn">import</span> <span class="n">Pipeline</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.preprocessing</span><span class="w"> </span><span class="kn">import</span> <span class="n">OneHotEncoder</span><span class="p">,</span> <span class="n">StandardScaler</span>
 
 
-customer_data = pd.read_csv(find_data_file(&quot;churn.csv&quot;))
-feature_data = customer_data.drop(columns=&quot;churn&quot;)
-churn_response = customer_data[&quot;churn&quot;].astype(int)
+<span class="k">def</span><span class="w"> </span><span class="nf">find_data_file</span><span class="p">(</span><span class="n">filename</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">directory</span> <span class="ow">in</span> <span class="p">(</span><span class="n">Path</span><span class="o">.</span><span class="n">cwd</span><span class="p">(),</span> <span class="o">*</span><span class="n">Path</span><span class="o">.</span><span class="n">cwd</span><span class="p">()</span><span class="o">.</span><span class="n">parents</span><span class="p">):</span>
+        <span class="n">data_path</span> <span class="o">=</span> <span class="n">directory</span> <span class="o">/</span> <span class="s2">"data"</span> <span class="o">/</span> <span class="n">filename</span>
+        <span class="k">if</span> <span class="n">data_path</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
+            <span class="k">return</span> <span class="n">data_path</span>
+    <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Could not find data/</span><span class="si">{</span><span class="n">filename</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
-(
-    development_features,
-    final_test_features,
-    development_response,
-    final_test_response,
-) = train_test_split(
-    feature_data,
-    churn_response,
-    test_size=0.20,
-    random_state=19,
-    stratify=churn_response,
-)
-(
-    training_features,
-    validation_features,
-    training_response,
-    validation_response,
-) = train_test_split(
-    development_features,
-    development_response,
-    test_size=0.25,
-    random_state=20,
-    stratify=development_response,
-)
-numeric_columns = [&quot;tenure_months&quot;, &quot;monthly_charge&quot;, &quot;support_calls&quot;]
-categorical_columns = [&quot;contract&quot;]
-preprocessing = ColumnTransformer(
-    transformers=[
-        (
-            &quot;numeric&quot;,
-            Pipeline(
-                steps=[
-                    (&quot;impute&quot;, SimpleImputer(strategy=&quot;median&quot;)),
-                    (&quot;scale&quot;, StandardScaler()),
-                ]
-            ),
-            numeric_columns,
-        ),
-        (
-            &quot;category&quot;,
-            Pipeline(
-                steps=[
-                    (&quot;impute&quot;, SimpleImputer(strategy=&quot;most_frequent&quot;)),
-                    (&quot;one_hot&quot;, OneHotEncoder(handle_unknown=&quot;ignore&quot;)),
-                ]
-            ),
-            categorical_columns,
-        ),
-    ]
-)
-print(&quot;Training class proportions:&quot;)
-print(training_response.value_counts(normalize=True).sort_index().round(3))
-print(f&quot;Training rows: {len(training_features)}&quot;)
-print(f&quot;Validation rows: {len(validation_features)}&quot;)
-print(f&quot;Final test rows: {len(final_test_features)}&quot;)</code></pre></section><section class="cell"><h2 id="section-2">Exercise 1 — Baseline and logistic model</h2>
-<p>Fit the starter logistic pipeline and report validation accuracy, precision, recall, F1, ROC-AUC, and confusion matrix at threshold 0.5. Compare accuracy with the most-frequent baseline. Why can that baseline look respectable while detecting no churners?</p></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code># Fit the starter logistic model on training rows.
-classification_model = Pipeline(
-    steps=[
-        (&quot;preprocessing&quot;, preprocessing),
-        (&quot;model&quot;, LogisticRegression(max_iter=2000)),
-    ]
-)
-classification_model.fit(training_features, training_response)
-validation_probabilities = classification_model.predict_proba(validation_features)[:, 1]
-validation_predictions = (validation_probabilities &gt;= 0.5).astype(int)
 
-majority_baseline = DummyClassifier(strategy=&quot;most_frequent&quot;)
-majority_baseline.fit(training_features, training_response)
-baseline_predictions = majority_baseline.predict(validation_features)
+<span class="n">customer_data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">find_data_file</span><span class="p">(</span><span class="s2">"churn.csv"</span><span class="p">))</span>
+<span class="n">feature_data</span> <span class="o">=</span> <span class="n">customer_data</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="s2">"churn"</span><span class="p">)</span>
+<span class="n">churn_response</span> <span class="o">=</span> <span class="n">customer_data</span><span class="p">[</span><span class="s2">"churn"</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
 
-print(&quot;Validation baseline accuracy:&quot;, accuracy_score(validation_response, baseline_predictions))
-print(&quot;Validation confusion matrix:&quot;)
-print(confusion_matrix(validation_response, validation_predictions))
-print(&quot;Validation accuracy:&quot;, accuracy_score(validation_response, validation_predictions))
-validation_precision = precision_score(
-    validation_response, validation_predictions, zero_division=0
-)
-validation_recall = recall_score(
-    validation_response, validation_predictions, zero_division=0
-)
-validation_f1 = f1_score(
-    validation_response, validation_predictions, zero_division=0
-)
-print(&quot;Validation precision:&quot;, validation_precision)
-print(&quot;Validation recall:&quot;, validation_recall)
-print(&quot;Validation F1:&quot;, validation_f1)
-print(&quot;Validation ROC-AUC:&quot;, roc_auc_score(validation_response, validation_probabilities))</code></pre></section><section class="cell"><h2 id="section-3">Exercise 2 — Cost and threshold on validation</h2>
-<p>Suppose a false positive costs 1 and a missed churn case costs 5, with zero cost for correct decisions. For calibrated probability $p$, derive the cost-optimal rule by comparing $C_{FP}(1-p)$ with $C_{FN}p$. Calculate the theoretical cutoff, then compare candidate thresholds using <strong>validation</strong> rows only. The starter table selects its minimum validation cost and applies that frozen threshold for one final test evaluation. Explain why the test results must not be used to revise the threshold.</p></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>false_positive_cost = 1.0
-false_negative_cost = 5.0
-threshold_candidates = [0.10, 0.17, 0.25, 0.35, 0.50, 0.65, 0.80]
-validation_cost_rows = []
+<span class="p">(</span>
+    <span class="n">development_features</span><span class="p">,</span>
+    <span class="n">final_test_features</span><span class="p">,</span>
+    <span class="n">development_response</span><span class="p">,</span>
+    <span class="n">final_test_response</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">=</span> <span class="n">train_test_split</span><span class="p">(</span>
+    <span class="n">feature_data</span><span class="p">,</span>
+    <span class="n">churn_response</span><span class="p">,</span>
+    <span class="n">test_size</span><span class="o">=</span><span class="mf">0.20</span><span class="p">,</span>
+    <span class="n">random_state</span><span class="o">=</span><span class="mi">19</span><span class="p">,</span>
+    <span class="n">stratify</span><span class="o">=</span><span class="n">churn_response</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="p">(</span>
+    <span class="n">training_features</span><span class="p">,</span>
+    <span class="n">validation_features</span><span class="p">,</span>
+    <span class="n">training_response</span><span class="p">,</span>
+    <span class="n">validation_response</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">=</span> <span class="n">train_test_split</span><span class="p">(</span>
+    <span class="n">development_features</span><span class="p">,</span>
+    <span class="n">development_response</span><span class="p">,</span>
+    <span class="n">test_size</span><span class="o">=</span><span class="mf">0.25</span><span class="p">,</span>
+    <span class="n">random_state</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
+    <span class="n">stratify</span><span class="o">=</span><span class="n">development_response</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">numeric_columns</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"tenure_months"</span><span class="p">,</span> <span class="s2">"monthly_charge"</span><span class="p">,</span> <span class="s2">"support_calls"</span><span class="p">]</span>
+<span class="n">categorical_columns</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"contract"</span><span class="p">]</span>
+<span class="n">preprocessing</span> <span class="o">=</span> <span class="n">ColumnTransformer</span><span class="p">(</span>
+    <span class="n">transformers</span><span class="o">=</span><span class="p">[</span>
+        <span class="p">(</span>
+            <span class="s2">"numeric"</span><span class="p">,</span>
+            <span class="n">Pipeline</span><span class="p">(</span>
+                <span class="n">steps</span><span class="o">=</span><span class="p">[</span>
+                    <span class="p">(</span><span class="s2">"impute"</span><span class="p">,</span> <span class="n">SimpleImputer</span><span class="p">(</span><span class="n">strategy</span><span class="o">=</span><span class="s2">"median"</span><span class="p">)),</span>
+                    <span class="p">(</span><span class="s2">"scale"</span><span class="p">,</span> <span class="n">StandardScaler</span><span class="p">()),</span>
+                <span class="p">]</span>
+            <span class="p">),</span>
+            <span class="n">numeric_columns</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="p">(</span>
+            <span class="s2">"category"</span><span class="p">,</span>
+            <span class="n">Pipeline</span><span class="p">(</span>
+                <span class="n">steps</span><span class="o">=</span><span class="p">[</span>
+                    <span class="p">(</span><span class="s2">"impute"</span><span class="p">,</span> <span class="n">SimpleImputer</span><span class="p">(</span><span class="n">strategy</span><span class="o">=</span><span class="s2">"most_frequent"</span><span class="p">)),</span>
+                    <span class="p">(</span><span class="s2">"one_hot"</span><span class="p">,</span> <span class="n">OneHotEncoder</span><span class="p">(</span><span class="n">handle_unknown</span><span class="o">=</span><span class="s2">"ignore"</span><span class="p">)),</span>
+                <span class="p">]</span>
+            <span class="p">),</span>
+            <span class="n">categorical_columns</span><span class="p">,</span>
+        <span class="p">),</span>
+    <span class="p">]</span>
+<span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Training class proportions:"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">training_response</span><span class="o">.</span><span class="n">value_counts</span><span class="p">(</span><span class="n">normalize</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">sort_index</span><span class="p">()</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Training rows: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">training_features</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Validation rows: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">validation_features</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Final test rows: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">final_test_features</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</pre></div>
+</section><section class="cell" id="cell-cell-003"><h2 id="section-2">Exercise 1 — Baseline and logistic model</h2>
+<p>Fit the starter logistic pipeline and report validation accuracy, precision, recall, F1, ROC-AUC, and confusion matrix at threshold 0.5. Compare accuracy with the most-frequent baseline. Why can that baseline look respectable while detecting no churners?</p></section><section class="cell" id="cell-cell-004"><div class="cell-label">Python · run in the notebook</div><div class="highlight"><pre><span></span><span class="c1"># Fit the starter logistic model on training rows.</span>
+<span class="n">classification_model</span> <span class="o">=</span> <span class="n">Pipeline</span><span class="p">(</span>
+    <span class="n">steps</span><span class="o">=</span><span class="p">[</span>
+        <span class="p">(</span><span class="s2">"preprocessing"</span><span class="p">,</span> <span class="n">preprocessing</span><span class="p">),</span>
+        <span class="p">(</span><span class="s2">"model"</span><span class="p">,</span> <span class="n">LogisticRegression</span><span class="p">(</span><span class="n">max_iter</span><span class="o">=</span><span class="mi">2000</span><span class="p">)),</span>
+    <span class="p">]</span>
+<span class="p">)</span>
+<span class="n">classification_model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">training_features</span><span class="p">,</span> <span class="n">training_response</span><span class="p">)</span>
+<span class="n">validation_probabilities</span> <span class="o">=</span> <span class="n">classification_model</span><span class="o">.</span><span class="n">predict_proba</span><span class="p">(</span><span class="n">validation_features</span><span class="p">)[:,</span> <span class="mi">1</span><span class="p">]</span>
+<span class="n">validation_predictions</span> <span class="o">=</span> <span class="p">(</span><span class="n">validation_probabilities</span> <span class="o">&gt;=</span> <span class="mf">0.5</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
 
-for threshold in threshold_candidates:
-    validation_decisions = (validation_probabilities &gt;= threshold).astype(int)
-    true_negative, false_positive, false_negative, true_positive = confusion_matrix(
-        validation_response, validation_decisions, labels=[0, 1]
-    ).ravel()
-    validation_cost_rows.append(
-        {
-            &quot;threshold&quot;: threshold,
-            &quot;false_positives&quot;: false_positive,
-            &quot;false_negatives&quot;: false_negative,
-            &quot;estimated_cost&quot;: (false_positive_cost * false_positive
-                               + false_negative_cost * false_negative),
-        }
-    )
+<span class="n">majority_baseline</span> <span class="o">=</span> <span class="n">DummyClassifier</span><span class="p">(</span><span class="n">strategy</span><span class="o">=</span><span class="s2">"most_frequent"</span><span class="p">)</span>
+<span class="n">majority_baseline</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">training_features</span><span class="p">,</span> <span class="n">training_response</span><span class="p">)</span>
+<span class="n">baseline_predictions</span> <span class="o">=</span> <span class="n">majority_baseline</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">validation_features</span><span class="p">)</span>
 
-validation_cost_table = pd.DataFrame(validation_cost_rows).sort_values(
-    [&quot;estimated_cost&quot;, &quot;threshold&quot;]
-)
-print(&quot;Choose the threshold from this validation table:&quot;)
-print(validation_cost_table.to_string(index=False))
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Validation baseline accuracy:"</span><span class="p">,</span> <span class="n">accuracy_score</span><span class="p">(</span><span class="n">validation_response</span><span class="p">,</span> <span class="n">baseline_predictions</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Validation confusion matrix:"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">confusion_matrix</span><span class="p">(</span><span class="n">validation_response</span><span class="p">,</span> <span class="n">validation_predictions</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Validation accuracy:"</span><span class="p">,</span> <span class="n">accuracy_score</span><span class="p">(</span><span class="n">validation_response</span><span class="p">,</span> <span class="n">validation_predictions</span><span class="p">))</span>
+<span class="n">validation_precision</span> <span class="o">=</span> <span class="n">precision_score</span><span class="p">(</span>
+    <span class="n">validation_response</span><span class="p">,</span> <span class="n">validation_predictions</span><span class="p">,</span> <span class="n">zero_division</span><span class="o">=</span><span class="mi">0</span>
+<span class="p">)</span>
+<span class="n">validation_recall</span> <span class="o">=</span> <span class="n">recall_score</span><span class="p">(</span>
+    <span class="n">validation_response</span><span class="p">,</span> <span class="n">validation_predictions</span><span class="p">,</span> <span class="n">zero_division</span><span class="o">=</span><span class="mi">0</span>
+<span class="p">)</span>
+<span class="n">validation_f1</span> <span class="o">=</span> <span class="n">f1_score</span><span class="p">(</span>
+    <span class="n">validation_response</span><span class="p">,</span> <span class="n">validation_predictions</span><span class="p">,</span> <span class="n">zero_division</span><span class="o">=</span><span class="mi">0</span>
+<span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Validation precision:"</span><span class="p">,</span> <span class="n">validation_precision</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Validation recall:"</span><span class="p">,</span> <span class="n">validation_recall</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Validation F1:"</span><span class="p">,</span> <span class="n">validation_f1</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Validation ROC-AUC:"</span><span class="p">,</span> <span class="n">roc_auc_score</span><span class="p">(</span><span class="n">validation_response</span><span class="p">,</span> <span class="n">validation_probabilities</span><span class="p">))</span>
+</pre></div>
+</section><section class="cell" id="cell-cell-005"><h2 id="section-3">Exercise 2 — Cost and threshold on validation</h2>
+<p>Suppose a false positive costs 1 and a missed churn case costs 5, with zero cost for correct decisions. For calibrated probability $p$, derive the cost-optimal rule by comparing $C_{FP}(1-p)$ with $C_{FN}p$. Calculate the theoretical cutoff, then compare candidate thresholds using <strong>validation</strong> rows only. The starter table selects its minimum validation cost and applies that frozen threshold for one final test evaluation. Explain why the test results must not be used to revise the threshold.</p></section><section class="cell" id="cell-cell-006"><div class="cell-label">Python · run in the notebook</div><div class="highlight"><pre><span></span><span class="n">false_positive_cost</span> <span class="o">=</span> <span class="mf">1.0</span>
+<span class="n">false_negative_cost</span> <span class="o">=</span> <span class="mf">5.0</span>
+<span class="n">threshold_candidates</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.10</span><span class="p">,</span> <span class="mf">0.17</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">,</span> <span class="mf">0.35</span><span class="p">,</span> <span class="mf">0.50</span><span class="p">,</span> <span class="mf">0.65</span><span class="p">,</span> <span class="mf">0.80</span><span class="p">]</span>
+<span class="n">validation_cost_rows</span> <span class="o">=</span> <span class="p">[]</span>
 
-# Freeze the validation-selected threshold before the one final test evaluation.
-selected_threshold = float(validation_cost_table.iloc[0][&quot;threshold&quot;])
-final_test_probabilities = classification_model.predict_proba(final_test_features)[:, 1]
-final_test_predictions = (final_test_probabilities &gt;= selected_threshold).astype(int)
-print(f&quot;Frozen validation threshold: {selected_threshold:.2f}&quot;)
-print(&quot;Final test confusion matrix:&quot;)
-print(confusion_matrix(final_test_response, final_test_predictions))
-print(&quot;Final test ROC-AUC:&quot;, roc_auc_score(final_test_response, final_test_probabilities))</code></pre></section><section class="cell"><h2 id="section-4">Exercise 3 — Explain metrics</h2>
-<p>Define precision and recall in words. Give one example where high recall is preferred and one where high precision is preferred. Explain why ROC-AUC does not determine the threshold by itself.</p></section><section class="cell"><h2 id="section-5">Exercise 4 — Cross-validation</h2>
-<p>Compare <code>C</code> values <code>[0.03, 0.1, 0.3, 1, 3, 10]</code> by stratified five-fold ROC-AUC on training rows. Keep preprocessing inside the pipeline. Update the fitted model with the selected setting, recompute validation probabilities, and repeat your threshold selection. Evaluate the frozen model and threshold on final test data once.</p></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>from sklearn.model_selection import GridSearchCV, StratifiedKFold
+<span class="k">for</span> <span class="n">threshold</span> <span class="ow">in</span> <span class="n">threshold_candidates</span><span class="p">:</span>
+    <span class="n">validation_decisions</span> <span class="o">=</span> <span class="p">(</span><span class="n">validation_probabilities</span> <span class="o">&gt;=</span> <span class="n">threshold</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+    <span class="n">true_negative</span><span class="p">,</span> <span class="n">false_positive</span><span class="p">,</span> <span class="n">false_negative</span><span class="p">,</span> <span class="n">true_positive</span> <span class="o">=</span> <span class="n">confusion_matrix</span><span class="p">(</span>
+        <span class="n">validation_response</span><span class="p">,</span> <span class="n">validation_decisions</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
+    <span class="p">)</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
+    <span class="n">validation_cost_rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+        <span class="p">{</span>
+            <span class="s2">"threshold"</span><span class="p">:</span> <span class="n">threshold</span><span class="p">,</span>
+            <span class="s2">"false_positives"</span><span class="p">:</span> <span class="n">false_positive</span><span class="p">,</span>
+            <span class="s2">"false_negatives"</span><span class="p">:</span> <span class="n">false_negative</span><span class="p">,</span>
+            <span class="s2">"estimated_cost"</span><span class="p">:</span> <span class="p">(</span><span class="n">false_positive_cost</span> <span class="o">*</span> <span class="n">false_positive</span>
+                               <span class="o">+</span> <span class="n">false_negative_cost</span> <span class="o">*</span> <span class="n">false_negative</span><span class="p">),</span>
+        <span class="p">}</span>
+    <span class="p">)</span>
 
-# TODO: compare candidate C values with folds from training data only.
-# Keep `preprocessing` inside the pipeline so each fold learns its own transforms.
-print(&quot;Candidate C values:&quot;, [0.03, 0.1, 0.3, 1.0, 3.0, 10.0])
-print(&quot;Validation is reserved for the threshold choice; test is reserved for final evaluation.&quot;)</code></pre></section><section class="cell"><h2 id="section-6">Exercise 5 — Limits</h2>
+<span class="n">validation_cost_table</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">validation_cost_rows</span><span class="p">)</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span>
+    <span class="p">[</span><span class="s2">"estimated_cost"</span><span class="p">,</span> <span class="s2">"threshold"</span><span class="p">]</span>
+<span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Choose the threshold from this validation table:"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">validation_cost_table</span><span class="o">.</span><span class="n">to_string</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
+
+<span class="c1"># Freeze the validation-selected threshold before the one final test evaluation.</span>
+<span class="n">selected_threshold</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">validation_cost_table</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s2">"threshold"</span><span class="p">])</span>
+<span class="n">final_test_probabilities</span> <span class="o">=</span> <span class="n">classification_model</span><span class="o">.</span><span class="n">predict_proba</span><span class="p">(</span><span class="n">final_test_features</span><span class="p">)[:,</span> <span class="mi">1</span><span class="p">]</span>
+<span class="n">final_test_predictions</span> <span class="o">=</span> <span class="p">(</span><span class="n">final_test_probabilities</span> <span class="o">&gt;=</span> <span class="n">selected_threshold</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Frozen validation threshold: </span><span class="si">{</span><span class="n">selected_threshold</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Final test confusion matrix:"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">confusion_matrix</span><span class="p">(</span><span class="n">final_test_response</span><span class="p">,</span> <span class="n">final_test_predictions</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Final test ROC-AUC:"</span><span class="p">,</span> <span class="n">roc_auc_score</span><span class="p">(</span><span class="n">final_test_response</span><span class="p">,</span> <span class="n">final_test_probabilities</span><span class="p">))</span>
+</pre></div>
+</section><section class="cell" id="cell-cell-007"><h2 id="section-4">Exercise 3 — Explain metrics</h2>
+<p>Define precision and recall in words. Give one example where high recall is preferred and one where high precision is preferred. Explain why ROC-AUC does not determine the threshold by itself.</p></section><section class="cell" id="cell-cell-008"><h2 id="section-5">Exercise 4 — Cross-validation</h2>
+<p>Compare <code>C</code> values <code>[0.03, 0.1, 0.3, 1, 3, 10]</code> by stratified five-fold ROC-AUC on training rows. Keep preprocessing inside the pipeline. Update the fitted model with the selected setting, recompute validation probabilities, and repeat your threshold selection. Evaluate the frozen model and threshold on final test data once.</p></section><section class="cell" id="cell-cell-009"><div class="cell-label">Python · run in the notebook</div><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.model_selection</span><span class="w"> </span><span class="kn">import</span> <span class="n">GridSearchCV</span><span class="p">,</span> <span class="n">StratifiedKFold</span>
+
+<span class="c1"># TODO: compare candidate C values with folds from training data only.</span>
+<span class="c1"># Keep `preprocessing` inside the pipeline so each fold learns its own transforms.</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Candidate C values:"</span><span class="p">,</span> <span class="p">[</span><span class="mf">0.03</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">,</span> <span class="mf">10.0</span><span class="p">])</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Validation is reserved for the threshold choice; test is reserved for final evaluation."</span><span class="p">)</span>
+</pre></div>
+</section><section class="cell" id="cell-cell-010"><h2 id="section-6">Exercise 5 — Limits</h2>
 <p>Name two reasons why an association between support calls and churn in generated data may fail to guide a real intervention. Consider omitted causes, measurement, privacy, fairness, or behavior change.</p></section></article><p>After writing your own answers, <a href="02_classification-solutions.html">compare with the worked solutions →</a></p><nav class="actions" aria-label="Study sequence"><a href="01_regression.html">← 01: Regression</a><a href="index.html#lectures">All lectures</a><a href="03_xgboost.html">03: XGBoost →</a></nav></main></div><footer>Mathematical ML · Eight practical lectures for mathematicians<br>Readable Python · Reproducible experiments · Synthetic teaching data</footer></body></html>

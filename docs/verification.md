@@ -1,21 +1,31 @@
 # Verification record
 
-Verified on 2026-10-14 using Windows and Python 3.12.10 in the repository's `.venv`. Exact installed dependencies are recorded in `requirements-lock.txt`; this lock is a Windows classroom snapshot. Use the compatible ranges in `pyproject.toml` for other platforms.
+## Current course revision
 
-- All 24 notebooks executed successfully in separate kernels: lessons, exercises, and solutions for lectures 01–08. After final revisions, the code cells were compared against the executed copies; all match. Executed copies and generated figures are under ignored `.verification/`.
-- All 15 pytest cases passed: persistence/reload parity, API parity and saved threshold, schema rejection, numeric validation, and unavailable/malformed artifacts.
-- Training CLI completed with `--track`, recording an MLflow run and a saved pipeline. The final lecture also executes local MLflow tracking and queries the resulting run.
-- The live Uvicorn service returned a successful health response and prediction over local HTTP.
-- All seven CSV datasets reproduced byte-for-byte from their generators without overwriting the classroom fixtures. The extra four datasets use independent generators for fraud/customer geometry, authored support tickets, and chronological sales.
-- The website built successfully. All 41 HTML pages passed local link/download checks. Browser checks confirmed the topic filter, the eight-lecture sequence, previous/next navigation, and MathJax rendering. A website preview is saved in `course-preview.png`.
-- Forecasting feature checks verify that perturbing future observations cannot alter earlier forecast features. Text splits keep every related template family in a single partition; clustering excludes latent generator labels from fitting and selection.
-- `pip check` reported no broken requirements.
+Verified locally on Windows with Python 3.12.10 in the repository environment. Installed versions are recorded in `requirements-lock.txt`; the gallery manifest records the numerical environment for captured outputs.
 
-Limitations: the Docker engine was stopped, so the image was not built or run. GitHub Actions and Pages workflows are prepared but have not run remotely. No GitHub remote or public hosting was created. MathJax on the website requires an internet connection; notebooks contain the same mathematical exposition for offline study.
+- All 24 notebooks executed successfully in separate kernels, including the rewritten single-artifact deployment lesson and its optional MLflow extension. Exercises remain runnable scaffolding, not automatically completed student answers.
+- All 17 pytest cases passed, including the notebook API helper's environment/cache restoration after an interrupted demonstration.
+- Exported 99 actual lesson outputs across eight galleries. Every snapshot is linked to its source cell. Build-time checks compare normalized source and dataset SHA-256 hashes, preventing stale snapshots after edits.
+- All 52 HTML pages pass checks for local links, section anchors, downloads, and image descriptions. Python and shell source blocks are highlighted at build time using Pygments and a VS Code-inspired Dark+ palette.
+- Clustering displays its silhouette-selected model (k=2 in this run), cluster sizes, original-unit profiles, standardized centroid heatmap, PCA projection, and ten-start sensitivity diagnostic. The earlier k=4 picture remains explicitly illustrative.
+- Deployment selects its threshold on validation, freezes that fitted pipeline, evaluates the final test once, and saves the exact policy. Assertions verify probability parity before saving, after loading, and through the API, plus threshold/decision parity and invalid-input rejection. MLflow records the same artifact without retraining.
+- Classification includes validation reliability bins and confusion counts. Rare-event analysis compares threshold cost and alert workload, with the always-negative test cost in the same table. Text demonstrates sparse counts, IDF, normalization, cosine similarity, sibling groups, and unseen-token behavior. Forecasting checks that changing the contemporaneous target and future outcomes cannot alter its predictors.
 
-Successful notebook execution verifies the supplied scaffolding and solutions, not whether a student has answered the exercise prompts. Synthetic-data results are teaching examples, not a real-world performance validation.
+## Reproduce the reading-site results
 
-## Beginner guidance and visual revision
+```console
+python -m pytest
+python scripts/check_notebooks.py
+python scripts/export_lesson_results.py
+python scripts/build_site.py
+python scripts/check_site.py
+```
 
-Added nine reproducible SVG teaching figures and first-experiment and review pages. All 43 HTML pages pass local-link checks. The new first-experiment Python snippet and all three lecture 01 notebooks execute successfully, including the added transformed-row inspection. Other lesson changes in this revision are Markdown only. Figures are authored teaching illustrations or labeled calculations on supplied data, rather than captured held-out model results.
+Commit `docs/results/` with the matching teaching-source changes. Pages builds from these committed outputs; the separate verification workflow executes all notebooks afresh. Captured outputs document one successful local run. Numerical values, initialization outcomes, and rendered figures can differ across compatible environments.
 
+## Earlier checks and limits
+
+The CLI trainer, local MLflow tracking, and live Uvicorn health/prediction endpoints were previously exercised. All seven CSV generators reproduced the committed fixtures in the verified local environment. The repository and GitHub Pages site are public, with automatic Pages deployment on pushes to main; workflows have run successfully.
+
+The Docker engine was stopped during initial verification, so an image build/run has not been verified. This revision uses an in-process HTTP client for the deployment notebook. MathJax needs an internet connection; code highlighting and captured figures work without a CDN. Synthetic-data results do not establish real-world accuracy, calibration, causality, or production readiness.

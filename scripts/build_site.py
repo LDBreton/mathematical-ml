@@ -4,8 +4,14 @@ import html
 import re
 import shutil
 import zipfile
+import json
 import markdown
 import nbformat
+from pygments import highlight
+from pygments.formatters import HtmlFormatter
+from pygments.lexers import PythonLexer, get_lexer_by_name
+from pygments.util import ClassNotFound
+from export_lesson_results import source_hashes
 
 ROOT = Path(__file__).resolve().parents[1]
 SITE = ROOT / "site"
@@ -21,6 +27,34 @@ LECTURES = [
 ]
 CSS = (ROOT / "scripts/site.css").read_text(encoding="utf-8")
 SCRIPT = (ROOT / "scripts/site.js").read_text(encoding="utf-8")
+RESULT_GUIDANCE = {
+    "01_regression": "Compare Ridge with both constant baselines, then inspect residual structure and the transformed feature columns. Metric units are price units.",
+    "02_classification": "Compare ranking, calibration, and thresholded decisions. Inspect validation-bin counts before interpreting deviations from the reliability diagonal.",
+    "03_xgboost": "Follow residual-tree stages and validation early stopping, then compare the frozen models on the same test rows. The hand split calculation is an illustrative numerical check.",
+    "04_imbalanced_learning": "Compare validation cost with alert workload. In the final test table, compare every frozen policy with the always-negative policy using the same cost units.",
+    "05_text_classification": "Inspect the tiny executed TF-IDF matrix before reading the held-out template-family results. New-message probes demonstrate behavior; they are not an independent accuracy estimate.",
+    "06_clustering": "Start with the selected-k plots below: they show the exact silhouette-selected fit. The earlier k=4 plot is an initial illustration. Cluster IDs are nominal, and PCA can hide separation in other dimensions.",
+    "07_time_series": "Check the chronological boundaries and forecast-row alignment, then compare seasonal naive and XGBoost on the same one-step targets. Preserve the baseline comparison even when the more complex model loses.",
+    "08_deployment": "Trace the validation-selected cutoff into the saved artifact and compare identical probabilities before saving, after loading, and through the API. HTTP correctness and predictive quality are separate checks.",
+}
+
+
+def highlighted_code(source: str, language: str = "python") -> str:
+    """Highlight at build time: no JavaScript, CDN, or network required."""
+    try:
+        lexer = get_lexer_by_name(language)
+    except ClassNotFound:
+        return '<pre><code>' + html.escape(source) + '</code></pre>'
+    return highlight(source, lexer, HtmlFormatter(cssclass="highlight"))
+
+
+def render_output(item: dict) -> str:
+    if "image" in item:
+        return ('<figure class="result-figure"><img loading="lazy" src="results/'
+                + html.escape(item["image"]) + '" alt="Executed result: '
+                + html.escape(item["heading"], quote=True) + '"><figcaption>'
+                + html.escape(item["heading"]) + ' · captured notebook output</figcaption></figure>')
+    return '<details class="result-text"><summary>' + html.escape(item["heading"]) + ' · computed output</summary><pre>' + html.escape(item["text"]) + '</pre></details>'
 
 
 
@@ -32,6 +66,9 @@ def render_markdown(source: str) -> str:
         return f"MATHPLACEHOLDER{len(expressions)-1}TOKEN"
     source = re.sub(r"\$\$[\s\S]*?\$\$|\\\[[\s\S]*?\\\]|\\\([\s\S]*?\\\)|(?<!\$)\$(?!\$)[^\n$]+\$", protect, source)
     rendered = markdown.markdown(source, extensions=["fenced_code", "tables"])
+    def highlight_fence(match):
+        return highlighted_code(html.unescape(match.group(2)), match.group(1) or "text")
+    rendered = re.sub(r'<pre><code(?: class="language-([^" ]+)")?>([\s\S]*?)</code></pre>', highlight_fence, rendered)
     for index, expression in enumerate(expressions):
         rendered = rendered.replace(f"MATHPLACEHOLDER{index}TOKEN", expression)
     return rendered
@@ -45,7 +82,7 @@ def page(title: str, body: str) -> str:
         for kind in ["lesson", "exercises", "solutions"]:
             navigation += f'<a class="sub" href="{folder}-{kind}.html">{kind.title()}</a>'
         navigation += '</details>'
-    navigation += '<h3>Resources</h3><a href="datasets.html">Datasets</a><a href="course-project.html">Course project</a><a href="instructor.html">Teaching guide</a><a href="verification.html">Verification</a>'
+    navigation += '<h3>Resources</h3><a href="results.html">Executed result galleries</a><a href="datasets.html">Datasets</a><a href="course-project.html">Course project</a><a href="instructor.html">Teaching guide</a><a href="verification.html">Verification</a>'
     return f'''<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Eight guided machine learning lectures for mathematicians: theory, readable Python, exercises and worked solutions."><title>{html.escape(title)} · Mathematical ML</title><link rel="stylesheet" href="style.css"><script defer src="site.js"></script><script>window.MathJax={{tex:{{inlineMath:[['$','$'],['\\\\(','\\\\)']]}}}};</script><script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script></head><body><a class="skip" href="#main">Skip to content</a><header><button class="menu" aria-controls="sidebar" aria-expanded="false" aria-label="Toggle course navigation">☰</button><a class="brand" href="index.html">∑ <span>Mathematical ML</span></a><nav aria-label="Quick links"><a href="setup.html">Get started</a><a href="index.html#lectures">Lectures</a><button id="theme" aria-label="Switch color theme">◐</button></nav></header><div class="layout"><aside id="sidebar" aria-label="Course navigation">{navigation}</aside><main id="main">{body}</main></div><footer>Mathematical ML · Eight practical lectures for mathematicians<br>Readable Python · Reproducible experiments · Synthetic teaching data</footer></body></html>'''
 
 
@@ -89,11 +126,16 @@ def lecture_navigation(folder: str) -> str:
 
 
 def build() -> None:
+    result_manifest = json.loads((ROOT / "docs/results/manifest.json").read_text(encoding="utf-8"))
+    if result_manifest["source_hashes"] != source_hashes():
+        raise ValueError("Result snapshots are stale. Execute notebooks, then run scripts/export_lesson_results.py")
     SITE.mkdir(exist_ok=True)
     (SITE / "style.css").write_text(CSS, encoding="utf-8")
     (SITE / "site.js").write_text(SCRIPT, encoding="utf-8")
     shutil.copytree(ROOT / "docs/figures", SITE / "figures", dirs_exist_ok=True)
+    shutil.copytree(ROOT / "docs/results", SITE / "results", dirs_exist_ok=True)
     cards = []
+    gallery_links = []
     for folder, number, title, description in LECTURES:
         source = ROOT / "lectures" / folder
         target = SITE / "downloads" / folder
@@ -106,10 +148,13 @@ def build() -> None:
                 if cell.cell_type == "markdown":
                     content = render_markdown(cell.source)
                 elif cell.cell_type == "code":
-                    content = '<div class="cell-label">Python · run in the notebook</div><pre><code>' + html.escape(cell.source) + '</code></pre>'
+                    content = '<div class="cell-label">Python · run in the notebook</div>' + highlighted_code(cell.source)
+                    if kind == "lesson":
+                        content += ''.join(render_output(item) for item in result_manifest["lessons"][folder]
+                                           if item["cell_id"] == cell.id)
                 else:
                     continue
-                cells.append(f'<section class="cell">{content}</section>')
+                cells.append(f'<section class="cell" id="cell-{html.escape(cell.id, quote=True)}">{content}</section>')
             filename = f"{folder}-{kind}.html"
             section_links = []
             def add_section(match):
@@ -122,6 +167,7 @@ def build() -> None:
             download = f"downloads/{folder}/{kind}.ipynb"
             body = f'<div class="eyebrow">Lecture {number} / {kind}</div><div class="actions"><a href="{folder}.html">← Lecture guide</a><a href="{download}" download>Download notebook</a></div><p class="note">This page is a reading view. To execute Python, download the complete course and open this notebook in Jupyter. <a href="first-steps.html">First notebook walkthrough →</a></p>' + toc + '<article class="reading">' + rewrite_links(contents, folder) + '</article>'
             if kind == "lesson":
+                body += f'<p><a href="{folder}-results.html">Explore this lecture’s executed result gallery →</a></p>'
                 body += f'<p><a class="button" href="{folder}-exercises.html">Next: attempt the exercises →</a></p>'
             elif kind == "exercises":
                 body += f'<p>After writing your own answers, <a href="{folder}-solutions.html">compare with the worked solutions →</a></p>'
@@ -130,9 +176,30 @@ def build() -> None:
             shutil.copy2(source / f"{kind}.ipynb", target)
             links.append(f'<a class="button" href="{filename}">{kind.title()}</a>')
         guide = rewrite_links(render_markdown((source / "README.md").read_text(encoding="utf-8")), folder)
+        links.append(f'<a href="{folder}-results.html">Executed results →</a>')
         body = f'<div class="eyebrow">Lecture {number}</div><h1>{title}</h1><p class="intro">{description}</p><div class="actions">' + "".join(links) + f'</div><article class="reading">{guide}</article>'
         body += lecture_navigation(folder)
         (SITE / f"{folder}.html").write_text(page(title, body), encoding="utf-8")
+        gallery = (f'<div class="eyebrow">Lecture {number} / Executed results</div><h1>{title}: results</h1>'
+                   '<p>Captured from a successful run of the supplied notebook on synthetic teaching data. '
+                   'These are computed outputs, distinct from the conceptual illustrations. '
+                   'Source and dataset hashes are checked during every website build.</p>'
+                   f'<p><a href="{folder}-lesson.html">Read the explanation and implementation →</a></p>')
+        gallery += '<p class="note"><strong>What to inspect.</strong> ' + RESULT_GUIDANCE[folder] + '</p>'
+        figures = [item for item in result_manifest["lessons"][folder] if "image" in item]
+        if folder == "06_clustering":
+            figures.sort(key=lambda item: item["cell_id"] != "selected-clusters-code")
+        computed = [item for item in result_manifest["lessons"][folder] if "text" in item]
+        for index, item in enumerate(figures + computed):
+            if index == 0 and figures:
+                gallery += '<h2>Computed figures</h2>'
+            if index == len(figures):
+                gallery += '<h2>Tables and printed results</h2>'
+            gallery += ('<section class="gallery-result">' + render_output(item)
+                        + f'<a class="result-source" href="{folder}-lesson.html#cell-{html.escape(item["cell_id"], quote=True)}">Source cell and explanation →</a></section>')
+        gallery += '<details class="contents"><summary>Execution environment and provenance</summary><pre>' + html.escape(json.dumps(result_manifest["versions"], indent=2)) + '</pre><a href="results/manifest.json">Source hashes and output manifest</a></details>'
+        (SITE / f"{folder}-results.html").write_text(page(f"{title}: executed results", gallery), encoding="utf-8")
+        gallery_links.append(f'<li><a href="{folder}-results.html">{number}: {title}</a></li>')
         cards.append(f'<article class="card" data-search="{html.escape((title+description).lower())}"><img class="card-image" src="figures/{folder}.svg" alt="{html.escape(title)} teaching illustration" loading="lazy" width="1000" height="430"><div class="number">{number}</div><h2>{title}</h2><p>{description}</p><a href="{folder}.html">Open lecture →</a></article>')
     route = " → ".join(number for _, number, _, _ in LECTURES)
     body = """
@@ -143,6 +210,7 @@ def build() -> None:
 Follow each mathematical idea into readable Python, test it on data, and understand what the result actually means.</p>
 <div class="actions"><a class="button" href="first-steps.html">Start learning →</a><a class="button secondary" href="setup.html">Set up Python</a><a class="button secondary" href="downloads/course.zip" download>Download the course</a></div>
 <p class="meta">8 lectures &nbsp; · &nbsp; 24 notebooks &nbsp; · &nbsp; 7 datasets &nbsp; · &nbsp; CPU-friendly</p>
+<p><a href="results.html">See the experiments: plots, tables, and computed results →</a></p>
 </section>
 <figure class="course-figure"><img src="figures/course-atlas.svg" alt="Three learning tasks: a fitted response curve, a logistic probability curve with a threshold, and a two-dimensional view of clusters." width="1200" height="370"><figcaption>Three questions, three mathematical objects. Curves are illustrative; the cluster projection uses the supplied synthetic customer data.</figcaption></figure>
 <section class="roadmap" aria-label="Learning roadmap">
@@ -172,6 +240,7 @@ document.querySelector('#search').addEventListener('input', event => {
 </script>
 """.replace("ROUTE", route).replace("CARDS", "".join(cards))
     (SITE / "index.html").write_text(page("Machine learning for mathematicians", body), encoding="utf-8")
+    (SITE / "results.html").write_text(page("Executed result galleries", '<h1>See what the experiments produced.</h1><p>Explore actual outputs from all eight successfully executed lesson notebooks. Read each result beside its source code, assumptions, and interpretation. Random seeds and dependency versions affect numerical details; these synthetic results do not establish real-world accuracy.</p><ul>' + ''.join(gallery_links) + '</ul>'), encoding="utf-8")
     information_pages = [
         ("setup.html", ROOT / "README.md"),
         ("first-steps.html", ROOT / "docs/first-steps.md"),

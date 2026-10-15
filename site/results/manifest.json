@@ -1,0 +1,546 @@
+{
+  "format": 1,
+  "description": "Outputs from successful local lesson execution on synthetic course data.",
+  "source_hashes": {
+    "data/bike_demand.csv": "da0e264437cd964945ac6a1c31c2a0b898fc3d2c5bd405260891aedeaeab4afd",
+    "data/churn.csv": "78299506567c067a361427f1c690004f6e11e58b6e4b9fb65ebc040991367b03",
+    "data/customer_segments.csv": "5eb85efef04ce963e45025fa700a96fcd4224db9730b6a8fc564d5123d94d14a",
+    "data/daily_sales.csv": "e17405822d6b68df19ab58cab7c5f316c2eb0787f097fb00d08f39acf4be4898",
+    "data/fraud.csv": "0fc3407b8f618cc136f559e3d2bed9c4a6722a539c70d905aab85be77d5b729c",
+    "data/housing.csv": "3060b3b4b03447362e5991f955f165a8f6c72e1723345e9afa18777ab79e605b",
+    "data/support_tickets.csv": "9cc2d324b6bb391dfeb2c7e30a40faa176e0d91bb9e109c98105f1ae9d9b07ce",
+    "lectures/01_regression/lesson.ipynb": "3c6fbfa4d9132ec625ffc31855f84bbdfb35fa5db2b6b6a45f278771bd4e061d",
+    "lectures/02_classification/lesson.ipynb": "dd6de024982c24f140663d9faa94655463656cab816319e47eb176b3b9213c3a",
+    "lectures/03_xgboost/lesson.ipynb": "9d8c745333bd093cfcc2be3d2c3483624e4e0e8d3ff5b2d9f395508f90b0462e",
+    "lectures/04_imbalanced_learning/lesson.ipynb": "8f12327cd4cde2d0c38f34efd70edd04840d6764598d4449c1dd0d131a40d61c",
+    "lectures/05_text_classification/lesson.ipynb": "9cd7eb7e9dadc44c4ea8ae8e21ef0226a1c92822fc625a9f835054b40ec5f4aa",
+    "lectures/06_clustering/lesson.ipynb": "9b2e67d59a5ad5bacdde2d226c7571bd5aae2ccb5fa7843478f10ad6f1331ac7",
+    "lectures/07_time_series/lesson.ipynb": "a3e8c2a1b62c59b2493725d35866b4403199353718d171848938c31f1e76db16",
+    "lectures/08_deployment/lesson.ipynb": "410abcde2dacc48510b256c51d2dd679f30e0f8f8eade9bddec1a9749ccfe2b9",
+    "src/course_ml/__init__.py": "52c96f271bc75948368fb80c654b7435aa62b5757f45810be6c6d303aae79f18",
+    "src/course_ml/app.py": "68ca940c0433f25ae3774bc00d29f52f990749259c9c84b0d091abed05234e6e",
+    "src/course_ml/forecasting.py": "69fdf911c877ba40bb657eb65a30bea02a797881d2d8593d7b1f226bdcb95f54",
+    "src/course_ml/teaching.py": "94918a2b248ac75599f7c2d08ac94c05dab76037be2ce822df024ae03180c791",
+    "src/course_ml/train.py": "51f5c33fb1b13ce848cff834eeebf2a3932fb3fd1227d6c1666c503f186f2fc2"
+  },
+  "versions": {
+    "python": "3.12.10",
+    "numpy": "2.5.4",
+    "pandas": "2.3.3",
+    "scikit_learn": "1.9.1",
+    "xgboost": "3.4.1"
+  },
+  "lessons": {
+    "01_regression": [
+      {
+        "cell_id": "cell-003",
+        "heading": "2. Load generated data",
+        "text": "Loaded 1200 synthetic rows from F:\\Proyectos\\RBF-Machine learning\\data\\housing.csv\n"
+      },
+      {
+        "cell_id": "cell-003",
+        "heading": "2. Load generated data",
+        "text": "    area_m2  bedrooms  age_years  distance_km neighborhood        price\n0  178.1819         1    42.7235      24.8766        outer  390826.6849\n1  116.1925         3    43.6482      17.8229      central  367962.5603\n2  193.8406         4     9.4556       7.3456      central  615257.2151\n3  164.0131         3    48.5478      22.3703        outer  377947.9298\n4   52.4228         2    47.2325       2.5344        outer  120664.8066"
+      },
+      {
+        "cell_id": "cell-005",
+        "heading": "3. Define target and hold out test rows",
+        "text": "Training rows: 900\nHeld-out test rows: 300\n"
+      },
+      {
+        "cell_id": "cell-010",
+        "heading": "5. Select penalty inside training data",
+        "text": "Selected Ridge alpha: 0.1\nMean training-fold RMSE: 25,888 price units\n"
+      },
+      {
+        "cell_id": "inspect-design-matrix-code",
+        "heading": "Inspect the design matrix you actually fitted",
+        "text": "Raw training rows:\n area_m2  bedrooms  age_years  distance_km neighborhood\n 80.3729         4    54.7933      26.4516      central\n192.6229         1    25.5533       9.6696      central\n 46.1978         4    67.0665       5.0187      central\nTransformed model inputs:\n     numeric__area_m2  numeric__bedrooms  numeric__age_years  numeric__distance_km  category__neighborhood_central  category__neighborhood_outer  category__neighborhood_residential\n945            -0.850              0.692               1.012                 1.350                             1.0                           0.0                                 0.0\n574             1.240             -1.412              -0.469                -0.587                             1.0                           0.0                                 0.0\n734            -1.487              0.692               1.634                -1.124                             1.0                           0.0                                 0.0\nTraining means after imputation: {'area_m2': np.float64(126.0428888888889), 'bedrooms': np.float64(3.013333333333333), 'age_years': np.float64(34.81788911111111), 'distance_km': np.float64(14.75872388888889)}\n"
+      },
+      {
+        "cell_id": "cell-012",
+        "heading": "6. One held-out evaluation",
+        "text": "                                MAE       RMSE    R\u00b2\nRidge pipeline             19515.07   24698.99  0.97\nTraining-mean baseline    116192.62  139243.47 -0.01\nTraining-median baseline  116265.35  139351.15 -0.01"
+      },
+      {
+        "cell_id": "cell-015",
+        "heading": "7. Residual diagnostics",
+        "image": "01_regression-cell-015-0.png"
+      },
+      {
+        "cell_id": "cell-017",
+        "heading": "8. Coefficients, cautiously",
+        "text": "numeric__area_m2                      129521.59\ncategory__neighborhood_central         45822.40\ncategory__neighborhood_outer          -42697.10\nnumeric__age_years                    -18543.90\nnumeric__bedrooms                      16387.60\nnumeric__distance_km                  -14803.80\ncategory__neighborhood_residential     -3125.30\ndtype: float64"
+      }
+    ],
+    "02_classification": [
+      {
+        "cell_id": "cell-003",
+        "heading": "2. Load synthetic data",
+        "text": "Loaded 1800 synthetic rows from F:\\Proyectos\\RBF-Machine learning\\data\\churn.csv\n"
+      },
+      {
+        "cell_id": "cell-003",
+        "heading": "2. Load synthetic data",
+        "text": "   tenure_months  monthly_charge  support_calls  contract  churn\n0             10         86.0045              0    annual      0\n1             48         63.7697              1   monthly      0\n2             42        129.0949              1    annual      0\n3             18         62.8151              1   monthly      0\n4             59         41.0848              1  two_year      0"
+      },
+      {
+        "cell_id": "cell-005",
+        "heading": "3. Training, validation, and final test",
+        "text": "Training rows: 1080\nValidation rows: 360\nFinal test rows: 360\nTraining class proportions:\n"
+      },
+      {
+        "cell_id": "cell-005",
+        "heading": "3. Training, validation, and final test",
+        "text": "churn\n0    0.768519\n1    0.231481\nName: proportion, dtype: float64"
+      },
+      {
+        "cell_id": "cell-009",
+        "heading": "5. Regularization on training rows",
+        "text": "Selected C: 3.0\nMean training-fold ROC-AUC: 0.771\n"
+      },
+      {
+        "cell_id": "cell-011",
+        "heading": "6. Validation metrics before choosing a threshold",
+        "text": "Validation majority-baseline accuracy: 0.769\nValidation metrics at threshold 0.5: {'accuracy': 0.781, 'precision': 0.556, 'recall': 0.241, 'F1': 0.336, 'ROC-AUC': 0.793}\nValidation confusion matrix [actual rows, predicted columns]:\n [[261  16]\n [ 63  20]]\n"
+      },
+      {
+        "cell_id": "calibration-code",
+        "heading": "6. Validation metrics before choosing a threshold",
+        "image": "02_classification-calibration-code-0.png"
+      },
+      {
+        "cell_id": "calibration-code",
+        "heading": "6. Validation metrics before choosing a threshold",
+        "text": "                 rows  mean_probability  observed_fraction\nbin                                                       \n(-0.001, 0.167]   167          0.081809           0.065868\n(0.167, 0.333]    112          0.239926           0.285714\n(0.333, 0.5]       45          0.399132           0.444444\n(0.5, 0.667]       24          0.579287           0.583333\n(0.667, 0.833]     11          0.729602           0.454545\n(0.833, 1.0]        1          0.899345           1.000000"
+      },
+      {
+        "cell_id": "cell-014",
+        "heading": "7. Choose a threshold on validation, then test once",
+        "image": "02_classification-cell-014-0.png"
+      },
+      {
+        "cell_id": "cell-014",
+        "heading": "7. Choose a threshold on validation, then test once",
+        "text": "   threshold  flagged  false_positives  false_negatives  estimated_cost\n0       0.10      252              174                5           199.0\n1       0.17      188              117               12           177.0\n2       0.25      127               70               26           200.0\n3       0.35       71               32               44           252.0\n4       0.50       36               16               63           331.0\n5       0.65       15                6               74           376.0"
+      },
+      {
+        "cell_id": "cell-016",
+        "heading": "7. Choose a threshold on validation, then test once",
+        "text": "Chosen validation threshold: 0.17\nFinal test metrics: {'accuracy': 0.656, 'precision': 0.384, 'recall': 0.819, 'F1': 0.523, 'ROC-AUC': 0.772}\nFinal test confusion matrix [actual rows, predicted columns]:\n [[168 109]\n [ 15  68]]\n"
+      },
+      {
+        "cell_id": "cell-018",
+        "heading": "8. Coefficients as conditional log-odds associations",
+        "text": "category__contract_monthly     0.860\ncategory__contract_two_year   -0.752\nnumeric__support_calls         0.602\nnumeric__monthly_charge        0.598\nnumeric__tenure_months        -0.559\ncategory__contract_annual     -0.099\ndtype: float64"
+      }
+    ],
+    "03_xgboost": [
+      {
+        "cell_id": "hand-split-code",
+        "heading": "3. Split gain and its limits",
+        "text": "{'left_leaf': np.float64(1.0), 'right_leaf': np.float64(-1.0), 'split_gain': np.float64(2.8)}\n"
+      },
+      {
+        "cell_id": "cell-005",
+        "heading": "4. A small residual-tree boosting round by round",
+        "image": "03_xgboost-cell-005-0.png"
+      },
+      {
+        "cell_id": "cell-008",
+        "heading": "5. Load and inspect the scenarios",
+        "text": "Loaded 2,000 complete scenario rows from F:\\Proyectos\\RBF-Machine learning\\data\\bike_demand.csv\n"
+      },
+      {
+        "cell_id": "cell-008",
+        "heading": "5. Load and inspect the scenarios",
+        "text": "   temperature_c  humidity  wind_kmh  hour  weekday  season  rentals\n0         7.2825   25.1391   11.3271     6        5       3       99\n1        21.9328   46.7671    3.3084    11        4       1      149\n2        15.2928   59.3648   23.6965     8        2       3      180\n3         3.0650   63.2718   11.5156     8        5       1       74\n4        34.4286   27.4304   11.3957    12        3       1      192"
+      },
+      {
+        "cell_id": "cell-009",
+        "heading": "5. Load and inspect the scenarios",
+        "text": "                count        mean        std      min        25%       50%  \\\ntemperature_c  2000.0   17.683749  10.162390   0.0194   9.070150   17.7985   \nhumidity       2000.0   58.070462  21.979304  20.0014  38.675425   59.3790   \nwind_kmh       2000.0   17.822632  10.084270   0.0150   8.958100   17.8896   \nhour           2000.0   11.303500   6.851705   0.0000   6.000000   11.0000   \nweekday        2000.0    2.946500   1.959224   0.0000   1.000000    3.0000   \nseason         2000.0    1.476000   1.132283   0.0000   0.000000    1.0000   \nrentals        2000.0  122.985000  72.585247   0.0000  66.000000  128.0000   \n\n                      75%       max  \ntemperature_c   26.446550   34.9846  \nhumidity        77.050475   94.9954  \nwind_kmh        26.949250   34.9994  \nhour            17.000000   23.0000  \nweekday          5.000000    6.0000  \nseason           3.000000    3.0000  \nrentals        175.000000  322.0000  "
+      },
+      {
+        "cell_id": "cell-010",
+        "heading": "5. Load and inspect the scenarios",
+        "image": "03_xgboost-cell-010-0.png"
+      },
+      {
+        "cell_id": "cell-012",
+        "heading": "5. Load and inspect the scenarios",
+        "text": "train=1300, validation=300, test=400\n"
+      },
+      {
+        "cell_id": "cell-014",
+        "heading": "6. Fit comparable models",
+        "text": "XGBoost best iteration: 760\n"
+      },
+      {
+        "cell_id": "cell-016",
+        "heading": "6. Fit comparable models",
+        "image": "03_xgboost-cell-016-0.png"
+      },
+      {
+        "cell_id": "cell-018",
+        "heading": "7. Evaluate once on the test partition",
+        "text": "                    model       RMSE        MAE        R\u00b2\n0  Training-mean baseline  74.324897  61.899596 -0.006192\n1           Random forest  20.806434  15.811783  0.921149\n2                 XGBoost  13.742325  10.811734  0.965602"
+      },
+      {
+        "cell_id": "cell-019",
+        "heading": "7. Evaluate once on the test partition",
+        "image": "03_xgboost-cell-019-0.png"
+      }
+    ],
+    "04_imbalanced_learning": [
+      {
+        "cell_id": "cell-002",
+        "heading": "1. Why accuracy can mislead",
+        "text": "rows=5000, positives=217, prevalence=4.340%\nsizes: 3000 1000 1000\n"
+      },
+      {
+        "cell_id": "cell-005",
+        "heading": "2a. Why class weights shift the posterior",
+        "text": "                         AP  trapezoid_PR_area  ROC_AUC   Brier\nmodel                                                          \nLogistic unweighted  0.0924             0.0838   0.6410  0.0406\nLogistic balanced    0.0910             0.0838   0.6503  0.2199\nXGBoost weighted     0.0618             0.0590   0.6164  0.1349"
+      },
+      {
+        "cell_id": "cell-008",
+        "heading": "Precision depends on prevalence",
+        "image": "04_imbalanced_learning-cell-008-0.png"
+      },
+      {
+        "cell_id": "cell-010",
+        "heading": "4. Validation cost and final test",
+        "text": "                 Logistic unweighted  Logistic balanced  XGBoost weighted\nthreshold                      0.030              0.410             0.335\nvalidation_cost              706.000            667.000           705.000\nalert_rate                     0.581              0.542             0.370"
+      },
+      {
+        "cell_id": "threshold-tradeoff-code",
+        "heading": "4. Validation cost and final test",
+        "image": "04_imbalanced_learning-threshold-tradeoff-code-0.png"
+      },
+      {
+        "cell_id": "cell-012",
+        "heading": "4. Validation cost and final test",
+        "text": "                 accuracy  recall  alerts  missed positives\nalways negative     0.957     0.0       0                43"
+      },
+      {
+        "cell_id": "cell-013",
+        "heading": "4. Validation cost and final test",
+        "text": "                     threshold  TP   FP  FN   TN  precision  recall      AP  \\\nmodel                                                                         \nLogistic unweighted      0.030  29  558  14  399     0.0494  0.6744  0.0813   \nLogistic balanced        0.410  28  518  15  439     0.0513  0.6512  0.0822   \nXGBoost weighted         0.335  19  344  24  613     0.0523  0.4419  0.0703   \nAlways negative            NaN   0    0  43  957     0.0000  0.0000     NaN   \n\n                     ROC_AUC   cost  test_alert_rate  \nmodel                                                 \nLogistic unweighted   0.5944  838.0            0.587  \nLogistic balanced     0.5973  818.0            0.546  \nXGBoost weighted      0.5371  824.0            0.363  \nAlways negative          NaN  860.0            0.000  "
+      }
+    ],
+    "05_text_classification": [
+      {
+        "cell_id": "cell-002",
+        "heading": "1. Load the fixture and keep template families together",
+        "text": "Loaded 480 tickets from 60 template groups.\n"
+      },
+      {
+        "cell_id": "cell-002",
+        "heading": "1. Load the fixture and keep template families together",
+        "text": "  ticket_id category       template_group  \\\n0    T-0001  billing  billing-template-01   \n1    T-0002  billing  billing-template-01   \n2    T-0003  billing  billing-template-01   \n\n                                                text  \n0  My cloud backup statement lists $18.40 for sea...  \n1  My team plan statement lists $42.00 for storag...  \n2  My monthly storage statement lists $7.95 for t...  "
+      },
+      {
+        "cell_id": "cell-003",
+        "heading": "1. Load the fixture and keep template families together",
+        "text": "train     : 320 rows; account_access=64, billing=64, order_status=64, refund_return=64, technical_issue=64\nvalidation:  80 rows; account_access=16, billing=16, order_status=16, refund_return=16, technical_issue=16\ntest      :  80 rows; account_access=16, billing=16, order_status=16, refund_return=16, technical_issue=16\n"
+      },
+      {
+        "cell_id": "template-siblings-code",
+        "heading": "1. Load the fixture and keep template families together",
+        "text": "        template_group category  \\\n0  billing-template-01  billing   \n1  billing-template-01  billing   \n2  billing-template-01  billing   \n3  billing-template-01  billing   \n\n                                                text  \n0  My cloud backup statement lists $18.40 for sea...  \n1  My team plan statement lists $42.00 for storag...  \n2  My monthly storage statement lists $7.95 for t...  \n3  My pro account statement lists $63.20 for the ...  "
+      },
+      {
+        "cell_id": "cell-005",
+        "heading": "2. TF-IDF as a weighted sparse vector",
+        "text": "shape: (320, 598)\nsparse type: csr_matrix\ndensity: 0.03517454013377926\nnorms of first three rows: [1. 1. 1.]\n{'lowercase': True, 'strip_accents': None, 'ngram_range': (1, 1), 'stop_words': None, 'token_pattern': '(?u)\\\\b\\\\w\\\\w+\\\\b', 'use_idf': True, 'smooth_idf': True, 'sublinear_tf': False, 'norm': 'l2'}\n"
+      },
+      {
+        "cell_id": "cell-007",
+        "heading": "2. TF-IDF as a weighted sparse vector",
+        "text": "manual smoothed IDF: 2.09861228866811\nscikit-learn stored IDF: 2.09861228866811\nubiquitous term IDF: 1.0\n"
+      },
+      {
+        "cell_id": "sparse-geometry-code",
+        "heading": "2. TF-IDF as a weighted sparse vector",
+        "text": "   count: common  count: rare\n0              1            1\n1              1            1\n2              1            0\n3              1            0\n4              1            0\n5              1            0\n6              1            0\n7              1            0"
+      },
+      {
+        "cell_id": "sparse-geometry-code",
+        "heading": "2. TF-IDF as a weighted sparse vector",
+        "text": "common    1.000000\nrare      2.098612\nName: IDF, dtype: float64"
+      },
+      {
+        "cell_id": "sparse-geometry-code",
+        "heading": "2. TF-IDF as a weighted sparse vector",
+        "text": "   common    rare\n0  0.4302  0.9028\n1  0.4302  0.9028\n2  1.0000  0.0000\n3  1.0000  0.0000\n4  1.0000  0.0000\n5  1.0000  0.0000\n6  1.0000  0.0000\n7  1.0000  0.0000"
+      },
+      {
+        "cell_id": "sparse-geometry-code",
+        "heading": "2. TF-IDF as a weighted sparse vector",
+        "text": "Cosine(document 0, document 2): 0.430165282498796\n"
+      },
+      {
+        "cell_id": "sparse-geometry-code",
+        "heading": "2. TF-IDF as a weighted sparse vector",
+        "image": "05_text_classification-sparse-geometry-code-4.png"
+      },
+      {
+        "cell_id": "cell-010",
+        "heading": "4. Select regularization on validation, then test once",
+        "text": "       C  macro_f1\n0   0.05  0.542456\n1   0.20  0.540300\n2   1.00  0.549523\n3   5.00  0.523175\n4  20.00  0.512367"
+      },
+      {
+        "cell_id": "cell-010",
+        "heading": "4. Select regularization on validation, then test once",
+        "text": "Selected C using validation macro-F1: 1.0\n"
+      },
+      {
+        "cell_id": "cell-011",
+        "heading": "4. Select regularization on validation, then test once",
+        "text": "test accuracy: 0.675\ntest macro-F1: 0.6715063520871143\nmost-frequent baseline accuracy: 0.2\nmost-frequent baseline macro-F1: 0.06666666666666667\n                 precision    recall  f1-score   support\n\n account_access       0.53      0.50      0.52        16\n        billing       1.00      0.94      0.97        16\n   order_status       0.69      0.56      0.62        16\n  refund_return       0.64      0.88      0.74        16\ntechnical_issue       0.53      0.50      0.52        16\n\n       accuracy                           0.68        80\n      macro avg       0.68      0.68      0.67        80\n   weighted avg       0.68      0.68      0.67        80\n\n"
+      },
+      {
+        "cell_id": "cell-011",
+        "heading": "4. Select regularization on validation, then test once",
+        "text": "                         predicted: account_access  predicted: billing  \\\nactual: account_access                           8                   0   \nactual: billing                                  0                  15   \nactual: order_status                             7                   0   \nactual: refund_return                            0                   0   \nactual: technical_issue                          0                   0   \n\n                         predicted: order_status  predicted: refund_return  \\\nactual: account_access                         1                         0   \nactual: billing                                1                         0   \nactual: order_status                           9                         0   \nactual: refund_return                          2                        14   \nactual: technical_issue                        0                         8   \n\n                         predicted: technical_issue  \nactual: account_access                            7  \nactual: billing                                   0  \nactual: order_status                              0  \nactual: refund_return                             0  \nactual: technical_issue                           8  "
+      },
+      {
+        "cell_id": "cell-013",
+        "heading": "5. Read mistakes and coefficients",
+        "text": "26 errors among 80 held-out rows.\n"
+      },
+      {
+        "cell_id": "cell-013",
+        "heading": "5. Read mistakes and coefficients",
+        "text": "   ticket_id               template_group                   actual/predicted  \\\n3     T-0060          billing-template-08            billing -> order_status   \n24    T-0137   account_access-template-06  account_access -> technical_issue   \n25    T-0138   account_access-template-06  account_access -> technical_issue   \n26    T-0139   account_access-template-06  account_access -> technical_issue   \n27    T-0140   account_access-template-06     account_access -> order_status   \n28    T-0141   account_access-template-06  account_access -> technical_issue   \n29    T-0142   account_access-template-06  account_access -> technical_issue   \n30    T-0143   account_access-template-06  account_access -> technical_issue   \n31    T-0144   account_access-template-06  account_access -> technical_issue   \n40    T-0249  technical_issue-template-08   technical_issue -> refund_return   \n41    T-0250  technical_issue-template-08   technical_issue -> refund_return   \n42    T-0251  technical_issue-template-08   technical_issue -> refund_return   \n\n                                                 text  \n3   I was billed a second workspace after removing...  \n24  The one-time code arrives after it has already...  \n25  The one-time code arrives after it has already...  \n26  The one-time code arrives after it has already...  \n27  The one-time code arrives after it has already...  \n28  The one-time code arrives after it has already...  \n29  The one-time code arrives after it has already...  \n30  The one-time code arrives after it has already...  \n31  The one-time code arrives after it has already...  \n40  Keyboard shortcut Ctrl+K used to open search, ...  \n41  Keyboard shortcut Alt+Enter used to open calen...  \n42  Keyboard shortcut Ctrl+Shift+P used to open up...  "
+      },
+      {
+        "cell_id": "cell-014",
+        "heading": "5. Read mistakes and coefficients",
+        "text": "\naccount_access: terms most associated with its logit\n[('sign', np.float64(1.765)), ('access', np.float64(1.349)), ('to', np.float64(1.234)), ('example', np.float64(1.177)), ('as', np.float64(1.153)), ('test', np.float64(1.138)), ('my', np.float64(1.062)), ('form', np.float64(1.0))]\nterms lowering its logit: [('order', np.float64(-0.542)), ('of', np.float64(-0.525)), ('00', np.float64(-0.523)), ('return', np.float64(-0.5)), ('invoice', np.float64(-0.469))]\n\nbilling: terms most associated with its logit\n[('invoice', np.float64(1.879)), ('00', np.float64(1.379)), ('month', np.float64(0.984)), ('card', np.float64(0.981)), ('cycle', np.float64(0.978)), ('team', np.float64(0.89)), ('uses', np.float64(0.836)), ('bill', np.float64(0.836))]\nterms lowering its logit: [('return', np.float64(-0.616)), ('has', np.float64(-0.601)), ('refund', np.float64(-0.599)), ('to', np.float64(-0.543)), ('delivery', np.float64(-0.514))]\n\norder_status: terms most associated with its logit\n[('delivery', np.float64(1.771)), ('order', np.float64(1.591)), ('tracking', np.float64(1.534)), ('from', np.float64(1.351)), ('is', np.float64(1.191)), ('arrival', np.float64(1.186)), ('or', np.float64(1.153)), ('has', np.float64(1.13))]\nterms lowering its logit: [('00', np.float64(-0.552)), ('refund', np.float64(-0.523)), ('return', np.float64(-0.521)), ('and', np.float64(-0.491)), ('card', np.float64(-0.464))]\n\nrefund_return: terms most associated with its logit\n[('return', np.float64(2.137)), ('refund', np.float64(2.056)), ('send', np.float64(1.257)), ('product', np.float64(1.221)), ('wrong', np.float64(1.124)), ('returned', np.float64(1.089)), ('item', np.float64(1.085)), ('would', np.float64(1.059))]\nterms lowering its logit: [('in', np.float64(-0.88)), ('says', np.float64(-0.808)), ('from', np.float64(-0.617)), ('my', np.float64(-0.596)), ('has', np.float64(-0.497))]\n\ntechnical_issue: terms most associated with its logit\n[('whenever', np.float64(1.208)), ('text', np.float64(1.123)), ('with', np.float64(1.046)), ('since', np.float64(0.972)), ('app', np.float64(0.928)), ('exported', np.float64(0.801)), ('opens', np.float64(0.801)), ('file', np.float64(0.801))]\nterms lowering its logit: [('is', np.float64(-1.086)), ('my', np.float64(-0.866)), ('but', np.float64(-0.778)), ('says', np.float64(-0.724)), ('can', np.float64(-0.677))]\n"
+      },
+      {
+        "cell_id": "fresh-text-code",
+        "heading": "5. Read mistakes and coefficients",
+        "text": "Stored nonzeros: [4 0]\n"
+      },
+      {
+        "cell_id": "fresh-text-code",
+        "heading": "5. Read mistakes and coefficients",
+        "text": "                                  account_access  billing  order_status  \\\nPlease help me reset my password           0.422    0.189         0.142   \nzzzzunseenword987654321                    0.164    0.221         0.154   \n\n                                  refund_return  technical_issue  \nPlease help me reset my password          0.123            0.124  \nzzzzunseenword987654321                   0.178            0.283  "
+      }
+    ],
+    "06_clustering": [
+      {
+        "cell_id": "cell-002",
+        "heading": "1. Alternating minimization",
+        "text": "       recency_days  orders_12m  average_order_value  annual_spend  web_share  \\\ncount       1200.00     1200.00              1200.00       1200.00    1200.00   \nmean          61.45        7.22               297.64        787.99       0.48   \nstd           39.65        6.53               188.86        508.35       0.26   \nmin            1.00        0.00                47.62        140.35       0.01   \n25%           23.00        2.00               136.00        341.10       0.25   \n50%           60.00        4.00               248.44        620.08       0.49   \n75%           97.00       12.00               428.26       1169.94       0.72   \nmax          144.00       29.00              1029.06       2883.71       0.99   \n\n       tenure_months  support_contacts_12m  \ncount        1200.00               1200.00  \nmean           27.74                  1.49  \nstd            15.54                  1.40  \nmin             1.00                  0.00  \n25%            15.00                  0.00  \n50%            27.00                  1.00  \n75%            39.00                  2.00  \nmax            70.00                  8.00  "
+      },
+      {
+        "cell_id": "cell-002",
+        "heading": "1. Alternating minimization",
+        "text": "means: [ 0.  0.  0. -0. -0.  0. -0.] stds: [1. 1. 1. 1. 1. 1. 1.]\n"
+      },
+      {
+        "cell_id": "pair-distances-code",
+        "heading": "1. Alternating minimization",
+        "text": "    pair  raw_distance  standardized_distance\n0   0, 1   1369.355328               6.679387\n1  0, 10    725.012828               4.085513"
+      },
+      {
+        "cell_id": "cell-004",
+        "heading": "2. Scaling defines distance",
+        "text": "inertia: 2194.7051247400486\nsizes: [314 277 303 306]\n"
+      },
+      {
+        "cell_id": "cell-004",
+        "heading": "2. Scaling defines distance",
+        "text": "   recency_days  orders_12m  average_order_value  annual_spend  web_share  \\\n0         78.09        2.12               188.37        473.98       0.20   \n1         19.68       15.73               536.44       1471.53       0.78   \n2         29.29       10.69               386.66       1003.75       0.63   \n3        114.05        1.32               105.47        277.82       0.36   \n\n   tenure_months  support_contacts_12m  \n0          29.16                  1.00  \n1          10.48                  2.83  \n2          21.71                  1.50  \n3          47.86                  0.76  "
+      },
+      {
+        "cell_id": "cell-006",
+        "heading": "3. PCA from the Rayleigh quotient",
+        "text": "explained variance fractions: [0.72  0.106]\n"
+      },
+      {
+        "cell_id": "cell-006",
+        "heading": "3. PCA from the Rayleigh quotient",
+        "image": "06_clustering-cell-006-1.png"
+      },
+      {
+        "cell_id": "cell-008",
+        "heading": "4. Internal diagnostics and label invariance",
+        "text": "    inertia  silhouette\nk                      \n2  3226.651       0.520\n3  2665.105       0.385\n4  2194.705       0.299\n5  1935.199       0.291\n6  1799.064       0.277\n7  1669.654       0.259\n8  1595.095       0.255"
+      },
+      {
+        "cell_id": "cell-008",
+        "heading": "4. Internal diagnostics and label invariance",
+        "image": "06_clustering-cell-008-1.png"
+      },
+      {
+        "cell_id": "cell-009",
+        "heading": "4. Internal diagnostics and label invariance",
+        "text": "post-hoc synthetic ARI: 0.4996525558167226\nARI across starts: 1.0\ninertias: 3226.650570919961 3226.650570919961\n"
+      },
+      {
+        "cell_id": "selected-clusters-code",
+        "heading": "5. Interpret the selected solution, not the initial illustration",
+        "text": "Silhouette-selected k: 2\n"
+      },
+      {
+        "cell_id": "selected-clusters-code",
+        "heading": "5. Interpret the selected solution, not the initial illustration",
+        "text": "         customers\ncluster           \n0              620\n1              580"
+      },
+      {
+        "cell_id": "selected-clusters-code",
+        "heading": "5. Interpret the selected solution, not the initial illustration",
+        "text": "         recency_days  orders_12m  average_order_value  annual_spend  \\\ncluster                                                                \n0               95.83        1.73               147.45        377.16   \n1               24.70       13.09               458.20       1227.16   \n\n         web_share  tenure_months  support_contacts_12m  \ncluster                                                  \n0             0.28          38.39                  0.88  \n1             0.70          16.35                  2.13  "
+      },
+      {
+        "cell_id": "selected-clusters-code",
+        "heading": "5. Interpret the selected solution, not the initial illustration",
+        "image": "06_clustering-selected-clusters-code-3.png"
+      },
+      {
+        "cell_id": "selected-clusters-code",
+        "heading": "5. Interpret the selected solution, not the initial illustration",
+        "image": "06_clustering-selected-clusters-code-4.png"
+      },
+      {
+        "cell_id": "multi-start-code",
+        "heading": "5. Interpret the selected solution, not the initial illustration",
+        "text": "   seed    inertia  ARI_vs_selected\n0     0  3226.6506              1.0\n1     1  3226.6506              1.0\n2     2  3226.6506              1.0\n3     3  3226.6506              1.0\n4     4  3226.6506              1.0\n5     5  3226.6506              1.0\n6     6  3226.6506              1.0\n7     7  3226.6506              1.0\n8     8  3226.6506              1.0\n9     9  3226.6506              1.0"
+      },
+      {
+        "cell_id": "multi-start-code",
+        "heading": "5. Interpret the selected solution, not the initial illustration",
+        "image": "06_clustering-multi-start-code-1.png"
+      }
+    ],
+    "07_time_series": [
+      {
+        "cell_id": "cell-005",
+        "heading": "4. Generate features without looking forward",
+        "text": "        date    sales\n0 2023-01-01  1084.81\n1 2023-01-02   857.27\n2 2023-01-03   837.36\n3 2023-01-04   824.92\n4 2023-01-05   893.70"
+      },
+      {
+        "cell_id": "cell-006",
+        "heading": "4. Generate features without looking forward",
+        "text": "        date    sales    lag_1    lag_7  mean_7_before  weekday_sin\n0 2023-01-29  1128.91  1090.04  1068.30    1010.350000    -0.781831\n1 2023-01-30   962.44  1128.91   929.07    1019.008571     0.000000\n2 2023-01-31   997.18   962.44   832.95    1023.775714     0.781831\n3 2023-02-01   857.27   997.18  1031.74    1047.237143     0.974928\n4 2023-02-02   927.99   857.27  1062.29    1022.312857     0.433884"
+      },
+      {
+        "cell_id": "forecast-five-rows-code",
+        "heading": "4. Generate features without looking forward",
+        "text": "  origin_date       date lag_7_date    lag_1    lag_7  mean_7_before    sales\n0  2023-01-28 2023-01-29 2023-01-22  1090.04  1068.30    1010.350000  1128.91\n1  2023-01-29 2023-01-30 2023-01-23  1128.91   929.07    1019.008571   962.44\n2  2023-01-30 2023-01-31 2023-01-24   962.44   832.95    1023.775714   997.18\n3  2023-01-31 2023-02-01 2023-01-25   997.18  1031.74    1047.237143   857.27\n4  2023-02-01 2023-02-02 2023-01-26   857.27  1062.29    1022.312857   927.99"
+      },
+      {
+        "cell_id": "cell-008",
+        "heading": "4. Generate features without looking forward",
+        "text": "Feature boundary checks passed: 2023-01-29\n"
+      },
+      {
+        "cell_id": "cell-010",
+        "heading": "4. Generate features without looking forward",
+        "text": "Changing the target at the forecast date and all future targets leaves its predictors unchanged.\n"
+      },
+      {
+        "cell_id": "cell-012",
+        "heading": "5. Chronological train, validation, and test boundaries",
+        "text": "    partition  rows  first_date   last_date\n0       train   680  2023-01-29  2024-12-08\n1  validation   146  2024-12-09  2025-05-03\n2        test   146  2025-05-04  2025-09-26"
+      },
+      {
+        "cell_id": "cell-013",
+        "heading": "5. Chronological train, validation, and test boundaries",
+        "image": "07_time_series-cell-013-0.png"
+      },
+      {
+        "cell_id": "cell-015",
+        "heading": "6. Expanding-window development backtest",
+        "text": "   fold fit_through validation_through evaluation_start evaluation_end  \\\n0     1  2024-01-13         2024-03-23       2024-03-24     2024-06-01   \n1     2  2024-03-23         2024-06-01       2024-06-02     2024-08-10   \n2     3  2024-06-01         2024-08-10       2024-08-11     2024-10-19   \n3     4  2024-08-10         2024-10-19       2024-10-20     2024-12-28   \n4     5  2024-10-19         2024-12-28       2024-12-29     2025-03-08   \n\n   selected_rounds        MAE       RMSE  seasonal_naive_MAE  \\\n0               85  78.340047  93.297652           71.788429   \n1               68  77.203933  92.319095           75.685429   \n2              163  59.924720  73.510938           71.940286   \n3               61  61.097561  77.437779           85.038000   \n4              129  44.793420  57.371597           58.131143   \n\n   seasonal_naive_RMSE  \n0            86.434215  \n1            88.781853  \n2            90.732181  \n3           110.121673  \n4            73.936372  "
+      },
+      {
+        "cell_id": "cell-018",
+        "heading": "7. Choose model complexity on validation only",
+        "text": "128"
+      },
+      {
+        "cell_id": "cell-020",
+        "heading": "8. Rolling one-step test evaluation",
+        "text": "                      MAE      RMSE  MAE improvement vs naive  \\\nseasonal naive  61.941575  78.95166                  0.000000   \nXGBoost         65.324087  79.41873                 -3.382512   \n\n                RMSE improvement vs naive  \nseasonal naive                    0.00000  \nXGBoost                          -0.46707  "
+      },
+      {
+        "cell_id": "cell-021",
+        "heading": "8. Rolling one-step test evaluation",
+        "image": "07_time_series-cell-021-0.png"
+      }
+    ],
+    "08_deployment": [
+      {
+        "cell_id": "deployment-03",
+        "heading": "1. What crosses the boundary?",
+        "text": "Rows: 1800\n"
+      },
+      {
+        "cell_id": "deployment-03",
+        "heading": "1. What crosses the boundary?",
+        "text": "   tenure_months  monthly_charge  support_calls contract  churn\n0             10         86.0045              0   annual      0\n1             48         63.7697              1  monthly      0\n2             42        129.0949              1   annual      0"
+      },
+      {
+        "cell_id": "deployment-05",
+        "heading": "2. Fit once, choose a policy on validation",
+        "text": "Validation-selected threshold: 0.25\n"
+      },
+      {
+        "cell_id": "deployment-05",
+        "heading": "2. Fit once, choose a policy on validation",
+        "text": "    threshold   cost  alerts\n0        0.05  180.0     236\n1        0.10  160.0     198\n2        0.15  147.0     173\n3        0.20  144.0     128\n4        0.25  141.0     101\n5        0.30  157.0      87\n6        0.35  167.0      67\n7        0.40  189.0      47\n8        0.45  219.0      35\n9        0.50  249.0      23\n10       0.55  266.0      16\n11       0.60  273.0      11\n12       0.65  286.0       6\n13       0.70  291.0       5\n14       0.75  296.0       4\n15       0.80  305.0       1\n16       0.85  310.0       0\n17       0.90  310.0       0\n18       0.95  310.0       0"
+      },
+      {
+        "cell_id": "deployment-05",
+        "heading": "2. Fit once, choose a policy on validation",
+        "image": "08_deployment-deployment-05-2.png"
+      },
+      {
+        "cell_id": "deployment-07",
+        "heading": "3. Assess the frozen pipeline and save the same policy",
+        "text": "Saved: churn-181f14b661a6455bb253cd5a3d2eb346.joblib\n"
+      },
+      {
+        "cell_id": "deployment-07",
+        "heading": "3. Assess the frozen pipeline and save the same policy",
+        "text": "roc_auc        0.764312\nprecision      0.464286\nrecall         0.625000\ncost         270.000000\nName: Final test metrics, dtype: float64"
+      },
+      {
+        "cell_id": "deployment-09",
+        "heading": "4. A successful prediction before and after saving",
+        "text": "{'before_saving': 0.7378078852870725, 'after_loading': 0.7378078852870725, 'threshold': 0.25, 'decision': 1}\n"
+      },
+      {
+        "cell_id": "deployment-11",
+        "heading": "5. Send the same customer to the API",
+        "text": "HTTP status: 200\n{\n  \"churn_probability\": 0.7378078852870725,\n  \"threshold\": 0.25,\n  \"prediction\": 1\n}\nParity verified: before saving = after loading = API probability.\n"
+      },
+      {
+        "cell_id": "deployment-13",
+        "heading": "6. Reject an invalid request",
+        "text": "Invalid request status: 422\n{\n  \"detail\": [\n    {\n      \"type\": \"literal_error\",\n      \"loc\": [\n        \"body\",\n        \"contract\"\n      ],\n      \"msg\": \"Input should be 'monthly', 'annual' or 'two_year'\",\n      \"input\": \"quarterly\",\n      \"ctx\": {\n        \"expected\": \"'monthly', 'annual' or 'two_year'\"\n      }\n    }\n  ]\n}\n"
+      },
+      {
+        "cell_id": "deployment-15",
+        "heading": "7. Inspect the contract you will hand off",
+        "text": "artifact_format                                                        1\nfeatures               [tenure_months, monthly_charge, support_calls,...\ncontract_values                              [monthly, annual, two_year]\npositive_class                                                         1\nthreshold                                                           0.25\nmetrics                {'roc_auc': 0.7643119164072922, 'precision': 0...\nfit_rows                                                            1080\nvalidation_rows                                                      270\ntest_rows                                                            450\ndata_sha256            898c44641ba4d89be279e5739c7da2689230303499b67e...\ndependency_versions    {'python': '3.12.10', 'scikit_learn': '1.9.1',...\ndtype: object"
+      },
+      {
+        "cell_id": "deployment-15",
+        "heading": "7. Inspect the contract you will hand off",
+        "image": "08_deployment-deployment-15-1.png"
+      },
+      {
+        "cell_id": "deployment-17",
+        "heading": "Optional extension: track this exact artifact with MLflow",
+        "text": "Tracked the same saved artifact in run: 4c655f02312e4e7aa20de9c884684f40\n"
+      }
+    ]
+  }
+}

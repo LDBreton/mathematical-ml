@@ -1,249 +1,264 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Eight guided machine learning lectures for mathematicians: theory, readable Python, exercises and worked solutions."><title>Time-series forecasting: lesson · Mathematical ML</title><link rel="stylesheet" href="style.css"><script defer src="site.js"></script><script>window.MathJax={tex:{inlineMath:[['$','$'],['\\(','\\)']]}};</script><script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script></head><body><a class="skip" href="#main">Skip to content</a><header><button class="menu" aria-controls="sidebar" aria-expanded="false" aria-label="Toggle course navigation">☰</button><a class="brand" href="index.html">∑ <span>Mathematical ML</span></a><nav aria-label="Quick links"><a href="setup.html">Get started</a><a href="index.html#lectures">Lectures</a><button id="theme" aria-label="Switch color theme">◐</button></nav></header><div class="layout"><aside id="sidebar" aria-label="Course navigation"><a href="index.html">Course overview</a><h3>Start here</h3><a href="setup.html">Installation &amp; first steps</a><a href="first-steps.html">New to ML? Start here</a><h3>The lectures</h3><details><summary><a href="01_regression.html">01 · Regression</a></summary><a class="sub" href="01_regression-lesson.html">Lesson</a><a class="sub" href="01_regression-exercises.html">Exercises</a><a class="sub" href="01_regression-solutions.html">Solutions</a></details><details><summary><a href="02_classification.html">02 · Classification</a></summary><a class="sub" href="02_classification-lesson.html">Lesson</a><a class="sub" href="02_classification-exercises.html">Exercises</a><a class="sub" href="02_classification-solutions.html">Solutions</a></details><details><summary><a href="03_xgboost.html">03 · XGBoost</a></summary><a class="sub" href="03_xgboost-lesson.html">Lesson</a><a class="sub" href="03_xgboost-exercises.html">Exercises</a><a class="sub" href="03_xgboost-solutions.html">Solutions</a></details><details><summary><a href="04_imbalanced_learning.html">04 · Imbalanced learning</a></summary><a class="sub" href="04_imbalanced_learning-lesson.html">Lesson</a><a class="sub" href="04_imbalanced_learning-exercises.html">Exercises</a><a class="sub" href="04_imbalanced_learning-solutions.html">Solutions</a></details><details><summary><a href="05_text_classification.html">05 · Text classification</a></summary><a class="sub" href="05_text_classification-lesson.html">Lesson</a><a class="sub" href="05_text_classification-exercises.html">Exercises</a><a class="sub" href="05_text_classification-solutions.html">Solutions</a></details><details><summary><a href="06_clustering.html">06 · Clustering</a></summary><a class="sub" href="06_clustering-lesson.html">Lesson</a><a class="sub" href="06_clustering-exercises.html">Exercises</a><a class="sub" href="06_clustering-solutions.html">Solutions</a></details><details><summary><a href="07_time_series.html">07 · Time-series forecasting</a></summary><a class="sub" href="07_time_series-lesson.html">Lesson</a><a class="sub" href="07_time_series-exercises.html">Exercises</a><a class="sub" href="07_time_series-solutions.html">Solutions</a></details><details><summary><a href="08_deployment.html">08 · From model to service</a></summary><a class="sub" href="08_deployment-lesson.html">Lesson</a><a class="sub" href="08_deployment-exercises.html">Exercises</a><a class="sub" href="08_deployment-solutions.html">Solutions</a></details><h3>Resources</h3><a href="datasets.html">Datasets</a><a href="course-project.html">Course project</a><a href="instructor.html">Teaching guide</a><a href="verification.html">Verification</a></aside><main id="main"><div class="eyebrow">Lecture 07 / lesson</div><div class="actions"><a href="07_time_series.html">← Lecture guide</a><a href="downloads/07_time_series/lesson.ipynb" download>Download notebook</a></div><p class="note">This page is a reading view. To execute Python, download the complete course and open this notebook in Jupyter. <a href="first-steps.html">First notebook walkthrough →</a></p><details class="contents"><summary>On this page</summary><nav aria-label="Page contents"><a href="#section-1">Translate the information set into a forecast row</a><a href="#section-2">1. Conditional expectation is the optimal squared-error forecast</a><a href="#section-3">2. A time series has ordered information</a><a href="#section-4">3. Why an iid random split answers the wrong question</a><a href="#section-5">4. Generate features without looking forward</a><a href="#section-6">5. Chronological train, validation, and test boundaries</a><a href="#section-7">6. Expanding-window development backtest</a><a href="#section-8">7. Choose model complexity on validation only</a><a href="#section-9">8. Rolling one-step test evaluation</a><a href="#section-10">Limits and interpretation</a></nav></details><article class="reading"><section class="cell"><h1>Lecture 07 — Time-series forecasting: information, origins, and honest evaluation</h1>
-<p>We forecast synthetic daily sales from their past and from calendar values known in advance. The central mathematical object is a conditional expectation given the information available at a forecast origin. We will compare a seasonal-naive rule with an XGBoost model, and evaluate both in a rolling one-step-ahead setting.</p></section><section class="cell"><p><img alt="Teaching figure for time series" src="figures/07_time_series.svg" /></p>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Eight guided machine learning lectures for mathematicians: theory, readable Python, exercises and worked solutions."><title>Time-series forecasting: lesson · Mathematical ML</title><link rel="stylesheet" href="style.css"><script defer src="site.js"></script><script>window.MathJax={tex:{inlineMath:[['$','$'],['\\(','\\)']]}};</script><script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script></head><body><a class="skip" href="#main">Skip to content</a><header><button class="menu" aria-controls="sidebar" aria-expanded="false" aria-label="Toggle course navigation">☰</button><a class="brand" href="index.html">∑ <span>Mathematical ML</span></a><nav aria-label="Quick links"><a href="setup.html">Get started</a><a href="index.html#lectures">Lectures</a><button id="theme" aria-label="Switch color theme">◐</button></nav></header><div class="layout"><aside id="sidebar" aria-label="Course navigation"><a href="index.html">Course overview</a><h3>Start here</h3><a href="setup.html">Installation &amp; first steps</a><a href="first-steps.html">New to ML? Start here</a><h3>The lectures</h3><details><summary><a href="01_regression.html">01 · Regression</a></summary><a class="sub" href="01_regression-lesson.html">Lesson</a><a class="sub" href="01_regression-exercises.html">Exercises</a><a class="sub" href="01_regression-solutions.html">Solutions</a></details><details><summary><a href="02_classification.html">02 · Classification</a></summary><a class="sub" href="02_classification-lesson.html">Lesson</a><a class="sub" href="02_classification-exercises.html">Exercises</a><a class="sub" href="02_classification-solutions.html">Solutions</a></details><details><summary><a href="03_xgboost.html">03 · XGBoost</a></summary><a class="sub" href="03_xgboost-lesson.html">Lesson</a><a class="sub" href="03_xgboost-exercises.html">Exercises</a><a class="sub" href="03_xgboost-solutions.html">Solutions</a></details><details><summary><a href="04_imbalanced_learning.html">04 · Imbalanced learning</a></summary><a class="sub" href="04_imbalanced_learning-lesson.html">Lesson</a><a class="sub" href="04_imbalanced_learning-exercises.html">Exercises</a><a class="sub" href="04_imbalanced_learning-solutions.html">Solutions</a></details><details><summary><a href="05_text_classification.html">05 · Text classification</a></summary><a class="sub" href="05_text_classification-lesson.html">Lesson</a><a class="sub" href="05_text_classification-exercises.html">Exercises</a><a class="sub" href="05_text_classification-solutions.html">Solutions</a></details><details><summary><a href="06_clustering.html">06 · Clustering</a></summary><a class="sub" href="06_clustering-lesson.html">Lesson</a><a class="sub" href="06_clustering-exercises.html">Exercises</a><a class="sub" href="06_clustering-solutions.html">Solutions</a></details><details><summary><a href="07_time_series.html">07 · Time-series forecasting</a></summary><a class="sub" href="07_time_series-lesson.html">Lesson</a><a class="sub" href="07_time_series-exercises.html">Exercises</a><a class="sub" href="07_time_series-solutions.html">Solutions</a></details><details><summary><a href="08_deployment.html">08 · From model to service</a></summary><a class="sub" href="08_deployment-lesson.html">Lesson</a><a class="sub" href="08_deployment-exercises.html">Exercises</a><a class="sub" href="08_deployment-solutions.html">Solutions</a></details><h3>Resources</h3><a href="results.html">Executed result galleries</a><a href="datasets.html">Datasets</a><a href="course-project.html">Course project</a><a href="instructor.html">Teaching guide</a><a href="verification.html">Verification</a></aside><main id="main"><div class="eyebrow">Lecture 07 / lesson</div><div class="actions"><a href="07_time_series.html">← Lecture guide</a><a href="downloads/07_time_series/lesson.ipynb" download>Download notebook</a></div><p class="note">This page is a reading view. To execute Python, download the complete course and open this notebook in Jupyter. <a href="first-steps.html">First notebook walkthrough →</a></p><details class="contents"><summary>On this page</summary><nav aria-label="Page contents"><a href="#section-1">Translate the information set into a forecast row</a><a href="#section-2">1. Conditional expectation is the optimal squared-error forecast</a><a href="#section-3">2. A time series has ordered information</a><a href="#section-4">3. Why an iid random split answers the wrong question</a><a href="#section-5">4. Generate features without looking forward</a><a href="#section-6">Five concrete forecast rows</a><a href="#section-7">5. Chronological train, validation, and test boundaries</a><a href="#section-8">6. Expanding-window development backtest</a><a href="#section-9">7. Choose model complexity on validation only</a><a href="#section-10">8. Rolling one-step test evaluation</a><a href="#section-11">Limits and interpretation</a></nav></details><article class="reading"><section class="cell" id="cell-cell-000"><h1>Lecture 07 — Time-series forecasting: information, origins, and honest evaluation</h1>
+<p>We forecast synthetic daily sales from their past and from calendar values known in advance. The central mathematical object is a conditional expectation given the information available at a forecast origin. We will compare a seasonal-naive rule with an XGBoost model, and evaluate both in a rolling one-step-ahead setting.</p></section><section class="cell" id="cell-beginner-bridge"><p><img alt="Teaching figure for time series" src="figures/07_time_series.svg" /></p>
 <p><em>The supplied synthetic series with illustrative 70/15/15 boundaries on raw rows. The notebook splits usable lagged rows, so its exact boundaries differ.</em></p>
 <h2 id="section-1">Translate the information set into a forecast row</h2>
 <p>We predict the sales for date $t$ after observing date $t-1$. For example, to predict January 9 after January 8 closes, <code>lag_1</code> is January 8 sales and <code>lag_7</code> is January 2 sales. The seven-day mean uses January 2 through January 8. January 9 sales must appear only as the target, never inside those features.</p>
 <p><code>shift(1)</code> moves each observed value into the next row, aligning yesterday's observation with today's target. A rolling mean without this shift would include today's target and leak it into the inputs. Calendar values, such as the weekday for January 9, are known in advance.</p>
-<p>During rolling one-step test evaluation, a completed test day's actual sales become available for the next day's lag features. The model parameters remain fixed. Predicting an entire future month before observing any of it is a different problem. The expanding-window section additionally refits models at several development origins; follow its input and output partitions carefully.</p></section><section class="cell"><h2 id="section-2">1. Conditional expectation is the optimal squared-error forecast</h2>
+<p>During rolling one-step test evaluation, a completed test day's actual sales become available for the next day's lag features. The model parameters remain fixed. Predicting an entire future month before observing any of it is a different problem. The expanding-window section additionally refits models at several development origins; follow its input and output partitions carefully.</p></section><section class="cell" id="cell-cell-001"><h2 id="section-2">1. Conditional expectation is the optimal squared-error forecast</h2>
 <p>Let $(\Omega,\mathcal A,\mathbb P)$ be a probability space, assume $Y_{t+h}\in L^2(\Omega,\mathcal A,\mathbb P)$, and let $Y_{t+h}$ be the value to forecast at origin $t$ and horizon $h$. The information available at the origin is a sigma-algebra $\mathcal F_t\subseteq\mathcal A$. For any $g\in L^2(\Omega,\mathcal A,\mathbb P)$ that is $\mathcal F_t$-measurable, condition on the information:</p>
 <p>$$\mathbb E[(Y_{t+h}-g)^2\mid\mathcal F_t]
 =\operatorname{Var}(Y_{t+h}\mid\mathcal F_t)
 +\left(g-\mathbb E[Y_{t+h}\mid\mathcal F_t]\right)^2.$$</p>
 <p>Thus the minimum-risk forecast is the conditional mean $\hat Y_{t+h\mid t}=\mathbb E[Y_{t+h}\mid\mathcal F_t]$ (up to almost-sure equality). A forecast is a function of what is known at its origin. If a predictor uses a realized value from after $t$, it is not $\mathcal F_t$-measurable and does not describe a forecast that could have been issued then.</p>
-<p>For absolute-error loss, a conditional median is optimal. We will report MAE and RMSE: both are interpretable in sales units, and RMSE gives larger misses more weight. We do not use MAPE because its percentage errors behave poorly near a zero response.</p></section><section class="cell"><h2 id="section-3">2. A time series has ordered information</h2>
+<p>For absolute-error loss, a conditional median is optimal. We will report MAE and RMSE: both are interpretable in sales units, and RMSE gives larger misses more weight. We do not use MAPE because its percentage errors behave poorly near a zero response.</p></section><section class="cell" id="cell-cell-002"><h2 id="section-3">2. A time series has ordered information</h2>
 <p>The filtration $\mathcal F_0\subseteq\mathcal F_1\subseteq\cdots$ represents information accumulating through time. Here it includes past observed sales $Y_s$ for $s\leq t$ and calendar values (weekday and day of year) that are known for future dates. It does not include future sales.</p>
 <p>An autoregression of order $p$ uses a lag window such as</p>
 <p>$$\hat Y_{t+1\mid t}=f(Y_t,Y_{t-1},\ldots,Y_{t-p+1},\text{calendar}_{t+1}).$$</p>
-<p>Lagged features let a nonlinear model use recent level, weekly recurrence, and other history. The 7-day seasonal-naive forecast is $\hat Y_{t+1\mid t}=Y_{t-6}$, the most recent observation on the same weekday. It is a transparent baseline, not a fitted model.</p></section><section class="cell"><h2 id="section-4">3. Why an iid random split answers the wrong question</h2>
+<p>Lagged features let a nonlinear model use recent level, weekly recurrence, and other history. The 7-day seasonal-naive forecast is $\hat Y_{t+1\mid t}=Y_{t-6}$, the most recent observation on the same weekday. It is a transparent baseline, not a fitted model.</p></section><section class="cell" id="cell-cell-003"><h2 id="section-4">3. Why an iid random split answers the wrong question</h2>
 <p>A random split usually allows training and test rows to be interleaved. Adjacent dates can be nearly duplicates in their history, and a model can train on dates later than a test date. This estimates performance on randomly hidden rows under an exchangeability assumption. Forecasting asks about future dates from an earlier information set, so we hold out contiguous future blocks and preserve their order.</p>
-<p>Our primary scenario is explicit: at each test date $t$, issue a one-day-ahead forecast, then observe $Y_t$ before issuing the next forecast. The model parameters remain fixed after training, but the lag features update with each newly observed actual. This is a rolling-origin, one-step evaluation. A fixed-origin 30-day forecast would have to recursively feed its own predictions into future lags (or use a direct horizon-specific model); it cannot use actual sales from within those 30 days.</p></section><section class="cell"><h2 id="section-5">4. Generate features without looking forward</h2>
+<p>Our primary scenario is explicit: at each test date $t$, issue a one-day-ahead forecast, then observe $Y_t$ before issuing the next forecast. The model parameters remain fixed after training, but the lag features update with each newly observed actual. This is a rolling-origin, one-step evaluation. A fixed-origin 30-day forecast would have to recursively feed its own predictions into future lags (or use a direct horizon-specific model); it cannot use actual sales from within those 30 days.</p></section><section class="cell" id="cell-cell-004"><h2 id="section-5">4. Generate features without looking forward</h2>
 <p>The lag for date $t$ is $Y_{t-k}$. A rolling mean over the previous 7 observed days is $\frac17\sum_{j=1}^7Y_{t-j}$. In pandas, compute it as <code>sales.shift(1).rolling(7).mean()</code>; shifting before rolling excludes $Y_t$. Calendar features are deterministic functions of the target date and are available in advance.</p>
-<p>The dataset is a pedagogical simulation, not business data. Its generator uses a fixed seed and the equation documented in <code>sales_dataset.md</code>. We load it from a path helper so every notebook works from either the repository root or its own folder.</p></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>from pathlib import Path
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
+<p>The dataset is a pedagogical simulation, not business data. Its generator uses a fixed seed and the equation documented in <code>sales_dataset.md</code>. We load it from a path helper so every notebook works from either the repository root or its own folder.</p></section><section class="cell" id="cell-cell-005"><div class="cell-label">Python · run in the notebook</div><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
 
 
-def find_data_file(filename):
-    &quot;&quot;&quot;Search this directory and its parents for a file under data/.&quot;&quot;&quot;
-    for directory in (Path.cwd(), *Path.cwd().parents):
-        candidate = directory / &quot;data&quot; / filename
-        if candidate.exists():
-            return candidate
-    raise FileNotFoundError(f&quot;Could not find data/{filename} from {Path.cwd()}&quot;)
+<span class="k">def</span><span class="w"> </span><span class="nf">find_data_file</span><span class="p">(</span><span class="n">filename</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Search this directory and its parents for a file under data/."""</span>
+    <span class="k">for</span> <span class="n">directory</span> <span class="ow">in</span> <span class="p">(</span><span class="n">Path</span><span class="o">.</span><span class="n">cwd</span><span class="p">(),</span> <span class="o">*</span><span class="n">Path</span><span class="o">.</span><span class="n">cwd</span><span class="p">()</span><span class="o">.</span><span class="n">parents</span><span class="p">):</span>
+        <span class="n">candidate</span> <span class="o">=</span> <span class="n">directory</span> <span class="o">/</span> <span class="s2">"data"</span> <span class="o">/</span> <span class="n">filename</span>
+        <span class="k">if</span> <span class="n">candidate</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="k">return</span> <span class="n">candidate</span>
+    <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Could not find data/</span><span class="si">{</span><span class="n">filename</span><span class="si">}</span><span class="s2"> from </span><span class="si">{</span><span class="n">Path</span><span class="o">.</span><span class="n">cwd</span><span class="p">()</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
 
-sales_data = pd.read_csv(find_data_file(&quot;daily_sales.csv&quot;), parse_dates=[&quot;date&quot;])
-sales_data = sales_data.sort_values(&quot;date&quot;).reset_index(drop=True)
-assert sales_data[&quot;date&quot;].is_monotonic_increasing and sales_data[&quot;date&quot;].is_unique
-sales_data.head()</code></pre></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>def make_forecasting_features(data):
-    &quot;&quot;&quot;Build rolling one-step predictors using only observations before each date.&quot;&quot;&quot;
-    frame = data[[&quot;date&quot;, &quot;sales&quot;]].copy().sort_values(&quot;date&quot;).reset_index(drop=True)
-    day = frame[&quot;date&quot;].dt.dayofweek.to_numpy()
-    frame[&quot;weekday_sin&quot;] = np.sin(2 * np.pi * day / 7)
-    frame[&quot;weekday_cos&quot;] = np.cos(2 * np.pi * day / 7)
-    frame[&quot;year_day_sin&quot;] = np.sin(2 * np.pi * frame[&quot;date&quot;].dt.dayofyear / 365.25)
-    frame[&quot;year_day_cos&quot;] = np.cos(2 * np.pi * frame[&quot;date&quot;].dt.dayofyear / 365.25)
-    for lag in (1, 2, 7, 14, 28):
-        frame[f&quot;lag_{lag}&quot;] = frame[&quot;sales&quot;].shift(lag)
-    frame[&quot;mean_7_before&quot;] = frame[&quot;sales&quot;].shift(1).rolling(7).mean()
-    frame[&quot;mean_28_before&quot;] = frame[&quot;sales&quot;].shift(1).rolling(28).mean()
-    return frame.dropna().reset_index(drop=True)
+<span class="n">sales_data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">find_data_file</span><span class="p">(</span><span class="s2">"daily_sales.csv"</span><span class="p">),</span> <span class="n">parse_dates</span><span class="o">=</span><span class="p">[</span><span class="s2">"date"</span><span class="p">])</span>
+<span class="n">sales_data</span> <span class="o">=</span> <span class="n">sales_data</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="s2">"date"</span><span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">sales_data</span><span class="p">[</span><span class="s2">"date"</span><span class="p">]</span><span class="o">.</span><span class="n">is_monotonic_increasing</span> <span class="ow">and</span> <span class="n">sales_data</span><span class="p">[</span><span class="s2">"date"</span><span class="p">]</span><span class="o">.</span><span class="n">is_unique</span>
+<span class="n">sales_data</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+</pre></div>
+<details class="result-text"><summary>4. Generate features without looking forward · computed output</summary><pre>        date    sales
+0 2023-01-01  1084.81
+1 2023-01-02   857.27
+2 2023-01-03   837.36
+3 2023-01-04   824.92
+4 2023-01-05   893.70</pre></details></section><section class="cell" id="cell-cell-006"><div class="cell-label">Python · run in the notebook</div><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">make_forecasting_features</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Build rolling one-step predictors using only observations before each date."""</span>
+    <span class="n">frame</span> <span class="o">=</span> <span class="n">data</span><span class="p">[[</span><span class="s2">"date"</span><span class="p">,</span> <span class="s2">"sales"</span><span class="p">]]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="s2">"date"</span><span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">day</span> <span class="o">=</span> <span class="n">frame</span><span class="p">[</span><span class="s2">"date"</span><span class="p">]</span><span class="o">.</span><span class="n">dt</span><span class="o">.</span><span class="n">dayofweek</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span>
+    <span class="n">frame</span><span class="p">[</span><span class="s2">"weekday_sin"</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">day</span> <span class="o">/</span> <span class="mi">7</span><span class="p">)</span>
+    <span class="n">frame</span><span class="p">[</span><span class="s2">"weekday_cos"</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">day</span> <span class="o">/</span> <span class="mi">7</span><span class="p">)</span>
+    <span class="n">frame</span><span class="p">[</span><span class="s2">"year_day_sin"</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">frame</span><span class="p">[</span><span class="s2">"date"</span><span class="p">]</span><span class="o">.</span><span class="n">dt</span><span class="o">.</span><span class="n">dayofyear</span> <span class="o">/</span> <span class="mf">365.25</span><span class="p">)</span>
+    <span class="n">frame</span><span class="p">[</span><span class="s2">"year_day_cos"</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">frame</span><span class="p">[</span><span class="s2">"date"</span><span class="p">]</span><span class="o">.</span><span class="n">dt</span><span class="o">.</span><span class="n">dayofyear</span> <span class="o">/</span> <span class="mf">365.25</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">lag</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">14</span><span class="p">,</span> <span class="mi">28</span><span class="p">):</span>
+        <span class="n">frame</span><span class="p">[</span><span class="sa">f</span><span class="s2">"lag_</span><span class="si">{</span><span class="n">lag</span><span class="si">}</span><span class="s2">"</span><span class="p">]</span> <span class="o">=</span> <span class="n">frame</span><span class="p">[</span><span class="s2">"sales"</span><span class="p">]</span><span class="o">.</span><span class="n">shift</span><span class="p">(</span><span class="n">lag</span><span class="p">)</span>
+    <span class="n">frame</span><span class="p">[</span><span class="s2">"mean_7_before"</span><span class="p">]</span> <span class="o">=</span> <span class="n">frame</span><span class="p">[</span><span class="s2">"sales"</span><span class="p">]</span><span class="o">.</span><span class="n">shift</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">rolling</span><span class="p">(</span><span class="mi">7</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+    <span class="n">frame</span><span class="p">[</span><span class="s2">"mean_28_before"</span><span class="p">]</span> <span class="o">=</span> <span class="n">frame</span><span class="p">[</span><span class="s2">"sales"</span><span class="p">]</span><span class="o">.</span><span class="n">shift</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">rolling</span><span class="p">(</span><span class="mi">28</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">frame</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
 
-feature_data = make_forecasting_features(sales_data)
-feature_columns = [
-    column for column in feature_data.columns if column not in (&quot;date&quot;, &quot;sales&quot;)
-]
-feature_data[[&quot;date&quot;, &quot;sales&quot;, &quot;lag_1&quot;, &quot;lag_7&quot;, &quot;mean_7_before&quot;, &quot;weekday_sin&quot;]].head()</code></pre></section><section class="cell"><p>Verify the boundary: the first complete row has 28 past observations. <code>lag_1</code> is the preceding day's observed sales, while <code>mean_7_before</code> excludes the row's own target. The calendar fields are known for the forecast date.</p></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>first_row = feature_data.iloc[0]
-assert np.isclose(first_row[&quot;lag_1&quot;], sales_data.loc[27, &quot;sales&quot;])
-assert np.isclose(first_row[&quot;mean_7_before&quot;], sales_data.loc[21:27, &quot;sales&quot;].mean())
-assert len(feature_data) == len(sales_data) - 28
-print(&quot;Feature boundary checks passed:&quot;, first_row[&quot;date&quot;].date())</code></pre></section><section class="cell"><p>A useful leakage test is to perturb outcomes strictly after one origin and verify that the earlier origin's features do not change.</p></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>origin_raw_index = 200
-origin_feature_index = origin_raw_index - 28
-future_perturbation = sales_data.copy()
-future_perturbation.loc[origin_raw_index + 1 :, &quot;sales&quot;] += 10000
-perturbed_features = make_forecasting_features(future_perturbation)
-predictor_columns = [
-    column for column in feature_data.columns if column not in (&quot;date&quot;, &quot;sales&quot;)
-]
-np.testing.assert_allclose(
-    feature_data.loc[origin_feature_index, predictor_columns].to_numpy(dtype=float),
-    perturbed_features.loc[origin_feature_index, predictor_columns].to_numpy(
-        dtype=float
-    ),
-)
-print(&quot;Future perturbations leave origin features unchanged.&quot;)</code></pre></section><section class="cell"><h2 id="section-6">5. Chronological train, validation, and test boundaries</h2>
-<p>We use the earliest 70% of usable feature rows for training, the next 15% for validation, and the final 15% for test. Validation chooses XGBoost's boosting-round count through early stopping. The test block is untouched until the model and baseline are scored. Since this is rolling one-step evaluation, test-row lags may contain sales observed earlier in the test block: those observations are available at those later origins. The trained model is not refit on test outcomes.</p></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>n_rows = len(feature_data)
-train_end = int(0.70 * n_rows)
-validation_end = int(0.85 * n_rows)
-train_data = feature_data.iloc[:train_end].copy()
-validation_data = feature_data.iloc[train_end:validation_end].copy()
-test_data = feature_data.iloc[validation_end:].copy()
+<span class="n">feature_data</span> <span class="o">=</span> <span class="n">make_forecasting_features</span><span class="p">(</span><span class="n">sales_data</span><span class="p">)</span>
+<span class="n">feature_columns</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">column</span> <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="n">feature_data</span><span class="o">.</span><span class="n">columns</span> <span class="k">if</span> <span class="n">column</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"date"</span><span class="p">,</span> <span class="s2">"sales"</span><span class="p">)</span>
+<span class="p">]</span>
+<span class="n">feature_data</span><span class="p">[[</span><span class="s2">"date"</span><span class="p">,</span> <span class="s2">"sales"</span><span class="p">,</span> <span class="s2">"lag_1"</span><span class="p">,</span> <span class="s2">"lag_7"</span><span class="p">,</span> <span class="s2">"mean_7_before"</span><span class="p">,</span> <span class="s2">"weekday_sin"</span><span class="p">]]</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+</pre></div>
+<details class="result-text"><summary>4. Generate features without looking forward · computed output</summary><pre>        date    sales    lag_1    lag_7  mean_7_before  weekday_sin
+0 2023-01-29  1128.91  1090.04  1068.30    1010.350000    -0.781831
+1 2023-01-30   962.44  1128.91   929.07    1019.008571     0.000000
+2 2023-01-31   997.18   962.44   832.95    1023.775714     0.781831
+3 2023-02-01   857.27   997.18  1031.74    1047.237143     0.974928
+4 2023-02-02   927.99   857.27  1062.29    1022.312857     0.433884</pre></details></section><section class="cell" id="cell-forecast-five-rows"><h3 id="section-6">Five concrete forecast rows</h3>
+<p>The origin is the last observed date, one day before the target date. Each row below names the most recent available observation and the seven-day lag. Target sales are shown for checking alignment after the event, and are excluded from the predictor columns.</p></section><section class="cell" id="cell-forecast-five-rows-code"><div class="cell-label">Python · run in the notebook</div><div class="highlight"><pre><span></span><span class="n">worked_dates</span> <span class="o">=</span> <span class="n">feature_data</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+<span class="n">worked_dates</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s2">"origin_date"</span><span class="p">,</span> <span class="n">worked_dates</span><span class="o">.</span><span class="n">date</span> <span class="o">-</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
+<span class="n">worked_dates</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="s2">"lag_7_date"</span><span class="p">,</span> <span class="n">worked_dates</span><span class="o">.</span><span class="n">date</span> <span class="o">-</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="mi">7</span><span class="p">))</span>
+<span class="n">display</span><span class="p">(</span><span class="n">worked_dates</span><span class="p">[[</span><span class="s2">"origin_date"</span><span class="p">,</span> <span class="s2">"date"</span><span class="p">,</span> <span class="s2">"lag_7_date"</span><span class="p">,</span> <span class="s2">"lag_1"</span><span class="p">,</span> <span class="s2">"lag_7"</span><span class="p">,</span> <span class="s2">"mean_7_before"</span><span class="p">,</span> <span class="s2">"sales"</span><span class="p">]])</span>
+</pre></div>
+<details class="result-text"><summary>4. Generate features without looking forward · computed output</summary><pre>  origin_date       date lag_7_date    lag_1    lag_7  mean_7_before    sales
+0  2023-01-28 2023-01-29 2023-01-22  1090.04  1068.30    1010.350000  1128.91
+1  2023-01-29 2023-01-30 2023-01-23  1128.91   929.07    1019.008571   962.44
+2  2023-01-30 2023-01-31 2023-01-24   962.44   832.95    1023.775714   997.18
+3  2023-01-31 2023-02-01 2023-01-25   997.18  1031.74    1047.237143   857.27
+4  2023-02-01 2023-02-02 2023-01-26   857.27  1062.29    1022.312857   927.99</pre></details></section><section class="cell" id="cell-cell-007"><p>Verify the boundary: the first complete row has 28 past observations. <code>lag_1</code> is the preceding day's observed sales, while <code>mean_7_before</code> excludes the row's own target. The calendar fields are known for the forecast date.</p></section><section class="cell" id="cell-cell-008"><div class="cell-label">Python · run in the notebook</div><div class="highlight"><pre><span></span><span class="n">first_row</span> <span class="o">=</span> <span class="n">feature_data</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">first_row</span><span class="p">[</span><span class="s2">"lag_1"</span><span class="p">],</span> <span class="n">sales_data</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="mi">27</span><span class="p">,</span> <span class="s2">"sales"</span><span class="p">])</span>
+<span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">first_row</span><span class="p">[</span><span class="s2">"mean_7_before"</span><span class="p">],</span> <span class="n">sales_data</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="mi">21</span><span class="p">:</span><span class="mi">27</span><span class="p">,</span> <span class="s2">"sales"</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span>
+<span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">feature_data</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">sales_data</span><span class="p">)</span> <span class="o">-</span> <span class="mi">28</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Feature boundary checks passed:"</span><span class="p">,</span> <span class="n">first_row</span><span class="p">[</span><span class="s2">"date"</span><span class="p">]</span><span class="o">.</span><span class="n">date</span><span class="p">())</span>
+</pre></div>
+<details class="result-text"><summary>4. Generate features without looking forward · computed output</summary><pre>Feature boundary checks passed: 2023-01-29
+</pre></details></section><section class="cell" id="cell-cell-009"><p>A useful leakage test is to perturb outcomes strictly after one origin and verify that the earlier origin's features do not change.</p></section><section class="cell" id="cell-cell-010"><div class="cell-label">Python · run in the notebook</div><div class="highlight"><pre><span></span><span class="n">origin_raw_index</span> <span class="o">=</span> <span class="mi">200</span>
+<span class="n">origin_feature_index</span> <span class="o">=</span> <span class="n">origin_raw_index</span> <span class="o">-</span> <span class="mi">28</span>
+<span class="n">future_perturbation</span> <span class="o">=</span> <span class="n">sales_data</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+<span class="n">future_perturbation</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">origin_raw_index</span> <span class="p">:,</span> <span class="s2">"sales"</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">10000</span>
+<span class="n">perturbed_features</span> <span class="o">=</span> <span class="n">make_forecasting_features</span><span class="p">(</span><span class="n">future_perturbation</span><span class="p">)</span>
+<span class="n">predictor_columns</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">column</span> <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="n">feature_data</span><span class="o">.</span><span class="n">columns</span> <span class="k">if</span> <span class="n">column</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"date"</span><span class="p">,</span> <span class="s2">"sales"</span><span class="p">)</span>
+<span class="p">]</span>
+<span class="n">np</span><span class="o">.</span><span class="n">testing</span><span class="o">.</span><span class="n">assert_allclose</span><span class="p">(</span>
+    <span class="n">feature_data</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">origin_feature_index</span><span class="p">,</span> <span class="n">predictor_columns</span><span class="p">]</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">),</span>
+    <span class="n">perturbed_features</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">origin_feature_index</span><span class="p">,</span> <span class="n">predictor_columns</span><span class="p">]</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">(</span>
+        <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span>
+    <span class="p">),</span>
+<span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Changing the target at the forecast date and all future targets leaves its predictors unchanged."</span><span class="p">)</span>
+</pre></div>
+<details class="result-text"><summary>4. Generate features without looking forward · computed output</summary><pre>Changing the target at the forecast date and all future targets leaves its predictors unchanged.
+</pre></details></section><section class="cell" id="cell-cell-011"><h2 id="section-7">5. Chronological train, validation, and test boundaries</h2>
+<p>We use the earliest 70% of usable feature rows for training, the next 15% for validation, and the final 15% for test. Validation chooses XGBoost's boosting-round count through early stopping. The test block is untouched until the model and baseline are scored. Since this is rolling one-step evaluation, test-row lags may contain sales observed earlier in the test block: those observations are available at those later origins. The trained model is not refit on test outcomes.</p></section><section class="cell" id="cell-cell-012"><div class="cell-label">Python · run in the notebook</div><div class="highlight"><pre><span></span><span class="n">n_rows</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">feature_data</span><span class="p">)</span>
+<span class="n">train_end</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="mf">0.70</span> <span class="o">*</span> <span class="n">n_rows</span><span class="p">)</span>
+<span class="n">validation_end</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="mf">0.85</span> <span class="o">*</span> <span class="n">n_rows</span><span class="p">)</span>
+<span class="n">train_data</span> <span class="o">=</span> <span class="n">feature_data</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:</span><span class="n">train_end</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+<span class="n">validation_data</span> <span class="o">=</span> <span class="n">feature_data</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">train_end</span><span class="p">:</span><span class="n">validation_end</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+<span class="n">test_data</span> <span class="o">=</span> <span class="n">feature_data</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">validation_end</span><span class="p">:]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
 
-boundary_table = pd.DataFrame(
-    {
-        &quot;partition&quot;: [&quot;train&quot;, &quot;validation&quot;, &quot;test&quot;],
-        &quot;rows&quot;: [len(train_data), len(validation_data), len(test_data)],
-        &quot;first_date&quot;: [
-            part[&quot;date&quot;].min().date()
-            for part in (train_data, validation_data, test_data)
-        ],
-        &quot;last_date&quot;: [
-            part[&quot;date&quot;].max().date()
-            for part in (train_data, validation_data, test_data)
-        ],
-    }
-)
-boundary_table</code></pre></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>fig, ax = plt.subplots(figsize=(11, 2.5))
-ax.plot(sales_data[&quot;date&quot;], sales_data[&quot;sales&quot;], color=&quot;0.55&quot;, lw=1)
-partitions = (
-    (train_data, &quot;#2563eb&quot;, &quot;train&quot;),
-    (validation_data, &quot;#f59e0b&quot;, &quot;validation&quot;),
-    (test_data, &quot;#dc2626&quot;, &quot;test&quot;),
-)
-for part, color, label in partitions:
-    ax.axvspan(
-        part[&quot;date&quot;].min(), part[&quot;date&quot;].max(), color=color, alpha=0.13, label=label
-    )
-ax.set(title=&quot;Chronological forecast partitions&quot;, ylabel=&quot;daily sales&quot;)
-ax.legend(ncol=3, frameon=False)
-fig.autofmt_xdate()
-plt.show()</code></pre></section><section class="cell"><h2 id="section-7">6. Expanding-window development backtest</h2>
-<p>A single boundary can make the result depend on one especially easy or difficult season. We can inspect several forecast origins that all lie before the final test boundary. At each origin, use an expanding training history, reserve the following contiguous block as an inner validation block for early stopping, then score the next contiguous block as rolling one-step forecasts. No final-test rows enter this backtest. Because the model is refit at each origin, it answers a different deployment question than the fixed-model final split above.</p></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>from xgboost import XGBRegressor
-from sklearn.metrics import mean_absolute_error, mean_squared_error
+<span class="n">boundary_table</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+    <span class="p">{</span>
+        <span class="s2">"partition"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"train"</span><span class="p">,</span> <span class="s2">"validation"</span><span class="p">,</span> <span class="s2">"test"</span><span class="p">],</span>
+        <span class="s2">"rows"</span><span class="p">:</span> <span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">train_data</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">validation_data</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">test_data</span><span class="p">)],</span>
+        <span class="s2">"first_date"</span><span class="p">:</span> <span class="p">[</span>
+            <span class="n">part</span><span class="p">[</span><span class="s2">"date"</span><span class="p">]</span><span class="o">.</span><span class="n">min</span><span class="p">()</span><span class="o">.</span><span class="n">date</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">part</span> <span class="ow">in</span> <span class="p">(</span><span class="n">train_data</span><span class="p">,</span> <span class="n">validation_data</span><span class="p">,</span> <span class="n">test_data</span><span class="p">)</span>
+        <span class="p">],</span>
+        <span class="s2">"last_date"</span><span class="p">:</span> <span class="p">[</span>
+            <span class="n">part</span><span class="p">[</span><span class="s2">"date"</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">.</span><span class="n">date</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">part</span> <span class="ow">in</span> <span class="p">(</span><span class="n">train_data</span><span class="p">,</span> <span class="n">validation_data</span><span class="p">,</span> <span class="n">test_data</span><span class="p">)</span>
+        <span class="p">],</span>
+    <span class="p">}</span>
+<span class="p">)</span>
+<span class="n">boundary_table</span>
+</pre></div>
+<details class="result-text"><summary>5. Chronological train, validation, and test boundaries · computed output</summary><pre>    partition  rows  first_date   last_date
+0       train   680  2023-01-29  2024-12-08
+1  validation   146  2024-12-09  2025-05-03
+2        test   146  2025-05-04  2025-09-26</pre></details></section><section class="cell" id="cell-cell-013"><div class="cell-label">Python · run in the notebook</div><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">11</span><span class="p">,</span> <span class="mf">2.5</span><span class="p">))</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">sales_data</span><span class="p">[</span><span class="s2">"date"</span><span class="p">],</span> <span class="n">sales_data</span><span class="p">[</span><span class="s2">"sales"</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="s2">"0.55"</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">partitions</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="p">(</span><span class="n">train_data</span><span class="p">,</span> <span class="s2">"#2563eb"</span><span class="p">,</span> <span class="s2">"train"</span><span class="p">),</span>
+    <span class="p">(</span><span class="n">validation_data</span><span class="p">,</span> <span class="s2">"#f59e0b"</span><span class="p">,</span> <span class="s2">"validation"</span><span class="p">),</span>
+    <span class="p">(</span><span class="n">test_data</span><span class="p">,</span> <span class="s2">"#dc2626"</span><span class="p">,</span> <span class="s2">"test"</span><span class="p">),</span>
+<span class="p">)</span>
+<span class="k">for</span> <span class="n">part</span><span class="p">,</span> <span class="n">color</span><span class="p">,</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">partitions</span><span class="p">:</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">axvspan</span><span class="p">(</span>
+        <span class="n">part</span><span class="p">[</span><span class="s2">"date"</span><span class="p">]</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span> <span class="n">part</span><span class="p">[</span><span class="s2">"date"</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">(),</span> <span class="n">color</span><span class="o">=</span><span class="n">color</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.13</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">label</span>
+    <span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="s2">"Chronological forecast partitions"</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s2">"daily sales"</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">ncol</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">frameon</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">autofmt_xdate</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+<figure class="result-figure"><img loading="lazy" src="results/07_time_series-cell-013-0.png" alt="Executed result: 5. Chronological train, validation, and test boundaries"><figcaption>5. Chronological train, validation, and test boundaries · captured notebook output</figcaption></figure></section><section class="cell" id="cell-cell-014"><h2 id="section-8">6. Expanding-window development backtest</h2>
+<p>A single boundary can make the result depend on one especially easy or difficult season. We can inspect several forecast origins that all lie before the final test boundary. At each origin, use an expanding training history, reserve the following contiguous block as an inner validation block for early stopping, then score the next contiguous block as rolling one-step forecasts. No final-test rows enter this backtest. Because the model is refit at each origin, it answers a different deployment question than the fixed-model final split above.</p></section><section class="cell" id="cell-cell-015"><div class="cell-label">Python · run in the notebook</div><div class="highlight"><pre><span></span><span class="c1"># Optional extension: implementation is in src/course_ml/forecasting.py.</span>
+<span class="c1"># Read the main chronological experiment first if you are new to forecasting.</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">find_data_file</span><span class="p">(</span><span class="s2">"daily_sales.csv"</span><span class="p">)</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">parent</span> <span class="o">/</span> <span class="s2">"src"</span><span class="p">))</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">course_ml.forecasting</span><span class="w"> </span><span class="kn">import</span> <span class="n">rolling_development_backtest</span>
 
+<span class="c1"># Development ends where the final test begins; folds never inspect the final test block.</span>
+<span class="n">development_folds</span> <span class="o">=</span> <span class="n">rolling_development_backtest</span><span class="p">(</span>
+    <span class="n">feature_data</span><span class="p">,</span>
+    <span class="n">feature_columns</span><span class="p">,</span>
+    <span class="n">development_end</span><span class="o">=</span><span class="n">validation_end</span><span class="p">,</span>
+    <span class="n">initial_train_size</span><span class="o">=</span><span class="mi">350</span><span class="p">,</span>
+    <span class="n">validation_size</span><span class="o">=</span><span class="mi">70</span><span class="p">,</span>
+    <span class="n">test_size</span><span class="o">=</span><span class="mi">70</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">development_folds</span>
+</pre></div>
+<details class="result-text"><summary>6. Expanding-window development backtest · computed output</summary><pre>   fold fit_through validation_through evaluation_start evaluation_end  \
+0     1  2024-01-13         2024-03-23       2024-03-24     2024-06-01   
+1     2  2024-03-23         2024-06-01       2024-06-02     2024-08-10   
+2     3  2024-06-01         2024-08-10       2024-08-11     2024-10-19   
+3     4  2024-08-10         2024-10-19       2024-10-20     2024-12-28   
+4     5  2024-10-19         2024-12-28       2024-12-29     2025-03-08   
 
-def rolling_development_backtest(
-    data,
-    feature_names,
-    development_end,
-    initial_train_size,
-    validation_size,
-    test_size,
-):
-    &quot;&quot;&quot;Expanding refits; each fold selects rounds on its own inner validation dates.&quot;&quot;&quot;
-    rows = []
-    origin = initial_train_size
-    fold = 1
-    while origin + validation_size + test_size &lt;= development_end:
-        training = data.iloc[:origin]
-        validation = data.iloc[origin : origin + validation_size]
-        evaluation = data.iloc[
-            origin + validation_size : origin + validation_size + test_size
-        ]
-        fold_model = XGBRegressor(
-            objective=&quot;reg:squarederror&quot;,
-            n_estimators=400,
-            learning_rate=0.04,
-            max_depth=3,
-            min_child_weight=5,
-            reg_lambda=5.0,
-            early_stopping_rounds=20,
-            eval_metric=&quot;rmse&quot;,
-            random_state=17,
-            n_jobs=2,
-        )
-        fold_model.fit(
-            training[feature_names],
-            training[&quot;sales&quot;],
-            eval_set=[(validation[feature_names], validation[&quot;sales&quot;])],
-            verbose=False,
-        )
-        predicted = fold_model.predict(evaluation[feature_names])
-        actual = evaluation[&quot;sales&quot;].to_numpy()
-        naive = evaluation[&quot;lag_7&quot;].to_numpy()
-        rows.append(
-            {
-                &quot;fold&quot;: fold,
-                &quot;fit_through&quot;: training[&quot;date&quot;].max().date(),
-                &quot;validation_through&quot;: validation[&quot;date&quot;].max().date(),
-                &quot;evaluation_start&quot;: evaluation[&quot;date&quot;].min().date(),
-                &quot;evaluation_end&quot;: evaluation[&quot;date&quot;].max().date(),
-                &quot;selected_rounds&quot;: fold_model.best_iteration + 1,
-                &quot;MAE&quot;: mean_absolute_error(actual, predicted),
-                &quot;RMSE&quot;: mean_squared_error(actual, predicted) ** 0.5,
-                &quot;seasonal_naive_MAE&quot;: mean_absolute_error(actual, naive),
-                &quot;seasonal_naive_RMSE&quot;: mean_squared_error(actual, naive) ** 0.5,
-            }
-        )
-        fold += 1
-        origin += test_size
-    return pd.DataFrame(rows)
+   selected_rounds        MAE       RMSE  seasonal_naive_MAE  \
+0               85  78.340047  93.297652           71.788429   
+1               68  77.203933  92.319095           75.685429   
+2              163  59.924720  73.510938           71.940286   
+3               61  61.097561  77.437779           85.038000   
+4              129  44.793420  57.371597           58.131143   
 
+   seasonal_naive_RMSE  
+0            86.434215  
+1            88.781853  
+2            90.732181  
+3           110.121673  
+4            73.936372  </pre></details></section><section class="cell" id="cell-cell-016"><p>The expanding backtest is a development diagnostic. Its fold-specific validation blocks choose iteration counts; its evaluation blocks compare chronological origins within development data. The final test remains a separate last block. Neither backtest changes the primary forecast scenario: all scores above are rolling one-step-ahead, with observed lag updates.</p></section><section class="cell" id="cell-cell-017"><h2 id="section-9">7. Choose model complexity on validation only</h2>
+<p>Use a modest tree model with fixed depth and learning rate. Early stopping monitors the contiguous validation block; the test set does not participate. XGBoost's scikit-learn interface expects <code>early_stopping_rounds</code> on <code>XGBRegressor</code> construction. We keep the selected estimator fitted on training data for a clean train/validation/test story.</p></section><section class="cell" id="cell-cell-018"><div class="cell-label">Python · run in the notebook</div><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">xgboost</span><span class="w"> </span><span class="kn">import</span> <span class="n">XGBRegressor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">mean_absolute_error</span><span class="p">,</span> <span class="n">mean_squared_error</span>
 
-# Development ends where the final test begins; folds never inspect the final test block.
-development_folds = rolling_development_backtest(
-    feature_data,
-    feature_columns,
-    development_end=validation_end,
-    initial_train_size=350,
-    validation_size=70,
-    test_size=70,
-)
-development_folds</code></pre></section><section class="cell"><p>The expanding backtest is a development diagnostic. Its fold-specific validation blocks choose iteration counts; its evaluation blocks compare chronological origins within development data. The final test remains a separate last block. Neither backtest changes the primary forecast scenario: all scores above are rolling one-step-ahead, with observed lag updates.</p></section><section class="cell"><h2 id="section-8">7. Choose model complexity on validation only</h2>
-<p>Use a modest tree model with fixed depth and learning rate. Early stopping monitors the contiguous validation block; the test set does not participate. XGBoost's scikit-learn interface expects <code>early_stopping_rounds</code> on <code>XGBRegressor</code> construction. We keep the selected estimator fitted on training data for a clean train/validation/test story.</p></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>from xgboost import XGBRegressor
-from sklearn.metrics import mean_absolute_error, mean_squared_error
+<span class="n">X_train</span> <span class="o">=</span> <span class="n">train_data</span><span class="p">[</span><span class="n">feature_columns</span><span class="p">]</span>
+<span class="n">y_train</span> <span class="o">=</span> <span class="n">train_data</span><span class="p">[</span><span class="s2">"sales"</span><span class="p">]</span>
+<span class="n">X_validation</span> <span class="o">=</span> <span class="n">validation_data</span><span class="p">[</span><span class="n">feature_columns</span><span class="p">]</span>
+<span class="n">y_validation</span> <span class="o">=</span> <span class="n">validation_data</span><span class="p">[</span><span class="s2">"sales"</span><span class="p">]</span>
 
-X_train = train_data[feature_columns]
-y_train = train_data[&quot;sales&quot;]
-X_validation = validation_data[feature_columns]
-y_validation = validation_data[&quot;sales&quot;]
-
-model = XGBRegressor(
-    objective=&quot;reg:squarederror&quot;,
-    n_estimators=500,
-    learning_rate=0.035,
-    max_depth=3,
-    min_child_weight=5,
-    subsample=0.9,
-    colsample_bytree=0.9,
-    reg_lambda=5.0,
-    early_stopping_rounds=25,
-    eval_metric=&quot;rmse&quot;,
-    random_state=17,
-    n_jobs=2,
-)
-model.fit(X_train, y_train, eval_set=[(X_validation, y_validation)], verbose=False)
-selected_rounds = model.best_iteration + 1
-selected_rounds</code></pre></section><section class="cell"><h2 id="section-9">8. Rolling one-step test evaluation</h2>
-<p>The 7-day seasonal-naive rule and XGBoost receive the same test origins and targets. For each test origin, the feature builder used only past observed sales, including actuals that would already have arrived in this rolling deployment scenario. MAE and RMSE are reported in synthetic sales units. A negative improvement over the baseline means the learned model did worse on that score.</p></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>test_prediction = model.predict(test_data[feature_columns])
-seasonal_prediction = test_data[&quot;lag_7&quot;].to_numpy()
-y_test = test_data[&quot;sales&quot;].to_numpy()
+<span class="n">model</span> <span class="o">=</span> <span class="n">XGBRegressor</span><span class="p">(</span>
+    <span class="n">objective</span><span class="o">=</span><span class="s2">"reg:squarederror"</span><span class="p">,</span>
+    <span class="n">n_estimators</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span>
+    <span class="n">learning_rate</span><span class="o">=</span><span class="mf">0.035</span><span class="p">,</span>
+    <span class="n">max_depth</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+    <span class="n">min_child_weight</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+    <span class="n">subsample</span><span class="o">=</span><span class="mf">0.9</span><span class="p">,</span>
+    <span class="n">colsample_bytree</span><span class="o">=</span><span class="mf">0.9</span><span class="p">,</span>
+    <span class="n">reg_lambda</span><span class="o">=</span><span class="mf">5.0</span><span class="p">,</span>
+    <span class="n">early_stopping_rounds</span><span class="o">=</span><span class="mi">25</span><span class="p">,</span>
+    <span class="n">eval_metric</span><span class="o">=</span><span class="s2">"rmse"</span><span class="p">,</span>
+    <span class="n">random_state</span><span class="o">=</span><span class="mi">17</span><span class="p">,</span>
+    <span class="n">n_jobs</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">eval_set</span><span class="o">=</span><span class="p">[(</span><span class="n">X_validation</span><span class="p">,</span> <span class="n">y_validation</span><span class="p">)],</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="n">selected_rounds</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">best_iteration</span> <span class="o">+</span> <span class="mi">1</span>
+<span class="n">selected_rounds</span>
+</pre></div>
+<details class="result-text"><summary>7. Choose model complexity on validation only · computed output</summary><pre>128</pre></details></section><section class="cell" id="cell-cell-019"><h2 id="section-10">8. Rolling one-step test evaluation</h2>
+<p>The 7-day seasonal-naive rule and XGBoost receive the same test origins and targets. For each test origin, the feature builder used only past observed sales, including actuals that would already have arrived in this rolling deployment scenario. MAE and RMSE are reported in synthetic sales units. A negative improvement over the baseline means the learned model did worse on that score.</p></section><section class="cell" id="cell-cell-020"><div class="cell-label">Python · run in the notebook</div><div class="highlight"><pre><span></span><span class="n">test_prediction</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">test_data</span><span class="p">[</span><span class="n">feature_columns</span><span class="p">])</span>
+<span class="n">seasonal_prediction</span> <span class="o">=</span> <span class="n">test_data</span><span class="p">[</span><span class="s2">"lag_7"</span><span class="p">]</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span>
+<span class="n">y_test</span> <span class="o">=</span> <span class="n">test_data</span><span class="p">[</span><span class="s2">"sales"</span><span class="p">]</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span>
 
 
-def score_predictions(actual, predicted):
-    return {
-        &quot;MAE&quot;: mean_absolute_error(actual, predicted),
-        &quot;RMSE&quot;: mean_squared_error(actual, predicted) ** 0.5,
-    }
+<span class="k">def</span><span class="w"> </span><span class="nf">score_predictions</span><span class="p">(</span><span class="n">actual</span><span class="p">,</span> <span class="n">predicted</span><span class="p">):</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">"MAE"</span><span class="p">:</span> <span class="n">mean_absolute_error</span><span class="p">(</span><span class="n">actual</span><span class="p">,</span> <span class="n">predicted</span><span class="p">),</span>
+        <span class="s2">"RMSE"</span><span class="p">:</span> <span class="n">mean_squared_error</span><span class="p">(</span><span class="n">actual</span><span class="p">,</span> <span class="n">predicted</span><span class="p">)</span> <span class="o">**</span> <span class="mf">0.5</span><span class="p">,</span>
+    <span class="p">}</span>
 
 
-score_table = pd.DataFrame(
-    {
-        &quot;seasonal naive&quot;: score_predictions(y_test, seasonal_prediction),
-        &quot;XGBoost&quot;: score_predictions(y_test, test_prediction),
-    }
-).T
-score_table[&quot;MAE improvement vs naive&quot;] = (
-    score_table.loc[&quot;seasonal naive&quot;, &quot;MAE&quot;] - score_table[&quot;MAE&quot;]
-)
-score_table[&quot;RMSE improvement vs naive&quot;] = (
-    score_table.loc[&quot;seasonal naive&quot;, &quot;RMSE&quot;] - score_table[&quot;RMSE&quot;]
-)
-score_table</code></pre></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>fig, axes = plt.subplots(2, 1, figsize=(11, 6), sharex=True, layout=&quot;constrained&quot;)
-axes[0].plot(test_data[&quot;date&quot;], y_test, label=&quot;actual&quot;, color=&quot;black&quot;, lw=1.4)
-axes[0].plot(test_data[&quot;date&quot;], seasonal_prediction, label=&quot;seasonal naive&quot;, alpha=0.8)
-axes[0].plot(test_data[&quot;date&quot;], test_prediction, label=&quot;XGBoost&quot;, alpha=0.8)
-axes[0].set_ylabel(&quot;sales&quot;)
-axes[0].legend(ncol=3, frameon=False)
-residual = y_test - test_prediction
-axes[1].scatter(test_data[&quot;date&quot;], residual, s=12, alpha=0.75)
-axes[1].axhline(0, color=&quot;black&quot;, lw=1)
-axes[1].set(
-    ylabel=&quot;actual - predicted&quot;, xlabel=&quot;test date&quot;, title=&quot;XGBoost one-step residuals&quot;
-)
-fig.autofmt_xdate()
-plt.show()</code></pre></section><section class="cell"><h2 id="section-10">Limits and interpretation</h2>
+<span class="n">score_table</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+    <span class="p">{</span>
+        <span class="s2">"seasonal naive"</span><span class="p">:</span> <span class="n">score_predictions</span><span class="p">(</span><span class="n">y_test</span><span class="p">,</span> <span class="n">seasonal_prediction</span><span class="p">),</span>
+        <span class="s2">"XGBoost"</span><span class="p">:</span> <span class="n">score_predictions</span><span class="p">(</span><span class="n">y_test</span><span class="p">,</span> <span class="n">test_prediction</span><span class="p">),</span>
+    <span class="p">}</span>
+<span class="p">)</span><span class="o">.</span><span class="n">T</span>
+<span class="n">score_table</span><span class="p">[</span><span class="s2">"MAE improvement vs naive"</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">score_table</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="s2">"seasonal naive"</span><span class="p">,</span> <span class="s2">"MAE"</span><span class="p">]</span> <span class="o">-</span> <span class="n">score_table</span><span class="p">[</span><span class="s2">"MAE"</span><span class="p">]</span>
+<span class="p">)</span>
+<span class="n">score_table</span><span class="p">[</span><span class="s2">"RMSE improvement vs naive"</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">score_table</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="s2">"seasonal naive"</span><span class="p">,</span> <span class="s2">"RMSE"</span><span class="p">]</span> <span class="o">-</span> <span class="n">score_table</span><span class="p">[</span><span class="s2">"RMSE"</span><span class="p">]</span>
+<span class="p">)</span>
+<span class="n">score_table</span>
+</pre></div>
+<details class="result-text"><summary>8. Rolling one-step test evaluation · computed output</summary><pre>                      MAE      RMSE  MAE improvement vs naive  \
+seasonal naive  61.941575  78.95166                  0.000000   
+XGBoost         65.324087  79.41873                 -3.382512   
+
+                RMSE improvement vs naive  
+seasonal naive                    0.00000  
+XGBoost                          -0.46707  </pre></details></section><section class="cell" id="cell-cell-021"><div class="cell-label">Python · run in the notebook</div><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">11</span><span class="p">,</span> <span class="mi">6</span><span class="p">),</span> <span class="n">sharex</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">layout</span><span class="o">=</span><span class="s2">"constrained"</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">test_data</span><span class="p">[</span><span class="s2">"date"</span><span class="p">],</span> <span class="n">y_test</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"actual"</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">"black"</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mf">1.4</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">test_data</span><span class="p">[</span><span class="s2">"date"</span><span class="p">],</span> <span class="n">seasonal_prediction</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"seasonal naive"</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.8</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">test_data</span><span class="p">[</span><span class="s2">"date"</span><span class="p">],</span> <span class="n">test_prediction</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"XGBoost"</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.8</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">"sales"</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">ncol</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">frameon</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="n">residual</span> <span class="o">=</span> <span class="n">y_test</span> <span class="o">-</span> <span class="n">test_prediction</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">test_data</span><span class="p">[</span><span class="s2">"date"</span><span class="p">],</span> <span class="n">residual</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.75</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">axhline</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">"black"</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set</span><span class="p">(</span>
+    <span class="n">ylabel</span><span class="o">=</span><span class="s2">"actual - predicted"</span><span class="p">,</span> <span class="n">xlabel</span><span class="o">=</span><span class="s2">"test date"</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">"XGBoost one-step residuals"</span>
+<span class="p">)</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">autofmt_xdate</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+<figure class="result-figure"><img loading="lazy" src="results/07_time_series-cell-021-0.png" alt="Executed result: 8. Rolling one-step test evaluation"><figcaption>8. Rolling one-step test evaluation · captured notebook output</figcaption></figure></section><section class="cell" id="cell-cell-022"><h2 id="section-11">Limits and interpretation</h2>
 <p>Synthetic series make the time ordering and leakage rules visible, but they do not establish a real retailer's demand process. The seasonal-naive baseline uses a weekly period chosen by construction. Calendar encodings assume the forecast date is known. MAE/RMSE summarize errors but hide date-specific failures; inspect the timeline and residuals. A useful operational evaluation must reproduce the forecast horizon, update schedule, and covariate availability of the intended deployment.</p>
-<p>Tree ensembles predict through leaf values and do not automatically extrapolate a linear trend. A drifting level can make the seasonal-naive rule competitive or better. A baseline win is an informative result: report it, and investigate using development data rather than tuning against the final test.</p></section></article><p><a class="button" href="07_time_series-exercises.html">Next: attempt the exercises →</a></p><nav class="actions" aria-label="Study sequence"><a href="06_clustering.html">← 06: Clustering</a><a href="index.html#lectures">All lectures</a><a href="08_deployment.html">08: From model to service →</a></nav></main></div><footer>Mathematical ML · Eight practical lectures for mathematicians<br>Readable Python · Reproducible experiments · Synthetic teaching data</footer></body></html>
+<p>Tree ensembles predict through leaf values and do not automatically extrapolate a linear trend. A drifting level can make the seasonal-naive rule competitive or better. A baseline win is an informative result: report it, and investigate using development data rather than tuning against the final test.</p></section></article><p><a href="07_time_series-results.html">Explore this lecture’s executed result gallery →</a></p><p><a class="button" href="07_time_series-exercises.html">Next: attempt the exercises →</a></p><nav class="actions" aria-label="Study sequence"><a href="06_clustering.html">← 06: Clustering</a><a href="index.html#lectures">All lectures</a><a href="08_deployment.html">08: From model to service →</a></nav></main></div><footer>Mathematical ML · Eight practical lectures for mathematicians<br>Readable Python · Reproducible experiments · Synthetic teaching data</footer></body></html>

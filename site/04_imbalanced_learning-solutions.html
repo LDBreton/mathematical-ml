@@ -1,164 +1,176 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Eight guided machine learning lectures for mathematicians: theory, readable Python, exercises and worked solutions."><title>Imbalanced learning: solutions · Mathematical ML</title><link rel="stylesheet" href="style.css"><script defer src="site.js"></script><script>window.MathJax={tex:{inlineMath:[['$','$'],['\\(','\\)']]}};</script><script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script></head><body><a class="skip" href="#main">Skip to content</a><header><button class="menu" aria-controls="sidebar" aria-expanded="false" aria-label="Toggle course navigation">☰</button><a class="brand" href="index.html">∑ <span>Mathematical ML</span></a><nav aria-label="Quick links"><a href="setup.html">Get started</a><a href="index.html#lectures">Lectures</a><button id="theme" aria-label="Switch color theme">◐</button></nav></header><div class="layout"><aside id="sidebar" aria-label="Course navigation"><a href="index.html">Course overview</a><h3>Start here</h3><a href="setup.html">Installation &amp; first steps</a><a href="first-steps.html">New to ML? Start here</a><h3>The lectures</h3><details><summary><a href="01_regression.html">01 · Regression</a></summary><a class="sub" href="01_regression-lesson.html">Lesson</a><a class="sub" href="01_regression-exercises.html">Exercises</a><a class="sub" href="01_regression-solutions.html">Solutions</a></details><details><summary><a href="02_classification.html">02 · Classification</a></summary><a class="sub" href="02_classification-lesson.html">Lesson</a><a class="sub" href="02_classification-exercises.html">Exercises</a><a class="sub" href="02_classification-solutions.html">Solutions</a></details><details><summary><a href="03_xgboost.html">03 · XGBoost</a></summary><a class="sub" href="03_xgboost-lesson.html">Lesson</a><a class="sub" href="03_xgboost-exercises.html">Exercises</a><a class="sub" href="03_xgboost-solutions.html">Solutions</a></details><details><summary><a href="04_imbalanced_learning.html">04 · Imbalanced learning</a></summary><a class="sub" href="04_imbalanced_learning-lesson.html">Lesson</a><a class="sub" href="04_imbalanced_learning-exercises.html">Exercises</a><a class="sub" href="04_imbalanced_learning-solutions.html">Solutions</a></details><details><summary><a href="05_text_classification.html">05 · Text classification</a></summary><a class="sub" href="05_text_classification-lesson.html">Lesson</a><a class="sub" href="05_text_classification-exercises.html">Exercises</a><a class="sub" href="05_text_classification-solutions.html">Solutions</a></details><details><summary><a href="06_clustering.html">06 · Clustering</a></summary><a class="sub" href="06_clustering-lesson.html">Lesson</a><a class="sub" href="06_clustering-exercises.html">Exercises</a><a class="sub" href="06_clustering-solutions.html">Solutions</a></details><details><summary><a href="07_time_series.html">07 · Time-series forecasting</a></summary><a class="sub" href="07_time_series-lesson.html">Lesson</a><a class="sub" href="07_time_series-exercises.html">Exercises</a><a class="sub" href="07_time_series-solutions.html">Solutions</a></details><details><summary><a href="08_deployment.html">08 · From model to service</a></summary><a class="sub" href="08_deployment-lesson.html">Lesson</a><a class="sub" href="08_deployment-exercises.html">Exercises</a><a class="sub" href="08_deployment-solutions.html">Solutions</a></details><h3>Resources</h3><a href="datasets.html">Datasets</a><a href="course-project.html">Course project</a><a href="instructor.html">Teaching guide</a><a href="verification.html">Verification</a></aside><main id="main"><div class="eyebrow">Lecture 04 / solutions</div><div class="actions"><a href="04_imbalanced_learning.html">← Lecture guide</a><a href="downloads/04_imbalanced_learning/solutions.ipynb" download>Download notebook</a></div><p class="note">This page is a reading view. To execute Python, download the complete course and open this notebook in Jupyter. <a href="first-steps.html">First notebook walkthrough →</a></p><details class="contents"><summary>On this page</summary><nav aria-label="Page contents"><a href="#section-1">1. Baseline</a><a href="#section-2">2. Posterior shift</a><a href="#section-3">2a. Why class weights shift the posterior</a><a href="#section-4">3. Model comparison</a><a href="#section-5">4. Validation thresholds and one test report</a><a href="#section-6">Interpretation</a></nav></details><article class="reading"><section class="cell"><h1>Lecture 04 solutions — Imbalanced learning</h1>
-<p>Complete executable worked answers.</p></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>from pathlib import Path
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
-from sklearn.pipeline import make_pipeline
-from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import (
-    average_precision_score,
-    precision_recall_curve,
-    auc,
-    roc_auc_score,
-    confusion_matrix,
-    precision_score,
-    recall_score,
-    brier_score_loss,
-)
-from xgboost import XGBClassifier
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Eight guided machine learning lectures for mathematicians: theory, readable Python, exercises and worked solutions."><title>Imbalanced learning: solutions · Mathematical ML</title><link rel="stylesheet" href="style.css"><script defer src="site.js"></script><script>window.MathJax={tex:{inlineMath:[['$','$'],['\\(','\\)']]}};</script><script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script></head><body><a class="skip" href="#main">Skip to content</a><header><button class="menu" aria-controls="sidebar" aria-expanded="false" aria-label="Toggle course navigation">☰</button><a class="brand" href="index.html">∑ <span>Mathematical ML</span></a><nav aria-label="Quick links"><a href="setup.html">Get started</a><a href="index.html#lectures">Lectures</a><button id="theme" aria-label="Switch color theme">◐</button></nav></header><div class="layout"><aside id="sidebar" aria-label="Course navigation"><a href="index.html">Course overview</a><h3>Start here</h3><a href="setup.html">Installation &amp; first steps</a><a href="first-steps.html">New to ML? Start here</a><h3>The lectures</h3><details><summary><a href="01_regression.html">01 · Regression</a></summary><a class="sub" href="01_regression-lesson.html">Lesson</a><a class="sub" href="01_regression-exercises.html">Exercises</a><a class="sub" href="01_regression-solutions.html">Solutions</a></details><details><summary><a href="02_classification.html">02 · Classification</a></summary><a class="sub" href="02_classification-lesson.html">Lesson</a><a class="sub" href="02_classification-exercises.html">Exercises</a><a class="sub" href="02_classification-solutions.html">Solutions</a></details><details><summary><a href="03_xgboost.html">03 · XGBoost</a></summary><a class="sub" href="03_xgboost-lesson.html">Lesson</a><a class="sub" href="03_xgboost-exercises.html">Exercises</a><a class="sub" href="03_xgboost-solutions.html">Solutions</a></details><details><summary><a href="04_imbalanced_learning.html">04 · Imbalanced learning</a></summary><a class="sub" href="04_imbalanced_learning-lesson.html">Lesson</a><a class="sub" href="04_imbalanced_learning-exercises.html">Exercises</a><a class="sub" href="04_imbalanced_learning-solutions.html">Solutions</a></details><details><summary><a href="05_text_classification.html">05 · Text classification</a></summary><a class="sub" href="05_text_classification-lesson.html">Lesson</a><a class="sub" href="05_text_classification-exercises.html">Exercises</a><a class="sub" href="05_text_classification-solutions.html">Solutions</a></details><details><summary><a href="06_clustering.html">06 · Clustering</a></summary><a class="sub" href="06_clustering-lesson.html">Lesson</a><a class="sub" href="06_clustering-exercises.html">Exercises</a><a class="sub" href="06_clustering-solutions.html">Solutions</a></details><details><summary><a href="07_time_series.html">07 · Time-series forecasting</a></summary><a class="sub" href="07_time_series-lesson.html">Lesson</a><a class="sub" href="07_time_series-exercises.html">Exercises</a><a class="sub" href="07_time_series-solutions.html">Solutions</a></details><details><summary><a href="08_deployment.html">08 · From model to service</a></summary><a class="sub" href="08_deployment-lesson.html">Lesson</a><a class="sub" href="08_deployment-exercises.html">Exercises</a><a class="sub" href="08_deployment-solutions.html">Solutions</a></details><h3>Resources</h3><a href="results.html">Executed result galleries</a><a href="datasets.html">Datasets</a><a href="course-project.html">Course project</a><a href="instructor.html">Teaching guide</a><a href="verification.html">Verification</a></aside><main id="main"><div class="eyebrow">Lecture 04 / solutions</div><div class="actions"><a href="04_imbalanced_learning.html">← Lecture guide</a><a href="downloads/04_imbalanced_learning/solutions.ipynb" download>Download notebook</a></div><p class="note">This page is a reading view. To execute Python, download the complete course and open this notebook in Jupyter. <a href="first-steps.html">First notebook walkthrough →</a></p><details class="contents"><summary>On this page</summary><nav aria-label="Page contents"><a href="#section-1">1. Baseline</a><a href="#section-2">2. Posterior shift</a><a href="#section-3">2a. Why class weights shift the posterior</a><a href="#section-4">3. Model comparison</a><a href="#section-5">4. Validation thresholds and one test report</a><a href="#section-6">Interpretation</a></nav></details><article class="reading"><section class="cell" id="cell-cell-000"><h1>Lecture 04 solutions — Imbalanced learning</h1>
+<p>Complete executable worked answers.</p></section><section class="cell" id="cell-cell-001"><div class="cell-label">Python · run in the notebook</div><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.model_selection</span><span class="w"> </span><span class="kn">import</span> <span class="n">train_test_split</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.preprocessing</span><span class="w"> </span><span class="kn">import</span> <span class="n">StandardScaler</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.pipeline</span><span class="w"> </span><span class="kn">import</span> <span class="n">make_pipeline</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.linear_model</span><span class="w"> </span><span class="kn">import</span> <span class="n">LogisticRegression</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">average_precision_score</span><span class="p">,</span>
+    <span class="n">precision_recall_curve</span><span class="p">,</span>
+    <span class="n">auc</span><span class="p">,</span>
+    <span class="n">roc_auc_score</span><span class="p">,</span>
+    <span class="n">confusion_matrix</span><span class="p">,</span>
+    <span class="n">precision_score</span><span class="p">,</span>
+    <span class="n">recall_score</span><span class="p">,</span>
+    <span class="n">brier_score_loss</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">xgboost</span><span class="w"> </span><span class="kn">import</span> <span class="n">XGBClassifier</span>
 
 
-def repo_root(start=Path.cwd()):
-    for path in (start, *start.parents):
-        if (path / &quot;data&quot; / &quot;fraud.csv&quot;).exists():
-            return path
-    raise FileNotFoundError(&quot;Could not find data/fraud.csv&quot;)
+<span class="k">def</span><span class="w"> </span><span class="nf">repo_root</span><span class="p">(</span><span class="n">start</span><span class="o">=</span><span class="n">Path</span><span class="o">.</span><span class="n">cwd</span><span class="p">()):</span>
+    <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="o">*</span><span class="n">start</span><span class="o">.</span><span class="n">parents</span><span class="p">):</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">path</span> <span class="o">/</span> <span class="s2">"data"</span> <span class="o">/</span> <span class="s2">"fraud.csv"</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="k">return</span> <span class="n">path</span>
+    <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="s2">"Could not find data/fraud.csv"</span><span class="p">)</span>
 
 
-ROOT = repo_root()
-data = pd.read_csv(ROOT / &quot;data&quot; / &quot;fraud.csv&quot;)
-features = [
-    &quot;amount&quot;,
-    &quot;hour&quot;,
-    &quot;card_present&quot;,
-    &quot;international&quot;,
-    &quot;account_age_days&quot;,
-    &quot;transactions_24h&quot;,
-    &quot;merchant_risk&quot;,
-]
-X, y = data[features], data[&quot;fraud&quot;].astype(int)
-print(f&quot;rows={len(data)}, positives={y.sum()}, prevalence={y.mean():.3%}&quot;)
-# Split first. The test rows remain untouched until all choices are frozen.
-X_dev, X_test, y_dev, y_test = train_test_split(
-    X, y, test_size=0.20, random_state=14, stratify=y
-)
-X_train, X_valid, y_train, y_valid = train_test_split(
-    X_dev, y_dev, test_size=0.25, random_state=15, stratify=y_dev
-)
-print(&quot;sizes:&quot;, len(X_train), len(X_valid), len(X_test))
+<span class="n">ROOT</span> <span class="o">=</span> <span class="n">repo_root</span><span class="p">()</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">ROOT</span> <span class="o">/</span> <span class="s2">"data"</span> <span class="o">/</span> <span class="s2">"fraud.csv"</span><span class="p">)</span>
+<span class="n">features</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">"amount"</span><span class="p">,</span>
+    <span class="s2">"hour"</span><span class="p">,</span>
+    <span class="s2">"card_present"</span><span class="p">,</span>
+    <span class="s2">"international"</span><span class="p">,</span>
+    <span class="s2">"account_age_days"</span><span class="p">,</span>
+    <span class="s2">"transactions_24h"</span><span class="p">,</span>
+    <span class="s2">"merchant_risk"</span><span class="p">,</span>
+<span class="p">]</span>
+<span class="n">X</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">features</span><span class="p">],</span> <span class="n">data</span><span class="p">[</span><span class="s2">"fraud"</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"rows=</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span><span class="si">}</span><span class="s2">, positives=</span><span class="si">{</span><span class="n">y</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="si">}</span><span class="s2">, prevalence=</span><span class="si">{</span><span class="n">y</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span><span class="si">:</span><span class="s2">.3%</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="c1"># Split first. The test rows remain untouched until all choices are frozen.</span>
+<span class="n">X_dev</span><span class="p">,</span> <span class="n">X_test</span><span class="p">,</span> <span class="n">y_dev</span><span class="p">,</span> <span class="n">y_test</span> <span class="o">=</span> <span class="n">train_test_split</span><span class="p">(</span>
+    <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">test_size</span><span class="o">=</span><span class="mf">0.20</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">14</span><span class="p">,</span> <span class="n">stratify</span><span class="o">=</span><span class="n">y</span>
+<span class="p">)</span>
+<span class="n">X_train</span><span class="p">,</span> <span class="n">X_valid</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">y_valid</span> <span class="o">=</span> <span class="n">train_test_split</span><span class="p">(</span>
+    <span class="n">X_dev</span><span class="p">,</span> <span class="n">y_dev</span><span class="p">,</span> <span class="n">test_size</span><span class="o">=</span><span class="mf">0.25</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">15</span><span class="p">,</span> <span class="n">stratify</span><span class="o">=</span><span class="n">y_dev</span>
+<span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"sizes:"</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">X_train</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">X_valid</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">X_test</span><span class="p">))</span>
 
 
-def empirical_cost(actual, scores, threshold, c_fn=20.0, c_fp=1.0):
-    predicted = scores &gt;= threshold
-    false_negative = np.sum((actual.to_numpy() == 1) &amp; ~predicted)
-    false_positive = np.sum((actual.to_numpy() == 0) &amp; predicted)
-    return c_fn * false_negative + c_fp * false_positive</code></pre></section><section class="cell"><h2 id="section-1">1. Baseline</h2>
-<p>Always-negative accuracy is $1-\pi$ and recall is zero; accuracy reflects majority prevalence.</p></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>negative, positive = np.bincount(y_test, minlength=2)
-print(
-    {
-        &quot;negative&quot;: negative,
-        &quot;positive&quot;: positive,
-        &quot;prevalence&quot;: positive / len(y_test),
-        &quot;always-negative accuracy&quot;: negative / len(y_test),
-        &quot;recall&quot;: 0.0,
-    }
-)</code></pre></section><section class="cell"><h2 id="section-2">2. Posterior shift</h2>
-<p>Dividing $q$ by $1-q$ gives weighted odds. At $q=1/2$, $p=w_0/(w_0+w_1)$, below one-half if positives weigh more.</p></section><section class="cell"><h2 id="section-3">2a. Why class weights shift the posterior</h2>
-<p>At fixed features $x$, let the natural positive probability be $p$. The conditional weighted Bernoulli risk for a proposed probability $q$ is $R(q|x)=-w_1p\log q-w_0(1-p)\log(1-q)$. Its derivative is $-w_1p/q+w_0(1-p)/(1-q)$. Setting this to zero gives $q/(1-q)=(w_1/w_0)p/(1-p)$. Thus weighting shifts odds even with an ideal learner; fitted weighted probabilities should not automatically be read as natural risk.</p></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>p = np.linspace(0.001, 0.2, 100)
-w0, w1 = 1.0, 10.0
-q = w1 * p / (w1 * p + w0 * (1 - p))
-plt.plot(p, q)
-plt.axhline(0.5, color=&quot;black&quot;, linestyle=&quot;--&quot;)
-plt.axvline(w0 / (w0 + w1), color=&quot;black&quot;, linestyle=&quot;:&quot;)
-plt.xlabel(&quot;natural p&quot;)
-plt.ylabel(&quot;weighted q&quot;)</code></pre></section><section class="cell"><h2 id="section-4">3. Model comparison</h2>
-<p>AP uses recall increments while trapezoid interpolates curve segments. ROC-AUC is a ranking measure, not calibration or a selected operating point.</p></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>negative, positive = np.bincount(y_train, minlength=2)
-ratio = negative / positive
-models = {
-    &quot;Logistic unweighted&quot;: make_pipeline(
-        StandardScaler(), LogisticRegression(C=1, max_iter=2000, random_state=14)
-    ),
-    &quot;Logistic balanced&quot;: make_pipeline(
-        StandardScaler(),
-        LogisticRegression(
-            C=1, class_weight=&quot;balanced&quot;, max_iter=2000, random_state=14
-        ),
-    ),
-    &quot;XGBoost weighted&quot;: XGBClassifier(
-        n_estimators=180,
-        max_depth=3,
-        learning_rate=0.06,
-        min_child_weight=4,
-        subsample=0.85,
-        colsample_bytree=0.9,
-        reg_lambda=2,
-        scale_pos_weight=ratio,
-        eval_metric=&quot;logloss&quot;,
-        n_jobs=1,
-        random_state=14,
-    ),
-}
-for model in models.values():
-    model.fit(X_train, y_train)
-valid_scores = {
-    name: model.predict_proba(X_valid)[:, 1] for name, model in models.items()
-}
-rows = []
-for name, scores in valid_scores.items():
-    precision, recall, _ = precision_recall_curve(y_valid, scores)
-    rows.append(
-        {
-            &quot;model&quot;: name,
-            &quot;AP&quot;: average_precision_score(y_valid, scores),
-            &quot;trapezoid_PR_area&quot;: auc(recall[::-1], precision[::-1]),
-            &quot;ROC_AUC&quot;: roc_auc_score(y_valid, scores),
-            &quot;Brier&quot;: brier_score_loss(y_valid, scores),
-        }
-    )
-pd.DataFrame(rows).set_index(&quot;model&quot;).round(4)</code></pre></section><section class="cell"><h2 id="section-5">4. Validation thresholds and one test report</h2></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>def empirical_cost(actual, scores, threshold, c_fn=20.0, c_fp=1.0):
-    predicted = scores &gt;= threshold
-    fn = np.sum((actual.to_numpy() == 1) &amp; ~predicted)
-    fp = np.sum((actual.to_numpy() == 0) &amp; predicted)
-    return c_fn * fn + c_fp * fp
+<span class="k">def</span><span class="w"> </span><span class="nf">empirical_cost</span><span class="p">(</span><span class="n">actual</span><span class="p">,</span> <span class="n">scores</span><span class="p">,</span> <span class="n">threshold</span><span class="p">,</span> <span class="n">c_fn</span><span class="o">=</span><span class="mf">20.0</span><span class="p">,</span> <span class="n">c_fp</span><span class="o">=</span><span class="mf">1.0</span><span class="p">):</span>
+    <span class="n">predicted</span> <span class="o">=</span> <span class="n">scores</span> <span class="o">&gt;=</span> <span class="n">threshold</span>
+    <span class="n">false_negative</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">((</span><span class="n">actual</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span> <span class="o">&amp;</span> <span class="o">~</span><span class="n">predicted</span><span class="p">)</span>
+    <span class="n">false_positive</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">((</span><span class="n">actual</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">predicted</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">c_fn</span> <span class="o">*</span> <span class="n">false_negative</span> <span class="o">+</span> <span class="n">c_fp</span> <span class="o">*</span> <span class="n">false_positive</span>
+</pre></div>
+</section><section class="cell" id="cell-cell-002"><h2 id="section-1">1. Baseline</h2>
+<p>Always-negative accuracy is $1-\pi$ and recall is zero; accuracy reflects majority prevalence.</p></section><section class="cell" id="cell-cell-003"><div class="cell-label">Python · run in the notebook</div><div class="highlight"><pre><span></span><span class="n">negative</span><span class="p">,</span> <span class="n">positive</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">bincount</span><span class="p">(</span><span class="n">y_test</span><span class="p">,</span> <span class="n">minlength</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span>
+    <span class="p">{</span>
+        <span class="s2">"negative"</span><span class="p">:</span> <span class="n">negative</span><span class="p">,</span>
+        <span class="s2">"positive"</span><span class="p">:</span> <span class="n">positive</span><span class="p">,</span>
+        <span class="s2">"prevalence"</span><span class="p">:</span> <span class="n">positive</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">y_test</span><span class="p">),</span>
+        <span class="s2">"always-negative accuracy"</span><span class="p">:</span> <span class="n">negative</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">y_test</span><span class="p">),</span>
+        <span class="s2">"recall"</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span>
+    <span class="p">}</span>
+<span class="p">)</span>
+</pre></div>
+</section><section class="cell" id="cell-cell-004"><h2 id="section-2">2. Posterior shift</h2>
+<p>Dividing $q$ by $1-q$ gives weighted odds. At $q=1/2$, $p=w_0/(w_0+w_1)$, below one-half if positives weigh more.</p></section><section class="cell" id="cell-cell-005"><h2 id="section-3">2a. Why class weights shift the posterior</h2>
+<p>At fixed features $x$, let the natural positive probability be $p$. The conditional weighted Bernoulli risk for a proposed probability $q$ is $R(q|x)=-w_1p\log q-w_0(1-p)\log(1-q)$. Its derivative is $-w_1p/q+w_0(1-p)/(1-q)$. Setting this to zero gives $q/(1-q)=(w_1/w_0)p/(1-p)$. Thus weighting shifts odds even with an ideal learner; fitted weighted probabilities should not automatically be read as natural risk.</p></section><section class="cell" id="cell-cell-006"><div class="cell-label">Python · run in the notebook</div><div class="highlight"><pre><span></span><span class="n">p</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.001</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
+<span class="n">w0</span><span class="p">,</span> <span class="n">w1</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">10.0</span>
+<span class="n">q</span> <span class="o">=</span> <span class="n">w1</span> <span class="o">*</span> <span class="n">p</span> <span class="o">/</span> <span class="p">(</span><span class="n">w1</span> <span class="o">*</span> <span class="n">p</span> <span class="o">+</span> <span class="n">w0</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">p</span><span class="p">))</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">q</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">axhline</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">"black"</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s2">"--"</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="n">w0</span> <span class="o">/</span> <span class="p">(</span><span class="n">w0</span> <span class="o">+</span> <span class="n">w1</span><span class="p">),</span> <span class="n">color</span><span class="o">=</span><span class="s2">"black"</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s2">":"</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">"natural p"</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">"weighted q"</span><span class="p">)</span>
+</pre></div>
+</section><section class="cell" id="cell-cell-007"><h2 id="section-4">3. Model comparison</h2>
+<p>AP uses recall increments while trapezoid interpolates curve segments. ROC-AUC is a ranking measure, not calibration or a selected operating point.</p></section><section class="cell" id="cell-cell-008"><div class="cell-label">Python · run in the notebook</div><div class="highlight"><pre><span></span><span class="n">negative</span><span class="p">,</span> <span class="n">positive</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">bincount</span><span class="p">(</span><span class="n">y_train</span><span class="p">,</span> <span class="n">minlength</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">ratio</span> <span class="o">=</span> <span class="n">negative</span> <span class="o">/</span> <span class="n">positive</span>
+<span class="n">models</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"Logistic unweighted"</span><span class="p">:</span> <span class="n">make_pipeline</span><span class="p">(</span>
+        <span class="n">StandardScaler</span><span class="p">(),</span> <span class="n">LogisticRegression</span><span class="p">(</span><span class="n">C</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">max_iter</span><span class="o">=</span><span class="mi">2000</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">14</span><span class="p">)</span>
+    <span class="p">),</span>
+    <span class="s2">"Logistic balanced"</span><span class="p">:</span> <span class="n">make_pipeline</span><span class="p">(</span>
+        <span class="n">StandardScaler</span><span class="p">(),</span>
+        <span class="n">LogisticRegression</span><span class="p">(</span>
+            <span class="n">C</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">class_weight</span><span class="o">=</span><span class="s2">"balanced"</span><span class="p">,</span> <span class="n">max_iter</span><span class="o">=</span><span class="mi">2000</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">14</span>
+        <span class="p">),</span>
+    <span class="p">),</span>
+    <span class="s2">"XGBoost weighted"</span><span class="p">:</span> <span class="n">XGBClassifier</span><span class="p">(</span>
+        <span class="n">n_estimators</span><span class="o">=</span><span class="mi">180</span><span class="p">,</span>
+        <span class="n">max_depth</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+        <span class="n">learning_rate</span><span class="o">=</span><span class="mf">0.06</span><span class="p">,</span>
+        <span class="n">min_child_weight</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
+        <span class="n">subsample</span><span class="o">=</span><span class="mf">0.85</span><span class="p">,</span>
+        <span class="n">colsample_bytree</span><span class="o">=</span><span class="mf">0.9</span><span class="p">,</span>
+        <span class="n">reg_lambda</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+        <span class="n">scale_pos_weight</span><span class="o">=</span><span class="n">ratio</span><span class="p">,</span>
+        <span class="n">eval_metric</span><span class="o">=</span><span class="s2">"logloss"</span><span class="p">,</span>
+        <span class="n">n_jobs</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="n">random_state</span><span class="o">=</span><span class="mi">14</span><span class="p">,</span>
+    <span class="p">),</span>
+<span class="p">}</span>
+<span class="k">for</span> <span class="n">model</span> <span class="ow">in</span> <span class="n">models</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">)</span>
+<span class="n">valid_scores</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="n">name</span><span class="p">:</span> <span class="n">model</span><span class="o">.</span><span class="n">predict_proba</span><span class="p">(</span><span class="n">X_valid</span><span class="p">)[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">model</span> <span class="ow">in</span> <span class="n">models</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+<span class="p">}</span>
+<span class="n">rows</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">scores</span> <span class="ow">in</span> <span class="n">valid_scores</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="n">precision</span><span class="p">,</span> <span class="n">recall</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">precision_recall_curve</span><span class="p">(</span><span class="n">y_valid</span><span class="p">,</span> <span class="n">scores</span><span class="p">)</span>
+    <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+        <span class="p">{</span>
+            <span class="s2">"model"</span><span class="p">:</span> <span class="n">name</span><span class="p">,</span>
+            <span class="s2">"AP"</span><span class="p">:</span> <span class="n">average_precision_score</span><span class="p">(</span><span class="n">y_valid</span><span class="p">,</span> <span class="n">scores</span><span class="p">),</span>
+            <span class="s2">"trapezoid_PR_area"</span><span class="p">:</span> <span class="n">auc</span><span class="p">(</span><span class="n">recall</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">precision</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]),</span>
+            <span class="s2">"ROC_AUC"</span><span class="p">:</span> <span class="n">roc_auc_score</span><span class="p">(</span><span class="n">y_valid</span><span class="p">,</span> <span class="n">scores</span><span class="p">),</span>
+            <span class="s2">"Brier"</span><span class="p">:</span> <span class="n">brier_score_loss</span><span class="p">(</span><span class="n">y_valid</span><span class="p">,</span> <span class="n">scores</span><span class="p">),</span>
+        <span class="p">}</span>
+    <span class="p">)</span>
+<span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">rows</span><span class="p">)</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s2">"model"</span><span class="p">)</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span>
+</pre></div>
+</section><section class="cell" id="cell-cell-009"><h2 id="section-5">4. Validation thresholds and one test report</h2></section><section class="cell" id="cell-cell-010"><div class="cell-label">Python · run in the notebook</div><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">empirical_cost</span><span class="p">(</span><span class="n">actual</span><span class="p">,</span> <span class="n">scores</span><span class="p">,</span> <span class="n">threshold</span><span class="p">,</span> <span class="n">c_fn</span><span class="o">=</span><span class="mf">20.0</span><span class="p">,</span> <span class="n">c_fp</span><span class="o">=</span><span class="mf">1.0</span><span class="p">):</span>
+    <span class="n">predicted</span> <span class="o">=</span> <span class="n">scores</span> <span class="o">&gt;=</span> <span class="n">threshold</span>
+    <span class="n">fn</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">((</span><span class="n">actual</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span> <span class="o">&amp;</span> <span class="o">~</span><span class="n">predicted</span><span class="p">)</span>
+    <span class="n">fp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">((</span><span class="n">actual</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">predicted</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">c_fn</span> <span class="o">*</span> <span class="n">fn</span> <span class="o">+</span> <span class="n">c_fp</span> <span class="o">*</span> <span class="n">fp</span>
 
 
-C_FN, C_FP = 20.0, 1.0
-grid = np.unique(np.r_[0.0, np.linspace(0.01, 0.99, 197), 1.0])
-thresholds = {}
-for name, scores in valid_scores.items():
-    costs = [empirical_cost(y_valid, scores, t, C_FN, C_FP) for t in grid]
-    thresholds[name] = float(grid[int(np.argmin(costs))])
-pd.DataFrame(
-    {
-        &quot;threshold&quot;: thresholds,
-        &quot;validation_cost&quot;: {
-            n: empirical_cost(y_valid, valid_scores[n], t, C_FN, C_FP)
-            for n, t in thresholds.items()
-        },
-        &quot;alert_rate&quot;: {n: np.mean(valid_scores[n] &gt;= t) for n, t in thresholds.items()},
-    }
-).T</code></pre></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>rows = []
-for name, model in models.items():
-    scores = model.predict_proba(X_test)[:, 1]
-    prediction = scores &gt;= thresholds[name]
-    tn, fp, fn, tp = confusion_matrix(y_test, prediction, labels=[0, 1]).ravel()
-    rows.append(
-        {
-            &quot;model&quot;: name,
-            &quot;threshold&quot;: thresholds[name],
-            &quot;TP&quot;: tp,
-            &quot;FP&quot;: fp,
-            &quot;FN&quot;: fn,
-            &quot;TN&quot;: tn,
-            &quot;precision&quot;: precision_score(y_test, prediction, zero_division=0),
-            &quot;recall&quot;: recall_score(y_test, prediction, zero_division=0),
-            &quot;AP&quot;: average_precision_score(y_test, scores),
-            &quot;ROC_AUC&quot;: roc_auc_score(y_test, scores),
-            &quot;cost&quot;: C_FN * fn + C_FP * fp,
-            &quot;test_alert_rate&quot;: prediction.mean(),
-        }
-    )
-pd.DataFrame(rows).set_index(&quot;model&quot;).round(4)</code></pre></section><section class="cell"><h2 id="section-6">Interpretation</h2>
+<span class="n">C_FN</span><span class="p">,</span> <span class="n">C_FP</span> <span class="o">=</span> <span class="mf">20.0</span><span class="p">,</span> <span class="mf">1.0</span>
+<span class="n">grid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">r_</span><span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.01</span><span class="p">,</span> <span class="mf">0.99</span><span class="p">,</span> <span class="mi">197</span><span class="p">),</span> <span class="mf">1.0</span><span class="p">])</span>
+<span class="n">thresholds</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">scores</span> <span class="ow">in</span> <span class="n">valid_scores</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="n">costs</span> <span class="o">=</span> <span class="p">[</span><span class="n">empirical_cost</span><span class="p">(</span><span class="n">y_valid</span><span class="p">,</span> <span class="n">scores</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">C_FN</span><span class="p">,</span> <span class="n">C_FP</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">grid</span><span class="p">]</span>
+    <span class="n">thresholds</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">grid</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">costs</span><span class="p">))])</span>
+<span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+    <span class="p">{</span>
+        <span class="s2">"threshold"</span><span class="p">:</span> <span class="n">thresholds</span><span class="p">,</span>
+        <span class="s2">"validation_cost"</span><span class="p">:</span> <span class="p">{</span>
+            <span class="n">n</span><span class="p">:</span> <span class="n">empirical_cost</span><span class="p">(</span><span class="n">y_valid</span><span class="p">,</span> <span class="n">valid_scores</span><span class="p">[</span><span class="n">n</span><span class="p">],</span> <span class="n">t</span><span class="p">,</span> <span class="n">C_FN</span><span class="p">,</span> <span class="n">C_FP</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">thresholds</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+        <span class="p">},</span>
+        <span class="s2">"alert_rate"</span><span class="p">:</span> <span class="p">{</span><span class="n">n</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">valid_scores</span><span class="p">[</span><span class="n">n</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">t</span><span class="p">)</span> <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">thresholds</span><span class="o">.</span><span class="n">items</span><span class="p">()},</span>
+    <span class="p">}</span>
+<span class="p">)</span><span class="o">.</span><span class="n">T</span>
+</pre></div>
+</section><section class="cell" id="cell-cell-011"><div class="cell-label">Python · run in the notebook</div><div class="highlight"><pre><span></span><span class="n">rows</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">model</span> <span class="ow">in</span> <span class="n">models</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="n">scores</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">predict_proba</span><span class="p">(</span><span class="n">X_test</span><span class="p">)[:,</span> <span class="mi">1</span><span class="p">]</span>
+    <span class="n">prediction</span> <span class="o">=</span> <span class="n">scores</span> <span class="o">&gt;=</span> <span class="n">thresholds</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+    <span class="n">tn</span><span class="p">,</span> <span class="n">fp</span><span class="p">,</span> <span class="n">fn</span><span class="p">,</span> <span class="n">tp</span> <span class="o">=</span> <span class="n">confusion_matrix</span><span class="p">(</span><span class="n">y_test</span><span class="p">,</span> <span class="n">prediction</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
+    <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+        <span class="p">{</span>
+            <span class="s2">"model"</span><span class="p">:</span> <span class="n">name</span><span class="p">,</span>
+            <span class="s2">"threshold"</span><span class="p">:</span> <span class="n">thresholds</span><span class="p">[</span><span class="n">name</span><span class="p">],</span>
+            <span class="s2">"TP"</span><span class="p">:</span> <span class="n">tp</span><span class="p">,</span>
+            <span class="s2">"FP"</span><span class="p">:</span> <span class="n">fp</span><span class="p">,</span>
+            <span class="s2">"FN"</span><span class="p">:</span> <span class="n">fn</span><span class="p">,</span>
+            <span class="s2">"TN"</span><span class="p">:</span> <span class="n">tn</span><span class="p">,</span>
+            <span class="s2">"precision"</span><span class="p">:</span> <span class="n">precision_score</span><span class="p">(</span><span class="n">y_test</span><span class="p">,</span> <span class="n">prediction</span><span class="p">,</span> <span class="n">zero_division</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span>
+            <span class="s2">"recall"</span><span class="p">:</span> <span class="n">recall_score</span><span class="p">(</span><span class="n">y_test</span><span class="p">,</span> <span class="n">prediction</span><span class="p">,</span> <span class="n">zero_division</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span>
+            <span class="s2">"AP"</span><span class="p">:</span> <span class="n">average_precision_score</span><span class="p">(</span><span class="n">y_test</span><span class="p">,</span> <span class="n">scores</span><span class="p">),</span>
+            <span class="s2">"ROC_AUC"</span><span class="p">:</span> <span class="n">roc_auc_score</span><span class="p">(</span><span class="n">y_test</span><span class="p">,</span> <span class="n">scores</span><span class="p">),</span>
+            <span class="s2">"cost"</span><span class="p">:</span> <span class="n">C_FN</span> <span class="o">*</span> <span class="n">fn</span> <span class="o">+</span> <span class="n">C_FP</span> <span class="o">*</span> <span class="n">fp</span><span class="p">,</span>
+            <span class="s2">"test_alert_rate"</span><span class="p">:</span> <span class="n">prediction</span><span class="o">.</span><span class="n">mean</span><span class="p">(),</span>
+        <span class="p">}</span>
+    <span class="p">)</span>
+<span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">rows</span><span class="p">)</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s2">"model"</span><span class="p">)</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span>
+</pre></div>
+</section><section class="cell" id="cell-cell-012"><h2 id="section-6">Interpretation</h2>
 <p>Thresholds depend on cost assumptions and validation data. Weighted probabilities may shift. The synthetic results do not justify real decisions.</p></section></article><nav class="actions" aria-label="Study sequence"><a href="03_xgboost.html">← 03: XGBoost</a><a href="index.html#lectures">All lectures</a><a href="05_text_classification.html">05: Text classification →</a></nav></main></div><footer>Mathematical ML · Eight practical lectures for mathematicians<br>Readable Python · Reproducible experiments · Synthetic teaching data</footer></body></html>

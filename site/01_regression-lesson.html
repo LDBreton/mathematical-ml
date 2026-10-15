@@ -1,192 +1,242 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Eight guided machine learning lectures for mathematicians: theory, readable Python, exercises and worked solutions."><title>Regression: lesson · Mathematical ML</title><link rel="stylesheet" href="style.css"><script defer src="site.js"></script><script>window.MathJax={tex:{inlineMath:[['$','$'],['\\(','\\)']]}};</script><script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script></head><body><a class="skip" href="#main">Skip to content</a><header><button class="menu" aria-controls="sidebar" aria-expanded="false" aria-label="Toggle course navigation">☰</button><a class="brand" href="index.html">∑ <span>Mathematical ML</span></a><nav aria-label="Quick links"><a href="setup.html">Get started</a><a href="index.html#lectures">Lectures</a><button id="theme" aria-label="Switch color theme">◐</button></nav></header><div class="layout"><aside id="sidebar" aria-label="Course navigation"><a href="index.html">Course overview</a><h3>Start here</h3><a href="setup.html">Installation &amp; first steps</a><a href="first-steps.html">New to ML? Start here</a><h3>The lectures</h3><details><summary><a href="01_regression.html">01 · Regression</a></summary><a class="sub" href="01_regression-lesson.html">Lesson</a><a class="sub" href="01_regression-exercises.html">Exercises</a><a class="sub" href="01_regression-solutions.html">Solutions</a></details><details><summary><a href="02_classification.html">02 · Classification</a></summary><a class="sub" href="02_classification-lesson.html">Lesson</a><a class="sub" href="02_classification-exercises.html">Exercises</a><a class="sub" href="02_classification-solutions.html">Solutions</a></details><details><summary><a href="03_xgboost.html">03 · XGBoost</a></summary><a class="sub" href="03_xgboost-lesson.html">Lesson</a><a class="sub" href="03_xgboost-exercises.html">Exercises</a><a class="sub" href="03_xgboost-solutions.html">Solutions</a></details><details><summary><a href="04_imbalanced_learning.html">04 · Imbalanced learning</a></summary><a class="sub" href="04_imbalanced_learning-lesson.html">Lesson</a><a class="sub" href="04_imbalanced_learning-exercises.html">Exercises</a><a class="sub" href="04_imbalanced_learning-solutions.html">Solutions</a></details><details><summary><a href="05_text_classification.html">05 · Text classification</a></summary><a class="sub" href="05_text_classification-lesson.html">Lesson</a><a class="sub" href="05_text_classification-exercises.html">Exercises</a><a class="sub" href="05_text_classification-solutions.html">Solutions</a></details><details><summary><a href="06_clustering.html">06 · Clustering</a></summary><a class="sub" href="06_clustering-lesson.html">Lesson</a><a class="sub" href="06_clustering-exercises.html">Exercises</a><a class="sub" href="06_clustering-solutions.html">Solutions</a></details><details><summary><a href="07_time_series.html">07 · Time-series forecasting</a></summary><a class="sub" href="07_time_series-lesson.html">Lesson</a><a class="sub" href="07_time_series-exercises.html">Exercises</a><a class="sub" href="07_time_series-solutions.html">Solutions</a></details><details><summary><a href="08_deployment.html">08 · From model to service</a></summary><a class="sub" href="08_deployment-lesson.html">Lesson</a><a class="sub" href="08_deployment-exercises.html">Exercises</a><a class="sub" href="08_deployment-solutions.html">Solutions</a></details><h3>Resources</h3><a href="datasets.html">Datasets</a><a href="course-project.html">Course project</a><a href="instructor.html">Teaching guide</a><a href="verification.html">Verification</a></aside><main id="main"><div class="eyebrow">Lecture 01 / lesson</div><div class="actions"><a href="01_regression.html">← Lecture guide</a><a href="downloads/01_regression/lesson.ipynb" download>Download notebook</a></div><p class="note">This page is a reading view. To execute Python, download the complete course and open this notebook in Jupyter. <a href="first-steps.html">First notebook walkthrough →</a></p><details class="contents"><summary>On this page</summary><nav aria-label="Page contents"><a href="#section-1">Before the pipeline: objects, arrays, and learned state</a><a href="#section-2">1. Population prediction and empirical least squares</a><a href="#section-3">2. Load generated data</a><a href="#section-4">3. Define target and hold out test rows</a><a href="#section-5">4. Preprocessing and the Ridge objective</a><a href="#section-6">5. Select penalty inside training data</a><a href="#section-7">Inspect the design matrix you actually fitted</a><a href="#section-8">6. One held-out evaluation</a><a href="#section-9">7. Residual diagnostics</a><a href="#section-10">8. Coefficients, cautiously</a><a href="#section-11">Takeaways</a></nav></details><article class="reading"><section class="cell"><h1>01 — Regression: predicting a numerical response</h1>
-<p>Regression predicts a number. We will predict synthetic home price from physical measurements and neighborhood. The goal is to learn a sound evaluation workflow, not to explain a real housing market.</p></section><section class="cell"><p><img alt="Teaching figure for regression" src="figures/01_regression.svg" /></p>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Eight guided machine learning lectures for mathematicians: theory, readable Python, exercises and worked solutions."><title>Regression: lesson · Mathematical ML</title><link rel="stylesheet" href="style.css"><script defer src="site.js"></script><script>window.MathJax={tex:{inlineMath:[['$','$'],['\\(','\\)']]}};</script><script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script></head><body><a class="skip" href="#main">Skip to content</a><header><button class="menu" aria-controls="sidebar" aria-expanded="false" aria-label="Toggle course navigation">☰</button><a class="brand" href="index.html">∑ <span>Mathematical ML</span></a><nav aria-label="Quick links"><a href="setup.html">Get started</a><a href="index.html#lectures">Lectures</a><button id="theme" aria-label="Switch color theme">◐</button></nav></header><div class="layout"><aside id="sidebar" aria-label="Course navigation"><a href="index.html">Course overview</a><h3>Start here</h3><a href="setup.html">Installation &amp; first steps</a><a href="first-steps.html">New to ML? Start here</a><h3>The lectures</h3><details><summary><a href="01_regression.html">01 · Regression</a></summary><a class="sub" href="01_regression-lesson.html">Lesson</a><a class="sub" href="01_regression-exercises.html">Exercises</a><a class="sub" href="01_regression-solutions.html">Solutions</a></details><details><summary><a href="02_classification.html">02 · Classification</a></summary><a class="sub" href="02_classification-lesson.html">Lesson</a><a class="sub" href="02_classification-exercises.html">Exercises</a><a class="sub" href="02_classification-solutions.html">Solutions</a></details><details><summary><a href="03_xgboost.html">03 · XGBoost</a></summary><a class="sub" href="03_xgboost-lesson.html">Lesson</a><a class="sub" href="03_xgboost-exercises.html">Exercises</a><a class="sub" href="03_xgboost-solutions.html">Solutions</a></details><details><summary><a href="04_imbalanced_learning.html">04 · Imbalanced learning</a></summary><a class="sub" href="04_imbalanced_learning-lesson.html">Lesson</a><a class="sub" href="04_imbalanced_learning-exercises.html">Exercises</a><a class="sub" href="04_imbalanced_learning-solutions.html">Solutions</a></details><details><summary><a href="05_text_classification.html">05 · Text classification</a></summary><a class="sub" href="05_text_classification-lesson.html">Lesson</a><a class="sub" href="05_text_classification-exercises.html">Exercises</a><a class="sub" href="05_text_classification-solutions.html">Solutions</a></details><details><summary><a href="06_clustering.html">06 · Clustering</a></summary><a class="sub" href="06_clustering-lesson.html">Lesson</a><a class="sub" href="06_clustering-exercises.html">Exercises</a><a class="sub" href="06_clustering-solutions.html">Solutions</a></details><details><summary><a href="07_time_series.html">07 · Time-series forecasting</a></summary><a class="sub" href="07_time_series-lesson.html">Lesson</a><a class="sub" href="07_time_series-exercises.html">Exercises</a><a class="sub" href="07_time_series-solutions.html">Solutions</a></details><details><summary><a href="08_deployment.html">08 · From model to service</a></summary><a class="sub" href="08_deployment-lesson.html">Lesson</a><a class="sub" href="08_deployment-exercises.html">Exercises</a><a class="sub" href="08_deployment-solutions.html">Solutions</a></details><h3>Resources</h3><a href="results.html">Executed result galleries</a><a href="datasets.html">Datasets</a><a href="course-project.html">Course project</a><a href="instructor.html">Teaching guide</a><a href="verification.html">Verification</a></aside><main id="main"><div class="eyebrow">Lecture 01 / lesson</div><div class="actions"><a href="01_regression.html">← Lecture guide</a><a href="downloads/01_regression/lesson.ipynb" download>Download notebook</a></div><p class="note">This page is a reading view. To execute Python, download the complete course and open this notebook in Jupyter. <a href="first-steps.html">First notebook walkthrough →</a></p><details class="contents"><summary>On this page</summary><nav aria-label="Page contents"><a href="#section-1">Before the pipeline: objects, arrays, and learned state</a><a href="#section-2">1. Population prediction and empirical least squares</a><a href="#section-3">2. Load generated data</a><a href="#section-4">3. Define target and hold out test rows</a><a href="#section-5">4. Preprocessing and the Ridge objective</a><a href="#section-6">5. Select penalty inside training data</a><a href="#section-7">Inspect the design matrix you actually fitted</a><a href="#section-8">6. One held-out evaluation</a><a href="#section-9">7. Residual diagnostics</a><a href="#section-10">8. Coefficients, cautiously</a><a href="#section-11">Takeaways</a></nav></details><article class="reading"><section class="cell" id="cell-cell-000"><h1>01 — Regression: predicting a numerical response</h1>
+<p>Regression predicts a number. We will predict synthetic home price from physical measurements and neighborhood. The goal is to learn a sound evaluation workflow, not to explain a real housing market.</p></section><section class="cell" id="cell-beginner-bridge"><p><img alt="Teaching figure for regression" src="figures/01_regression.svg" /></p>
 <p><em>Illustrative noisy response and two function families. Inspect what a straight line cannot capture; this is not the housing model evaluation.</em></p>
 <h2 id="section-1">Before the pipeline: objects, arrays, and learned state</h2>
 <p>If the library names are new, read <a href="first-steps.html">Your first experiment</a>. Here $X$ has one observation per row, while $y$ has one target per row. <code>model = Ridge(alpha=1)</code> constructs an unfitted estimator; <code>model.fit(X, y)</code> learns its coefficients; <code>model.predict(X_new)</code> applies them. Settings such as <code>alpha</code> are hyperparameters. Attributes such as <code>coef_</code> and a scaler's <code>mean_</code> are learned state.</p>
 <p>A scaler maps a value 14 to 2 if its <strong>training</strong> mean is 10 and standard deviation is 2. A category such as <code>north</code> becomes an indicator column, not a numerical rank. <code>ColumnTransformer</code> joins the numerical and categorical blocks. <code>Pipeline</code> chains this transformation with Ridge. After the cross-validation section, inspect <code>regularization_search.best_estimator_.named_steps["preprocessing"].get_feature_names_out()</code> to connect transformed columns to coefficients.</p>
 <p><code>model__alpha</code> means “the <code>alpha</code> setting of the pipeline step named <code>model</code>.” In five-fold cross-validation, each candidate is fitted five times: four folds supply training data and one supplies validation data, rotating that role. Preprocessing is fitted anew within each fold. <code>GridSearchCV(refit=True)</code> then refits the winning setting on all supplied training rows; it still does not use the final test rows.</p>
 <p><strong>A tiny calculation:</strong> for centered $X=(-1,0,1)^T$, $y=(-2,0,2)^T$, and ridge penalty $\alpha=1$, the coefficient is $(X^TX+\alpha)^{-1}X^Ty=4/3$. The intercept is zero. This uses the sum-of-squares convention; changing to mean squared loss changes the penalty scaling. You can check it with <code>Ridge(alpha=1).fit([[-1],[0],[1]], [-2,0,2]).coef_</code>.</p>
-<p><strong>Check your understanding:</strong> Which objects learn from data? Which operations can safely be applied to held-out rows without refitting?</p></section><section class="cell"><h2 id="section-2">1. Population prediction and empirical least squares</h2>
+<p><strong>Check your understanding:</strong> Which objects learn from data? Which operations can safely be applied to held-out rows without refitting?</p></section><section class="cell" id="cell-cell-001"><h2 id="section-2">1. Population prediction and empirical least squares</h2>
 <p>Assume $\mathbb E[Y^2]&lt;\infty$. For any fixed feature value $X=x$, expand the conditional squared loss around the conditional mean:</p>
 <p>$$\mathbb E[(Y-a)^2\mid X=x]=\mathbb E[(Y-\mu(x))^2\mid X=x]+(a-\mu(x))^2,$$</p>
 <p>where $\mu(x)=\mathbb E[Y\mid X=x]$. The cross term vanishes because $\mathbb E[Y-\mu(x)\mid X=x]=0$. Therefore the unique squared-loss population target is $f^*(x)=\mathbb E[Y\mid X=x]$ for $P_X$-almost every $x$. A model class restricts which functions can approximate that conditional mean; it does not change the target.</p>
-<p>For a design matrix $A\in\mathbb R^{n\times p}$, ordinary least squares minimizes $\|y-A\beta\|_2^2$. Its gradient is $-2A^T(y-A\beta)$, so a minimizer satisfies the normal equations $A^TA\hat\beta=A^Ty$. Geometrically, $A\hat\beta$ is the orthogonal projection of $y$ onto the column space of $A$. Full column rank makes $A^TA$ invertible and the coefficient vector unique. Under rank deficiency, fitted values remain the unique projection, but multiple coefficient vectors can attain it.</p></section><section class="cell"><h2 id="section-3">2. Load generated data</h2>
-<p>The CSV is synthetic and pedagogical. Its patterns and noise were chosen for demonstration; the fitted results say nothing about actual homes.</p></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>from pathlib import Path
+<p>For a design matrix $A\in\mathbb R^{n\times p}$, ordinary least squares minimizes $\|y-A\beta\|_2^2$. Its gradient is $-2A^T(y-A\beta)$, so a minimizer satisfies the normal equations $A^TA\hat\beta=A^Ty$. Geometrically, $A\hat\beta$ is the orthogonal projection of $y$ onto the column space of $A$. Full column rank makes $A^TA$ invertible and the coefficient vector unique. Under rank deficiency, fitted values remain the unique projection, but multiple coefficient vectors can attain it.</p></section><section class="cell" id="cell-cell-002"><h2 id="section-3">2. Load generated data</h2>
+<p>The CSV is synthetic and pedagogical. Its patterns and noise were chosen for demonstration; the fitted results say nothing about actual homes.</p></section><section class="cell" id="cell-cell-003"><div class="cell-label">Python · run in the notebook</div><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 
-import numpy as np
-import pandas as pd
-
-
-def find_data_file(filename):
-    &quot;&quot;&quot;Search the current directory and its parents for a repository data file.&quot;&quot;&quot;
-    for directory in (Path.cwd(), *Path.cwd().parents):
-        data_path = directory / &quot;data&quot; / filename
-        if data_path.is_file():
-            return data_path
-
-    raise FileNotFoundError(
-        f&quot;Could not find data/{filename}. Start Jupyter at the repository root &quot;
-        &quot;or inside this lecture directory.&quot;
-    )
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
 
 
-housing_path = find_data_file(&quot;housing.csv&quot;)
-housing_data = pd.read_csv(housing_path)
-print(f&quot;Loaded {len(housing_data)} synthetic rows from {housing_path}&quot;)
-housing_data.head()</code></pre></section><section class="cell"><h2 id="section-4">3. Define target and hold out test rows</h2>
-<p><code>price</code> is the response; all other columns are features. We set aside the test set before fitting transformations or choosing a model. It estimates performance of the selected procedure on unseen rows from a similar data process.</p></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>from sklearn.model_selection import train_test_split
+<span class="k">def</span><span class="w"> </span><span class="nf">find_data_file</span><span class="p">(</span><span class="n">filename</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Search the current directory and its parents for a repository data file."""</span>
+    <span class="k">for</span> <span class="n">directory</span> <span class="ow">in</span> <span class="p">(</span><span class="n">Path</span><span class="o">.</span><span class="n">cwd</span><span class="p">(),</span> <span class="o">*</span><span class="n">Path</span><span class="o">.</span><span class="n">cwd</span><span class="p">()</span><span class="o">.</span><span class="n">parents</span><span class="p">):</span>
+        <span class="n">data_path</span> <span class="o">=</span> <span class="n">directory</span> <span class="o">/</span> <span class="s2">"data"</span> <span class="o">/</span> <span class="n">filename</span>
+        <span class="k">if</span> <span class="n">data_path</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
+            <span class="k">return</span> <span class="n">data_path</span>
 
-target_column = &quot;price&quot;
-feature_data = housing_data.drop(columns=target_column)
-price_response = housing_data[target_column]
+    <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">"Could not find data/</span><span class="si">{</span><span class="n">filename</span><span class="si">}</span><span class="s2">. Start Jupyter at the repository root "</span>
+        <span class="s2">"or inside this lecture directory."</span>
+    <span class="p">)</span>
 
-training_features, test_features, training_response, test_response = train_test_split(
-    feature_data,
-    price_response,
-    test_size=0.25,
-    random_state=27,
-)
 
-print(f&quot;Training rows: {len(training_features)}&quot;)
-print(f&quot;Held-out test rows: {len(test_features)}&quot;)</code></pre></section><section class="cell"><p>Random splitting assumes rows are exchangeable. For future prediction over time, or repeated measurements grouped by household, the split should instead reflect that structure.</p></section><section class="cell"><h2 id="section-5">4. Preprocessing and the Ridge objective</h2>
+<span class="n">housing_path</span> <span class="o">=</span> <span class="n">find_data_file</span><span class="p">(</span><span class="s2">"housing.csv"</span><span class="p">)</span>
+<span class="n">housing_data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">housing_path</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Loaded </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">housing_data</span><span class="p">)</span><span class="si">}</span><span class="s2"> synthetic rows from </span><span class="si">{</span><span class="n">housing_path</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="n">housing_data</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+</pre></div>
+<details class="result-text"><summary>2. Load generated data · computed output</summary><pre>Loaded 1200 synthetic rows from F:\Proyectos\RBF-Machine learning\data\housing.csv
+</pre></details><details class="result-text"><summary>2. Load generated data · computed output</summary><pre>    area_m2  bedrooms  age_years  distance_km neighborhood        price
+0  178.1819         1    42.7235      24.8766        outer  390826.6849
+1  116.1925         3    43.6482      17.8229      central  367962.5603
+2  193.8406         4     9.4556       7.3456      central  615257.2151
+3  164.0131         3    48.5478      22.3703        outer  377947.9298
+4   52.4228         2    47.2325       2.5344        outer  120664.8066</pre></details></section><section class="cell" id="cell-cell-004"><h2 id="section-4">3. Define target and hold out test rows</h2>
+<p><code>price</code> is the response; all other columns are features. We set aside the test set before fitting transformations or choosing a model. It estimates performance of the selected procedure on unseen rows from a similar data process.</p></section><section class="cell" id="cell-cell-005"><div class="cell-label">Python · run in the notebook</div><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.model_selection</span><span class="w"> </span><span class="kn">import</span> <span class="n">train_test_split</span>
+
+<span class="n">target_column</span> <span class="o">=</span> <span class="s2">"price"</span>
+<span class="n">feature_data</span> <span class="o">=</span> <span class="n">housing_data</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="n">target_column</span><span class="p">)</span>
+<span class="n">price_response</span> <span class="o">=</span> <span class="n">housing_data</span><span class="p">[</span><span class="n">target_column</span><span class="p">]</span>
+
+<span class="n">training_features</span><span class="p">,</span> <span class="n">test_features</span><span class="p">,</span> <span class="n">training_response</span><span class="p">,</span> <span class="n">test_response</span> <span class="o">=</span> <span class="n">train_test_split</span><span class="p">(</span>
+    <span class="n">feature_data</span><span class="p">,</span>
+    <span class="n">price_response</span><span class="p">,</span>
+    <span class="n">test_size</span><span class="o">=</span><span class="mf">0.25</span><span class="p">,</span>
+    <span class="n">random_state</span><span class="o">=</span><span class="mi">27</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Training rows: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">training_features</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Held-out test rows: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">test_features</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</pre></div>
+<details class="result-text"><summary>3. Define target and hold out test rows · computed output</summary><pre>Training rows: 900
+Held-out test rows: 300
+</pre></details></section><section class="cell" id="cell-cell-006"><p>Random splitting assumes rows are exchangeable. For future prediction over time, or repeated measurements grouped by household, the split should instead reflect that structure.</p></section><section class="cell" id="cell-cell-007"><h2 id="section-5">4. Preprocessing and the Ridge objective</h2>
 <p>Numerical columns are standardized and <code>neighborhood</code> is one-hot encoded. <code>handle_unknown="ignore"</code> prevents a runtime error for a future category that was absent in training by encoding that category as all zeros. This pattern was outside the training support, so the encoding does not make its prediction trustworthy. The preprocessing belongs inside the pipeline so a cross-validation fold learns means, scales, medians, and categories from its own fitting rows.</p>
-<p>Ridge solves $\min_{\beta_0,\beta}\sum_i(y_i-\beta_0-x_i^T\beta)^2+\alpha\|\beta\|_2^2$. With $\alpha&gt;0$, the slope system is positive definite even when predictors are linearly dependent. The intercept $\beta_0$ is unpenalized in scikit-learn; for fixed slopes, minimizing over it centers residuals. Standardizing slopes makes a common penalty more comparable across numerical units. Do not add a constant-one feature when the estimator already fits its own intercept.</p></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>from sklearn.compose import ColumnTransformer
-from sklearn.impute import SimpleImputer
-from sklearn.linear_model import Ridge
-from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import OneHotEncoder, StandardScaler
+<p>Ridge solves $\min_{\beta_0,\beta}\sum_i(y_i-\beta_0-x_i^T\beta)^2+\alpha\|\beta\|_2^2$. With $\alpha&gt;0$, the slope system is positive definite even when predictors are linearly dependent. The intercept $\beta_0$ is unpenalized in scikit-learn; for fixed slopes, minimizing over it centers residuals. Standardizing slopes makes a common penalty more comparable across numerical units. Do not add a constant-one feature when the estimator already fits its own intercept.</p></section><section class="cell" id="cell-cell-008"><div class="cell-label">Python · run in the notebook</div><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.compose</span><span class="w"> </span><span class="kn">import</span> <span class="n">ColumnTransformer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.impute</span><span class="w"> </span><span class="kn">import</span> <span class="n">SimpleImputer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.linear_model</span><span class="w"> </span><span class="kn">import</span> <span class="n">Ridge</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.pipeline</span><span class="w"> </span><span class="kn">import</span> <span class="n">Pipeline</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.preprocessing</span><span class="w"> </span><span class="kn">import</span> <span class="n">OneHotEncoder</span><span class="p">,</span> <span class="n">StandardScaler</span>
 
-numeric_columns = [&quot;area_m2&quot;, &quot;bedrooms&quot;, &quot;age_years&quot;, &quot;distance_km&quot;]
-categorical_columns = [&quot;neighborhood&quot;]
+<span class="n">numeric_columns</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"area_m2"</span><span class="p">,</span> <span class="s2">"bedrooms"</span><span class="p">,</span> <span class="s2">"age_years"</span><span class="p">,</span> <span class="s2">"distance_km"</span><span class="p">]</span>
+<span class="n">categorical_columns</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"neighborhood"</span><span class="p">]</span>
 
-numeric_preprocessing = Pipeline(
-    steps=[
-        (&quot;impute&quot;, SimpleImputer(strategy=&quot;median&quot;)),
-        (&quot;scale&quot;, StandardScaler()),
-    ]
-)
-categorical_preprocessing = Pipeline(
-    steps=[
-        (&quot;impute&quot;, SimpleImputer(strategy=&quot;most_frequent&quot;)),
-        (&quot;one_hot&quot;, OneHotEncoder(handle_unknown=&quot;ignore&quot;)),
-    ]
-)
-preprocessing = ColumnTransformer(
-    transformers=[
-        (&quot;numeric&quot;, numeric_preprocessing, numeric_columns),
-        (&quot;category&quot;, categorical_preprocessing, categorical_columns),
-    ]
-)
-regression_pipeline = Pipeline(
-    steps=[(&quot;preprocessing&quot;, preprocessing), (&quot;model&quot;, Ridge())]
-)</code></pre></section><section class="cell"><h2 id="section-6">5. Select penalty inside training data</h2>
-<p>Five-fold CV compares alpha values using only the training partition. The negative scorer convention is used by scikit-learn; negate the reported score to get RMSE.</p></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>from sklearn.model_selection import GridSearchCV, KFold
+<span class="n">numeric_preprocessing</span> <span class="o">=</span> <span class="n">Pipeline</span><span class="p">(</span>
+    <span class="n">steps</span><span class="o">=</span><span class="p">[</span>
+        <span class="p">(</span><span class="s2">"impute"</span><span class="p">,</span> <span class="n">SimpleImputer</span><span class="p">(</span><span class="n">strategy</span><span class="o">=</span><span class="s2">"median"</span><span class="p">)),</span>
+        <span class="p">(</span><span class="s2">"scale"</span><span class="p">,</span> <span class="n">StandardScaler</span><span class="p">()),</span>
+    <span class="p">]</span>
+<span class="p">)</span>
+<span class="n">categorical_preprocessing</span> <span class="o">=</span> <span class="n">Pipeline</span><span class="p">(</span>
+    <span class="n">steps</span><span class="o">=</span><span class="p">[</span>
+        <span class="p">(</span><span class="s2">"impute"</span><span class="p">,</span> <span class="n">SimpleImputer</span><span class="p">(</span><span class="n">strategy</span><span class="o">=</span><span class="s2">"most_frequent"</span><span class="p">)),</span>
+        <span class="p">(</span><span class="s2">"one_hot"</span><span class="p">,</span> <span class="n">OneHotEncoder</span><span class="p">(</span><span class="n">handle_unknown</span><span class="o">=</span><span class="s2">"ignore"</span><span class="p">)),</span>
+    <span class="p">]</span>
+<span class="p">)</span>
+<span class="n">preprocessing</span> <span class="o">=</span> <span class="n">ColumnTransformer</span><span class="p">(</span>
+    <span class="n">transformers</span><span class="o">=</span><span class="p">[</span>
+        <span class="p">(</span><span class="s2">"numeric"</span><span class="p">,</span> <span class="n">numeric_preprocessing</span><span class="p">,</span> <span class="n">numeric_columns</span><span class="p">),</span>
+        <span class="p">(</span><span class="s2">"category"</span><span class="p">,</span> <span class="n">categorical_preprocessing</span><span class="p">,</span> <span class="n">categorical_columns</span><span class="p">),</span>
+    <span class="p">]</span>
+<span class="p">)</span>
+<span class="n">regression_pipeline</span> <span class="o">=</span> <span class="n">Pipeline</span><span class="p">(</span>
+    <span class="n">steps</span><span class="o">=</span><span class="p">[(</span><span class="s2">"preprocessing"</span><span class="p">,</span> <span class="n">preprocessing</span><span class="p">),</span> <span class="p">(</span><span class="s2">"model"</span><span class="p">,</span> <span class="n">Ridge</span><span class="p">())]</span>
+<span class="p">)</span>
+</pre></div>
+</section><section class="cell" id="cell-cell-009"><h2 id="section-6">5. Select penalty inside training data</h2>
+<p>Five-fold CV compares alpha values using only the training partition. The negative scorer convention is used by scikit-learn; negate the reported score to get RMSE.</p></section><section class="cell" id="cell-cell-010"><div class="cell-label">Python · run in the notebook</div><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.model_selection</span><span class="w"> </span><span class="kn">import</span> <span class="n">GridSearchCV</span><span class="p">,</span> <span class="n">KFold</span>
 
-training_folds = KFold(n_splits=5, shuffle=True, random_state=27)
-regularization_search = GridSearchCV(
-    estimator=regression_pipeline,
-    param_grid={&quot;model__alpha&quot;: [0.01, 0.1, 1.0, 10.0, 100.0]},
-    scoring=&quot;neg_root_mean_squared_error&quot;,
-    cv=training_folds,
-    refit=True,
-)
-regularization_search.fit(training_features, training_response)
+<span class="n">training_folds</span> <span class="o">=</span> <span class="n">KFold</span><span class="p">(</span><span class="n">n_splits</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">27</span><span class="p">)</span>
+<span class="n">regularization_search</span> <span class="o">=</span> <span class="n">GridSearchCV</span><span class="p">(</span>
+    <span class="n">estimator</span><span class="o">=</span><span class="n">regression_pipeline</span><span class="p">,</span>
+    <span class="n">param_grid</span><span class="o">=</span><span class="p">{</span><span class="s2">"model__alpha"</span><span class="p">:</span> <span class="p">[</span><span class="mf">0.01</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">10.0</span><span class="p">,</span> <span class="mf">100.0</span><span class="p">]},</span>
+    <span class="n">scoring</span><span class="o">=</span><span class="s2">"neg_root_mean_squared_error"</span><span class="p">,</span>
+    <span class="n">cv</span><span class="o">=</span><span class="n">training_folds</span><span class="p">,</span>
+    <span class="n">refit</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">regularization_search</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">training_features</span><span class="p">,</span> <span class="n">training_response</span><span class="p">)</span>
 
-selected_alpha = regularization_search.best_params_[&quot;model__alpha&quot;]
-training_cv_rmse = -regularization_search.best_score_
-print(f&quot;Selected Ridge alpha: {selected_alpha}&quot;)
-print(f&quot;Mean training-fold RMSE: {training_cv_rmse:,.0f} price units&quot;)</code></pre></section><section class="cell"><h2 id="section-7">Inspect the design matrix you actually fitted</h2>
-<p>Cross-validation fits clones of the original pipeline. Inspect its selected, refitted estimator rather than assuming the original transformer holds the selected fitted state. Below, each transformed column name aligns with one model input. Numerical columns have been imputed and scaled; category columns are indicators. The displayed rows come from training data, and <code>transform</code> learns nothing new.</p></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>fitted_preprocessing = regularization_search.best_estimator_.named_steps[&quot;preprocessing&quot;]
-example_rows = training_features.iloc[:3]
-encoded_rows = fitted_preprocessing.transform(example_rows)
-# ColumnTransformer may return a sparse matrix, depending on output density.
-if hasattr(encoded_rows, &quot;toarray&quot;):
-    encoded_rows = encoded_rows.toarray()
-print(&quot;Raw training rows:&quot;)
-print(example_rows.to_string(index=False))
-print(&quot;Transformed model inputs:&quot;)
-print(pd.DataFrame(
-    encoded_rows,
-    columns=fitted_preprocessing.get_feature_names_out(),
-    index=example_rows.index,
-).round(3).to_string())
-fitted_scaler = fitted_preprocessing.named_transformers_[&quot;numeric&quot;].named_steps[&quot;scale&quot;]
-print(&quot;Training means after imputation:&quot;, dict(zip(numeric_columns, fitted_scaler.mean_)))
-</code></pre></section><section class="cell"><h2 id="section-8">6. One held-out evaluation</h2>
-<p>MAE is average absolute error in the target units. RMSE penalizes large misses more. $R^2$ compares with a constant prediction equal to the test mean; it can be negative. None of these scores alone says whether a model is useful for a particular decision.</p></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>import numpy as np
-import pandas as pd
-from sklearn.dummy import DummyRegressor
-from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+<span class="n">selected_alpha</span> <span class="o">=</span> <span class="n">regularization_search</span><span class="o">.</span><span class="n">best_params_</span><span class="p">[</span><span class="s2">"model__alpha"</span><span class="p">]</span>
+<span class="n">training_cv_rmse</span> <span class="o">=</span> <span class="o">-</span><span class="n">regularization_search</span><span class="o">.</span><span class="n">best_score_</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Selected Ridge alpha: </span><span class="si">{</span><span class="n">selected_alpha</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Mean training-fold RMSE: </span><span class="si">{</span><span class="n">training_cv_rmse</span><span class="si">:</span><span class="s2">,.0f</span><span class="si">}</span><span class="s2"> price units"</span><span class="p">)</span>
+</pre></div>
+<details class="result-text"><summary>5. Select penalty inside training data · computed output</summary><pre>Selected Ridge alpha: 0.1
+Mean training-fold RMSE: 25,888 price units
+</pre></details></section><section class="cell" id="cell-inspect-design-matrix"><h2 id="section-7">Inspect the design matrix you actually fitted</h2>
+<p>Cross-validation fits clones of the original pipeline. Inspect its selected, refitted estimator rather than assuming the original transformer holds the selected fitted state. Below, each transformed column name aligns with one model input. Numerical columns have been imputed and scaled; category columns are indicators. The displayed rows come from training data, and <code>transform</code> learns nothing new.</p></section><section class="cell" id="cell-inspect-design-matrix-code"><div class="cell-label">Python · run in the notebook</div><div class="highlight"><pre><span></span><span class="n">fitted_preprocessing</span> <span class="o">=</span> <span class="n">regularization_search</span><span class="o">.</span><span class="n">best_estimator_</span><span class="o">.</span><span class="n">named_steps</span><span class="p">[</span><span class="s2">"preprocessing"</span><span class="p">]</span>
+<span class="n">example_rows</span> <span class="o">=</span> <span class="n">training_features</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:</span><span class="mi">3</span><span class="p">]</span>
+<span class="n">encoded_rows</span> <span class="o">=</span> <span class="n">fitted_preprocessing</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">example_rows</span><span class="p">)</span>
+<span class="c1"># ColumnTransformer may return a sparse matrix, depending on output density.</span>
+<span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">encoded_rows</span><span class="p">,</span> <span class="s2">"toarray"</span><span class="p">):</span>
+    <span class="n">encoded_rows</span> <span class="o">=</span> <span class="n">encoded_rows</span><span class="o">.</span><span class="n">toarray</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Raw training rows:"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">example_rows</span><span class="o">.</span><span class="n">to_string</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Transformed model inputs:"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+    <span class="n">encoded_rows</span><span class="p">,</span>
+    <span class="n">columns</span><span class="o">=</span><span class="n">fitted_preprocessing</span><span class="o">.</span><span class="n">get_feature_names_out</span><span class="p">(),</span>
+    <span class="n">index</span><span class="o">=</span><span class="n">example_rows</span><span class="o">.</span><span class="n">index</span><span class="p">,</span>
+<span class="p">)</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span><span class="o">.</span><span class="n">to_string</span><span class="p">())</span>
+<span class="n">fitted_scaler</span> <span class="o">=</span> <span class="n">fitted_preprocessing</span><span class="o">.</span><span class="n">named_transformers_</span><span class="p">[</span><span class="s2">"numeric"</span><span class="p">]</span><span class="o">.</span><span class="n">named_steps</span><span class="p">[</span><span class="s2">"scale"</span><span class="p">]</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Training means after imputation:"</span><span class="p">,</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">numeric_columns</span><span class="p">,</span> <span class="n">fitted_scaler</span><span class="o">.</span><span class="n">mean_</span><span class="p">)))</span>
+</pre></div>
+<details class="result-text"><summary>Inspect the design matrix you actually fitted · computed output</summary><pre>Raw training rows:
+ area_m2  bedrooms  age_years  distance_km neighborhood
+ 80.3729         4    54.7933      26.4516      central
+192.6229         1    25.5533       9.6696      central
+ 46.1978         4    67.0665       5.0187      central
+Transformed model inputs:
+     numeric__area_m2  numeric__bedrooms  numeric__age_years  numeric__distance_km  category__neighborhood_central  category__neighborhood_outer  category__neighborhood_residential
+945            -0.850              0.692               1.012                 1.350                             1.0                           0.0                                 0.0
+574             1.240             -1.412              -0.469                -0.587                             1.0                           0.0                                 0.0
+734            -1.487              0.692               1.634                -1.124                             1.0                           0.0                                 0.0
+Training means after imputation: {&#x27;area_m2&#x27;: np.float64(126.0428888888889), &#x27;bedrooms&#x27;: np.float64(3.013333333333333), &#x27;age_years&#x27;: np.float64(34.81788911111111), &#x27;distance_km&#x27;: np.float64(14.75872388888889)}
+</pre></details></section><section class="cell" id="cell-cell-011"><h2 id="section-8">6. One held-out evaluation</h2>
+<p>MAE is average absolute error in the target units. RMSE penalizes large misses more. $R^2$ compares with a constant prediction equal to the test mean; it can be negative. None of these scores alone says whether a model is useful for a particular decision.</p></section><section class="cell" id="cell-cell-012"><div class="cell-label">Python · run in the notebook</div><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.dummy</span><span class="w"> </span><span class="kn">import</span> <span class="n">DummyRegressor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">mean_absolute_error</span><span class="p">,</span> <span class="n">mean_squared_error</span><span class="p">,</span> <span class="n">r2_score</span>
 
 
-def summarize_regression_errors(actual_values, predicted_values):
-    &quot;&quot;&quot;Return three complementary regression metrics.&quot;&quot;&quot;
-    return {
-        &quot;MAE&quot;: mean_absolute_error(actual_values, predicted_values),
-        &quot;RMSE&quot;: mean_squared_error(actual_values, predicted_values) ** 0.5,
-        &quot;R²&quot;: r2_score(actual_values, predicted_values),
-    }
+<span class="k">def</span><span class="w"> </span><span class="nf">summarize_regression_errors</span><span class="p">(</span><span class="n">actual_values</span><span class="p">,</span> <span class="n">predicted_values</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Return three complementary regression metrics."""</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">"MAE"</span><span class="p">:</span> <span class="n">mean_absolute_error</span><span class="p">(</span><span class="n">actual_values</span><span class="p">,</span> <span class="n">predicted_values</span><span class="p">),</span>
+        <span class="s2">"RMSE"</span><span class="p">:</span> <span class="n">mean_squared_error</span><span class="p">(</span><span class="n">actual_values</span><span class="p">,</span> <span class="n">predicted_values</span><span class="p">)</span> <span class="o">**</span> <span class="mf">0.5</span><span class="p">,</span>
+        <span class="s2">"R²"</span><span class="p">:</span> <span class="n">r2_score</span><span class="p">(</span><span class="n">actual_values</span><span class="p">,</span> <span class="n">predicted_values</span><span class="p">),</span>
+    <span class="p">}</span>
 
 
-best_regression_model = regularization_search.best_estimator_
-test_price_predictions = best_regression_model.predict(test_features)
+<span class="n">best_regression_model</span> <span class="o">=</span> <span class="n">regularization_search</span><span class="o">.</span><span class="n">best_estimator_</span>
+<span class="n">test_price_predictions</span> <span class="o">=</span> <span class="n">best_regression_model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">test_features</span><span class="p">)</span>
 
-median_baseline = DummyRegressor(strategy=&quot;median&quot;)
-baseline_training_input = np.zeros((len(training_response), 1))
-baseline_test_input = np.zeros((len(test_response), 1))
-median_baseline.fit(baseline_training_input, training_response)
-baseline_predictions = median_baseline.predict(baseline_test_input)
+<span class="n">median_baseline</span> <span class="o">=</span> <span class="n">DummyRegressor</span><span class="p">(</span><span class="n">strategy</span><span class="o">=</span><span class="s2">"median"</span><span class="p">)</span>
+<span class="n">baseline_training_input</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">training_response</span><span class="p">),</span> <span class="mi">1</span><span class="p">))</span>
+<span class="n">baseline_test_input</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">test_response</span><span class="p">),</span> <span class="mi">1</span><span class="p">))</span>
+<span class="n">median_baseline</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">baseline_training_input</span><span class="p">,</span> <span class="n">training_response</span><span class="p">)</span>
+<span class="n">baseline_predictions</span> <span class="o">=</span> <span class="n">median_baseline</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">baseline_test_input</span><span class="p">)</span>
 
-test_metrics = pd.DataFrame(
-    {
-        &quot;Ridge pipeline&quot;: summarize_regression_errors(test_response, test_price_predictions),
-        &quot;Training-median baseline&quot;: summarize_regression_errors(
-            test_response, baseline_predictions
-        ),
-    }
-).T
-test_metrics.round(2)</code></pre></section><section class="cell"><p>The training median is a deliberately simple reference rule. MAE reports typical absolute miss size in price units, while RMSE gives large misses more influence. $R^2$ compares squared error with predicting the test-set mean and may be negative. The reported test metrics assess this selected modeling procedure on this held-out synthetic sample; they do not estimate real housing-market performance.</p></section><section class="cell"><h2 id="section-9">7. Residual diagnostics</h2>
-<p>Residuals $e_i=y_i-\hat y_i$ can reveal curvature, changing spread, or subgroups with systematically different errors. A plot is a prompt for investigation, not proof that assumptions hold.</p></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>import matplotlib.pyplot as plt
+<span class="n">mean_baseline</span> <span class="o">=</span> <span class="n">DummyRegressor</span><span class="p">(</span><span class="n">strategy</span><span class="o">=</span><span class="s2">"mean"</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">baseline_training_input</span><span class="p">,</span> <span class="n">training_response</span><span class="p">)</span>
+<span class="n">mean_predictions</span> <span class="o">=</span> <span class="n">mean_baseline</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">baseline_test_input</span><span class="p">)</span>
 
-test_residuals = test_response.to_numpy() - test_price_predictions
-figure, axes = plt.subplots(1, 2, figsize=(12, 4))
+<span class="n">test_metrics</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+    <span class="p">{</span>
+        <span class="s2">"Ridge pipeline"</span><span class="p">:</span> <span class="n">summarize_regression_errors</span><span class="p">(</span><span class="n">test_response</span><span class="p">,</span> <span class="n">test_price_predictions</span><span class="p">),</span>
+        <span class="s2">"Training-mean baseline"</span><span class="p">:</span> <span class="n">summarize_regression_errors</span><span class="p">(</span><span class="n">test_response</span><span class="p">,</span> <span class="n">mean_predictions</span><span class="p">),</span>
+        <span class="s2">"Training-median baseline"</span><span class="p">:</span> <span class="n">summarize_regression_errors</span><span class="p">(</span>
+            <span class="n">test_response</span><span class="p">,</span> <span class="n">baseline_predictions</span>
+        <span class="p">),</span>
+    <span class="p">}</span>
+<span class="p">)</span><span class="o">.</span><span class="n">T</span>
+<span class="n">test_metrics</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+</pre></div>
+<details class="result-text"><summary>6. One held-out evaluation · computed output</summary><pre>                                MAE       RMSE    R²
+Ridge pipeline             19515.07   24698.99  0.97
+Training-mean baseline    116192.62  139243.47 -0.01
+Training-median baseline  116265.35  139351.15 -0.01</pre></details></section><section class="cell" id="cell-cell-013"><p>The training mean is the optimal constant for training squared loss; the training median minimizes training absolute loss. Comparing both connects the baselines to the objectives. MAE is average absolute error in price units. RMSE uses the same units and gives larger misses more influence; it is at least MAE on the same errors. What residual pattern would suggest that an important nonlinear relationship is missing? Neither baseline may use test targets to choose its constant.</p></section><section class="cell" id="cell-cell-014"><h2 id="section-9">7. Residual diagnostics</h2>
+<p>Residuals $e_i=y_i-\hat y_i$ can reveal curvature, changing spread, or subgroups with systematically different errors. A plot is a prompt for investigation, not proof that assumptions hold.</p></section><section class="cell" id="cell-cell-015"><div class="cell-label">Python · run in the notebook</div><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
 
-axes[0].scatter(test_response, test_price_predictions, alpha=0.75)
-plot_limits = [
-    min(test_response.min(), test_price_predictions.min()),
-    max(test_response.max(), test_price_predictions.max()),
-]
-axes[0].plot(plot_limits, plot_limits, color=&quot;black&quot;, linestyle=&quot;--&quot;)
-axes[0].set(
-    xlabel=&quot;Observed price&quot;,
-    ylabel=&quot;Predicted price&quot;,
-    title=&quot;Held-out predictions&quot;,
-)
+<span class="n">test_residuals</span> <span class="o">=</span> <span class="n">test_response</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span> <span class="o">-</span> <span class="n">test_price_predictions</span>
+<span class="n">figure</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
 
-axes[1].scatter(test_price_predictions, test_residuals, alpha=0.75)
-axes[1].axhline(0, color=&quot;black&quot;, linestyle=&quot;--&quot;)
-axes[1].set(
-    xlabel=&quot;Predicted price&quot;,
-    ylabel=&quot;Observed minus predicted&quot;,
-    title=&quot;Residual check&quot;,
-)
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">test_response</span><span class="p">,</span> <span class="n">test_price_predictions</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.75</span><span class="p">)</span>
+<span class="n">plot_limits</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="nb">min</span><span class="p">(</span><span class="n">test_response</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span> <span class="n">test_price_predictions</span><span class="o">.</span><span class="n">min</span><span class="p">()),</span>
+    <span class="nb">max</span><span class="p">(</span><span class="n">test_response</span><span class="o">.</span><span class="n">max</span><span class="p">(),</span> <span class="n">test_price_predictions</span><span class="o">.</span><span class="n">max</span><span class="p">()),</span>
+<span class="p">]</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">plot_limits</span><span class="p">,</span> <span class="n">plot_limits</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">"black"</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s2">"--"</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set</span><span class="p">(</span>
+    <span class="n">xlabel</span><span class="o">=</span><span class="s2">"Observed price"</span><span class="p">,</span>
+    <span class="n">ylabel</span><span class="o">=</span><span class="s2">"Predicted price"</span><span class="p">,</span>
+    <span class="n">title</span><span class="o">=</span><span class="s2">"Held-out predictions"</span><span class="p">,</span>
+<span class="p">)</span>
 
-figure.tight_layout()</code></pre></section><section class="cell"><h2 id="section-10">8. Coefficients, cautiously</h2>
-<p>For a scaled numerical input, its coefficient describes a one-standard-deviation change in the fitted prediction, conditional on the other encoded columns. The encoder keeps all category indicators, so each displayed category coefficient is expressed relative to the fitted intercept under Ridge's penalty convention. Pairwise category contrasts are identifiable in this penalized parameterization; individual category values depend on the penalty and coding. Correlation, shrinkage, and omitted factors affect interpretation. These are conditional model associations, not causal effects.</p></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>import pandas as pd
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">test_price_predictions</span><span class="p">,</span> <span class="n">test_residuals</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.75</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">axhline</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">"black"</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s2">"--"</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set</span><span class="p">(</span>
+    <span class="n">xlabel</span><span class="o">=</span><span class="s2">"Predicted price"</span><span class="p">,</span>
+    <span class="n">ylabel</span><span class="o">=</span><span class="s2">"Observed minus predicted"</span><span class="p">,</span>
+    <span class="n">title</span><span class="o">=</span><span class="s2">"Residual check"</span><span class="p">,</span>
+<span class="p">)</span>
 
-selected_model = regularization_search.best_estimator_
-encoded_feature_names = selected_model.named_steps[&quot;preprocessing&quot;].get_feature_names_out()
-model_coefficients = pd.Series(
-    selected_model.named_steps[&quot;model&quot;].coef_,
-    index=encoded_feature_names,
-)
-model_coefficients.reindex(
-    model_coefficients.abs().sort_values(ascending=False).index
-).head(12).round(2)</code></pre></section><section class="cell"><h2 id="section-11">Takeaways</h2>
+<span class="n">figure</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+</pre></div>
+<figure class="result-figure"><img loading="lazy" src="results/01_regression-cell-015-0.png" alt="Executed result: 7. Residual diagnostics"><figcaption>7. Residual diagnostics · captured notebook output</figcaption></figure></section><section class="cell" id="cell-cell-016"><h2 id="section-10">8. Coefficients, cautiously</h2>
+<p>For a scaled numerical input, its coefficient describes a one-standard-deviation change in the fitted prediction, conditional on the other encoded columns. The encoder keeps all category indicators, so each displayed category coefficient is expressed relative to the fitted intercept under Ridge's penalty convention. Pairwise category contrasts are identifiable in this penalized parameterization; individual category values depend on the penalty and coding. Correlation, shrinkage, and omitted factors affect interpretation. These are conditional model associations, not causal effects.</p></section><section class="cell" id="cell-cell-017"><div class="cell-label">Python · run in the notebook</div><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+
+<span class="n">selected_model</span> <span class="o">=</span> <span class="n">regularization_search</span><span class="o">.</span><span class="n">best_estimator_</span>
+<span class="n">encoded_feature_names</span> <span class="o">=</span> <span class="n">selected_model</span><span class="o">.</span><span class="n">named_steps</span><span class="p">[</span><span class="s2">"preprocessing"</span><span class="p">]</span><span class="o">.</span><span class="n">get_feature_names_out</span><span class="p">()</span>
+<span class="n">model_coefficients</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span>
+    <span class="n">selected_model</span><span class="o">.</span><span class="n">named_steps</span><span class="p">[</span><span class="s2">"model"</span><span class="p">]</span><span class="o">.</span><span class="n">coef_</span><span class="p">,</span>
+    <span class="n">index</span><span class="o">=</span><span class="n">encoded_feature_names</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">model_coefficients</span><span class="o">.</span><span class="n">reindex</span><span class="p">(</span>
+    <span class="n">model_coefficients</span><span class="o">.</span><span class="n">abs</span><span class="p">()</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="n">ascending</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">index</span>
+<span class="p">)</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">12</span><span class="p">)</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+</pre></div>
+<details class="result-text"><summary>8. Coefficients, cautiously · computed output</summary><pre>numeric__area_m2                      129521.59
+category__neighborhood_central         45822.40
+category__neighborhood_outer          -42697.10
+numeric__age_years                    -18543.90
+numeric__bedrooms                      16387.60
+numeric__distance_km                  -14803.80
+category__neighborhood_residential     -3125.30
+dtype: float64</pre></details></section><section class="cell" id="cell-cell-018"><h2 id="section-11">Takeaways</h2>
 <ul>
 <li>Hold out test data before model selection.</li>
 <li>Keep imputation, scaling, and encoding inside the pipeline.</li>
 <li>Compare against a simple baseline and report errors in meaningful units.</li>
 <li>Use residual plots to ask where errors differ.</li>
 <li>Synthetic-data predictions do not establish real-world accuracy or causation.</li>
-</ul></section></article><p><a class="button" href="01_regression-exercises.html">Next: attempt the exercises →</a></p><nav class="actions" aria-label="Study sequence"><a href="index.html#lectures">All lectures</a><a href="02_classification.html">02: Classification →</a></nav></main></div><footer>Mathematical ML · Eight practical lectures for mathematicians<br>Readable Python · Reproducible experiments · Synthetic teaching data</footer></body></html>
+</ul></section></article><p><a href="01_regression-results.html">Explore this lecture’s executed result gallery →</a></p><p><a class="button" href="01_regression-exercises.html">Next: attempt the exercises →</a></p><nav class="actions" aria-label="Study sequence"><a href="index.html#lectures">All lectures</a><a href="02_classification.html">02: Classification →</a></nav></main></div><footer>Mathematical ML · Eight practical lectures for mathematicians<br>Readable Python · Reproducible experiments · Synthetic teaching data</footer></body></html>

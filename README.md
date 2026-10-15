@@ -42,16 +42,19 @@ python scripts/build_site.py
 python -m http.server 8000 --bind 127.0.0.1
 ```
 
-Open **http://127.0.0.1:8000/site/**. The navigator includes rendered theory and code, lecture instructions, and notebook downloads. Math rendering uses MathJax from a CDN when online; the local notebooks remain the offline mathematics reference. Press Ctrl+C to stop the server. The generated website can be hosted through GitHub Pages using the included GitHub Actions workflow.
+Open **http://127.0.0.1:8000/site/**. The navigator includes syntax-highlighted theory and code, captured lesson outputs, eight executed-result galleries, lecture instructions, and notebook downloads. Math rendering uses MathJax from a CDN when online; the local notebooks remain the offline mathematics reference. Press Ctrl+C to stop the server. The generated website can be hosted through GitHub Pages using the included GitHub Actions workflow.
 
 ## Verify the course
 
 ```powershell
 python -m pytest
 python scripts/check_notebooks.py
+python scripts/export_lesson_results.py
+python scripts/build_site.py
+python scripts/check_site.py
 ```
 
-The notebook runner executes all lessons, exercises, and solutions using separate kernels and writes results under ignored `.verification/`. It checks execution, not completion of student answers. The committed notebooks keep clean outputs so students generate their own figures.
+The notebook runner executes all lessons, exercises, and solutions using separate kernels and writes results under ignored `.verification/`. It checks execution, not completion of student answers. The committed notebooks keep clean outputs so students generate their own figures. `export_lesson_results.py` copies checked lesson outputs into `docs/results/` with source/data hashes and dependency versions. Commit those snapshots after intentional lesson updates; the site build rejects stale snapshots. GitHub Pages builds from committed snapshots and does not execute Python notebooks. The verification workflow independently executes every notebook. See [the galleries](https://ldbreton.github.io/mathematical-ml/results.html).
 
 The latest local checks and their limitations are recorded in [verification.md](docs/verification.md). To validate the website after rebuilding, run `python scripts/check_site.py`.
 

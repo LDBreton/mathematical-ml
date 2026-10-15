@@ -1,120 +1,126 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Eight guided machine learning lectures for mathematicians: theory, readable Python, exercises and worked solutions."><title>XGBoost: solutions · Mathematical ML</title><link rel="stylesheet" href="style.css"><script defer src="site.js"></script><script>window.MathJax={tex:{inlineMath:[['$','$'],['\\(','\\)']]}};</script><script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script></head><body><a class="skip" href="#main">Skip to content</a><header><button class="menu" aria-controls="sidebar" aria-expanded="false" aria-label="Toggle course navigation">☰</button><a class="brand" href="index.html">∑ <span>Mathematical ML</span></a><nav aria-label="Quick links"><a href="setup.html">Get started</a><a href="index.html#lectures">Lectures</a><button id="theme" aria-label="Switch color theme">◐</button></nav></header><div class="layout"><aside id="sidebar" aria-label="Course navigation"><a href="index.html">Course overview</a><h3>Start here</h3><a href="setup.html">Installation &amp; first steps</a><a href="first-steps.html">New to ML? Start here</a><h3>The lectures</h3><details><summary><a href="01_regression.html">01 · Regression</a></summary><a class="sub" href="01_regression-lesson.html">Lesson</a><a class="sub" href="01_regression-exercises.html">Exercises</a><a class="sub" href="01_regression-solutions.html">Solutions</a></details><details><summary><a href="02_classification.html">02 · Classification</a></summary><a class="sub" href="02_classification-lesson.html">Lesson</a><a class="sub" href="02_classification-exercises.html">Exercises</a><a class="sub" href="02_classification-solutions.html">Solutions</a></details><details><summary><a href="03_xgboost.html">03 · XGBoost</a></summary><a class="sub" href="03_xgboost-lesson.html">Lesson</a><a class="sub" href="03_xgboost-exercises.html">Exercises</a><a class="sub" href="03_xgboost-solutions.html">Solutions</a></details><details><summary><a href="04_imbalanced_learning.html">04 · Imbalanced learning</a></summary><a class="sub" href="04_imbalanced_learning-lesson.html">Lesson</a><a class="sub" href="04_imbalanced_learning-exercises.html">Exercises</a><a class="sub" href="04_imbalanced_learning-solutions.html">Solutions</a></details><details><summary><a href="05_text_classification.html">05 · Text classification</a></summary><a class="sub" href="05_text_classification-lesson.html">Lesson</a><a class="sub" href="05_text_classification-exercises.html">Exercises</a><a class="sub" href="05_text_classification-solutions.html">Solutions</a></details><details><summary><a href="06_clustering.html">06 · Clustering</a></summary><a class="sub" href="06_clustering-lesson.html">Lesson</a><a class="sub" href="06_clustering-exercises.html">Exercises</a><a class="sub" href="06_clustering-solutions.html">Solutions</a></details><details><summary><a href="07_time_series.html">07 · Time-series forecasting</a></summary><a class="sub" href="07_time_series-lesson.html">Lesson</a><a class="sub" href="07_time_series-exercises.html">Exercises</a><a class="sub" href="07_time_series-solutions.html">Solutions</a></details><details><summary><a href="08_deployment.html">08 · From model to service</a></summary><a class="sub" href="08_deployment-lesson.html">Lesson</a><a class="sub" href="08_deployment-exercises.html">Exercises</a><a class="sub" href="08_deployment-solutions.html">Solutions</a></details><h3>Resources</h3><a href="datasets.html">Datasets</a><a href="course-project.html">Course project</a><a href="instructor.html">Teaching guide</a><a href="verification.html">Verification</a></aside><main id="main"><div class="eyebrow">Lecture 03 / solutions</div><div class="actions"><a href="03_xgboost.html">← Lecture guide</a><a href="downloads/03_xgboost/solutions.ipynb" download>Download notebook</a></div><p class="note">This page is a reading view. To execute Python, download the complete course and open this notebook in Jupyter. <a href="first-steps.html">First notebook walkthrough →</a></p><details class="contents"><summary>On this page</summary><nav aria-label="Page contents"><a href="#section-1">Exercise 1 — Regularized leaf value</a><a href="#section-2">Exercise 2 — Approximate split gain</a><a href="#section-3">Exercise 3 — Fit and compare</a><a href="#section-4">Exercise 4 — Residual diagnostics and scope</a></nav></details><article class="reading"><section class="cell"><h1>Worked solutions — XGBoost and model evaluation</h1>
-<p>These answers correspond to the exercises in <code>exercises.ipynb</code>. The bike rows are independent generated hourly scenarios, so results describe scenario interpolation/generalization under a random split, not forecasting across calendar time.</p></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>from pathlib import Path
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
-from sklearn.model_selection import train_test_split
-from sklearn.compose import ColumnTransformer
-from sklearn.preprocessing import OneHotEncoder
-from sklearn.pipeline import make_pipeline
-from sklearn.dummy import DummyRegressor
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
-from xgboost import XGBRegressor
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Eight guided machine learning lectures for mathematicians: theory, readable Python, exercises and worked solutions."><title>XGBoost: solutions · Mathematical ML</title><link rel="stylesheet" href="style.css"><script defer src="site.js"></script><script>window.MathJax={tex:{inlineMath:[['$','$'],['\\(','\\)']]}};</script><script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script></head><body><a class="skip" href="#main">Skip to content</a><header><button class="menu" aria-controls="sidebar" aria-expanded="false" aria-label="Toggle course navigation">☰</button><a class="brand" href="index.html">∑ <span>Mathematical ML</span></a><nav aria-label="Quick links"><a href="setup.html">Get started</a><a href="index.html#lectures">Lectures</a><button id="theme" aria-label="Switch color theme">◐</button></nav></header><div class="layout"><aside id="sidebar" aria-label="Course navigation"><a href="index.html">Course overview</a><h3>Start here</h3><a href="setup.html">Installation &amp; first steps</a><a href="first-steps.html">New to ML? Start here</a><h3>The lectures</h3><details><summary><a href="01_regression.html">01 · Regression</a></summary><a class="sub" href="01_regression-lesson.html">Lesson</a><a class="sub" href="01_regression-exercises.html">Exercises</a><a class="sub" href="01_regression-solutions.html">Solutions</a></details><details><summary><a href="02_classification.html">02 · Classification</a></summary><a class="sub" href="02_classification-lesson.html">Lesson</a><a class="sub" href="02_classification-exercises.html">Exercises</a><a class="sub" href="02_classification-solutions.html">Solutions</a></details><details><summary><a href="03_xgboost.html">03 · XGBoost</a></summary><a class="sub" href="03_xgboost-lesson.html">Lesson</a><a class="sub" href="03_xgboost-exercises.html">Exercises</a><a class="sub" href="03_xgboost-solutions.html">Solutions</a></details><details><summary><a href="04_imbalanced_learning.html">04 · Imbalanced learning</a></summary><a class="sub" href="04_imbalanced_learning-lesson.html">Lesson</a><a class="sub" href="04_imbalanced_learning-exercises.html">Exercises</a><a class="sub" href="04_imbalanced_learning-solutions.html">Solutions</a></details><details><summary><a href="05_text_classification.html">05 · Text classification</a></summary><a class="sub" href="05_text_classification-lesson.html">Lesson</a><a class="sub" href="05_text_classification-exercises.html">Exercises</a><a class="sub" href="05_text_classification-solutions.html">Solutions</a></details><details><summary><a href="06_clustering.html">06 · Clustering</a></summary><a class="sub" href="06_clustering-lesson.html">Lesson</a><a class="sub" href="06_clustering-exercises.html">Exercises</a><a class="sub" href="06_clustering-solutions.html">Solutions</a></details><details><summary><a href="07_time_series.html">07 · Time-series forecasting</a></summary><a class="sub" href="07_time_series-lesson.html">Lesson</a><a class="sub" href="07_time_series-exercises.html">Exercises</a><a class="sub" href="07_time_series-solutions.html">Solutions</a></details><details><summary><a href="08_deployment.html">08 · From model to service</a></summary><a class="sub" href="08_deployment-lesson.html">Lesson</a><a class="sub" href="08_deployment-exercises.html">Exercises</a><a class="sub" href="08_deployment-solutions.html">Solutions</a></details><h3>Resources</h3><a href="results.html">Executed result galleries</a><a href="datasets.html">Datasets</a><a href="course-project.html">Course project</a><a href="instructor.html">Teaching guide</a><a href="verification.html">Verification</a></aside><main id="main"><div class="eyebrow">Lecture 03 / solutions</div><div class="actions"><a href="03_xgboost.html">← Lecture guide</a><a href="downloads/03_xgboost/solutions.ipynb" download>Download notebook</a></div><p class="note">This page is a reading view. To execute Python, download the complete course and open this notebook in Jupyter. <a href="first-steps.html">First notebook walkthrough →</a></p><details class="contents"><summary>On this page</summary><nav aria-label="Page contents"><a href="#section-1">Exercise 1 — Regularized leaf value</a><a href="#section-2">Exercise 2 — Approximate split gain</a><a href="#section-3">Exercise 3 — Fit and compare</a><a href="#section-4">Exercise 4 — Residual diagnostics and scope</a></nav></details><article class="reading"><section class="cell" id="cell-cell-000"><h1>Worked solutions — XGBoost and model evaluation</h1>
+<p>These answers correspond to the exercises in <code>exercises.ipynb</code>. The bike rows are independent generated hourly scenarios, so results describe scenario interpolation/generalization under a random split, not forecasting across calendar time.</p></section><section class="cell" id="cell-cell-001"><div class="cell-label">Python · run in the notebook</div><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.model_selection</span><span class="w"> </span><span class="kn">import</span> <span class="n">train_test_split</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.compose</span><span class="w"> </span><span class="kn">import</span> <span class="n">ColumnTransformer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.preprocessing</span><span class="w"> </span><span class="kn">import</span> <span class="n">OneHotEncoder</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.pipeline</span><span class="w"> </span><span class="kn">import</span> <span class="n">make_pipeline</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.dummy</span><span class="w"> </span><span class="kn">import</span> <span class="n">DummyRegressor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.ensemble</span><span class="w"> </span><span class="kn">import</span> <span class="n">RandomForestRegressor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">mean_absolute_error</span><span class="p">,</span> <span class="n">mean_squared_error</span><span class="p">,</span> <span class="n">r2_score</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">xgboost</span><span class="w"> </span><span class="kn">import</span> <span class="n">XGBRegressor</span>
 
-SEED = 42
-FEATURES = [&quot;temperature_c&quot;, &quot;humidity&quot;, &quot;wind_kmh&quot;, &quot;hour&quot;, &quot;weekday&quot;, &quot;season&quot;]
-TARGET = &quot;rentals&quot;
+<span class="n">SEED</span> <span class="o">=</span> <span class="mi">42</span>
+<span class="n">FEATURES</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"temperature_c"</span><span class="p">,</span> <span class="s2">"humidity"</span><span class="p">,</span> <span class="s2">"wind_kmh"</span><span class="p">,</span> <span class="s2">"hour"</span><span class="p">,</span> <span class="s2">"weekday"</span><span class="p">,</span> <span class="s2">"season"</span><span class="p">]</span>
+<span class="n">TARGET</span> <span class="o">=</span> <span class="s2">"rentals"</span>
 
-def find_data_file(filename=&quot;bike_demand.csv&quot;):
-    # In Jupyter, cwd is commonly the repository root or this notebook&#x27;s folder.
-    for start in (Path.cwd(), *Path.cwd().parents):
-        candidate = start / &quot;data&quot; / filename
-        if candidate.is_file():
-            return candidate
-    raise FileNotFoundError(
-        &quot;Could not find data/&quot; + filename + &quot; in the current directory or its parents. &quot;
-        &quot;Open Jupyter from the repository or place the supplied CSV in data/.&quot;
-    )
+<span class="k">def</span><span class="w"> </span><span class="nf">find_data_file</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="s2">"bike_demand.csv"</span><span class="p">):</span>
+    <span class="c1"># In Jupyter, cwd is commonly the repository root or this notebook's folder.</span>
+    <span class="k">for</span> <span class="n">start</span> <span class="ow">in</span> <span class="p">(</span><span class="n">Path</span><span class="o">.</span><span class="n">cwd</span><span class="p">(),</span> <span class="o">*</span><span class="n">Path</span><span class="o">.</span><span class="n">cwd</span><span class="p">()</span><span class="o">.</span><span class="n">parents</span><span class="p">):</span>
+        <span class="n">candidate</span> <span class="o">=</span> <span class="n">start</span> <span class="o">/</span> <span class="s2">"data"</span> <span class="o">/</span> <span class="n">filename</span>
+        <span class="k">if</span> <span class="n">candidate</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
+            <span class="k">return</span> <span class="n">candidate</span>
+    <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span>
+        <span class="s2">"Could not find data/"</span> <span class="o">+</span> <span class="n">filename</span> <span class="o">+</span> <span class="s2">" in the current directory or its parents. "</span>
+        <span class="s2">"Open Jupyter from the repository or place the supplied CSV in data/."</span>
+    <span class="p">)</span>
 
-data_path = find_data_file()
-df = pd.read_csv(data_path)
-missing = sorted(set(FEATURES + [TARGET]) - set(df.columns))
-if missing:
-    raise ValueError(f&quot;{data_path} is missing required columns: {missing}&quot;)
-df = df[FEATURES + [TARGET]].dropna().copy()
-print(f&quot;Loaded {len(df):,} complete scenario rows from {data_path}&quot;)
-df.head()
-</code></pre></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code># Treat hour and weekday as labels, not measurements with meaningful linear distance.
-# One-hot columns are shared across all models so the comparison uses the same inputs.
-categorical = [&quot;hour&quot;, &quot;weekday&quot;, &quot;season&quot;]
-numeric = [&quot;temperature_c&quot;, &quot;humidity&quot;, &quot;wind_kmh&quot;]
-encoder = ColumnTransformer(
-    [(&quot;numeric&quot;, &quot;passthrough&quot;, numeric),
-     (&quot;categories&quot;, OneHotEncoder(handle_unknown=&quot;ignore&quot;, sparse_output=False), categorical)],
-    verbose_feature_names_out=False,
-)
-X = df[FEATURES]
-y = df[TARGET].astype(float)
+<span class="n">data_path</span> <span class="o">=</span> <span class="n">find_data_file</span><span class="p">()</span>
+<span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">data_path</span><span class="p">)</span>
+<span class="n">missing</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">FEATURES</span> <span class="o">+</span> <span class="p">[</span><span class="n">TARGET</span><span class="p">])</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">))</span>
+<span class="k">if</span> <span class="n">missing</span><span class="p">:</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">data_path</span><span class="si">}</span><span class="s2"> is missing required columns: </span><span class="si">{</span><span class="n">missing</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">FEATURES</span> <span class="o">+</span> <span class="p">[</span><span class="n">TARGET</span><span class="p">]]</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Loaded </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">)</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2"> complete scenario rows from </span><span class="si">{</span><span class="n">data_path</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="n">df</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+</pre></div>
+</section><section class="cell" id="cell-cell-002"><div class="cell-label">Python · run in the notebook</div><div class="highlight"><pre><span></span><span class="c1"># Treat hour and weekday as labels, not measurements with meaningful linear distance.</span>
+<span class="c1"># One-hot columns are shared across all models so the comparison uses the same inputs.</span>
+<span class="n">categorical</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"hour"</span><span class="p">,</span> <span class="s2">"weekday"</span><span class="p">,</span> <span class="s2">"season"</span><span class="p">]</span>
+<span class="n">numeric</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"temperature_c"</span><span class="p">,</span> <span class="s2">"humidity"</span><span class="p">,</span> <span class="s2">"wind_kmh"</span><span class="p">]</span>
+<span class="n">encoder</span> <span class="o">=</span> <span class="n">ColumnTransformer</span><span class="p">(</span>
+    <span class="p">[(</span><span class="s2">"numeric"</span><span class="p">,</span> <span class="s2">"passthrough"</span><span class="p">,</span> <span class="n">numeric</span><span class="p">),</span>
+     <span class="p">(</span><span class="s2">"categories"</span><span class="p">,</span> <span class="n">OneHotEncoder</span><span class="p">(</span><span class="n">handle_unknown</span><span class="o">=</span><span class="s2">"ignore"</span><span class="p">,</span> <span class="n">sparse_output</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span> <span class="n">categorical</span><span class="p">)],</span>
+    <span class="n">verbose_feature_names_out</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">X</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">FEATURES</span><span class="p">]</span>
+<span class="n">y</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">TARGET</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
 
-# First hold out the final test set. Then split the remaining development rows
-# into model-fit and early-stopping validation subsets.
-X_dev, X_test, y_dev, y_test = train_test_split(
-    X, y, test_size=0.20, random_state=SEED
-)
-X_train, X_val, y_train, y_val = train_test_split(
-    X_dev, y_dev, test_size=0.1875, random_state=SEED
-)  # 0.1875 * 0.80 = 0.15 of all rows
-print(f&quot;train={len(X_train)}, validation={len(X_val)}, test={len(X_test)}&quot;)
-</code></pre></section><section class="cell"><h2 id="section-1">Exercise 1 — Regularized leaf value</h2>
+<span class="c1"># First hold out the final test set. Then split the remaining development rows</span>
+<span class="c1"># into model-fit and early-stopping validation subsets.</span>
+<span class="n">X_dev</span><span class="p">,</span> <span class="n">X_test</span><span class="p">,</span> <span class="n">y_dev</span><span class="p">,</span> <span class="n">y_test</span> <span class="o">=</span> <span class="n">train_test_split</span><span class="p">(</span>
+    <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">test_size</span><span class="o">=</span><span class="mf">0.20</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="n">SEED</span>
+<span class="p">)</span>
+<span class="n">X_train</span><span class="p">,</span> <span class="n">X_val</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">y_val</span> <span class="o">=</span> <span class="n">train_test_split</span><span class="p">(</span>
+    <span class="n">X_dev</span><span class="p">,</span> <span class="n">y_dev</span><span class="p">,</span> <span class="n">test_size</span><span class="o">=</span><span class="mf">0.1875</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="n">SEED</span>
+<span class="p">)</span>  <span class="c1"># 0.1875 * 0.80 = 0.15 of all rows</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"train=</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">X_train</span><span class="p">)</span><span class="si">}</span><span class="s2">, validation=</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">X_val</span><span class="p">)</span><span class="si">}</span><span class="s2">, test=</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">X_test</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</pre></div>
+</section><section class="cell" id="cell-cell-003"><h2 id="section-1">Exercise 1 — Regularized leaf value</h2>
 <p>For \(H+\lambda&gt;0\), the smooth quadratic has slope \(G+(H+\lambda)w\). The L1 term contributes subgradient \(\alpha\operatorname{sgn}(w)\) for nonzero \(w\), and interval \([-\alpha,\alpha]\) at zero. If \(G&gt;\alpha\), the minimizer is negative and satisfies \(G+(H+\lambda)w-\alpha=0\); if \(G&lt;-\alpha\), it is positive and satisfies \(G+(H+\lambda)w+\alpha=0\). If \(|G|\le\alpha\), zero satisfies the subgradient condition. Therefore</p>
 <p>\[
 w^*=-\frac{\operatorname{sgn}(G)(|G|-\alpha)_+}{H+\lambda}.
 \]</p>
-<p>Increasing \(\lambda\) shrinks the magnitude toward zero. The threshold \(\alpha\) can make the update exactly zero.</p></section><section class="cell"><h2 id="section-2">Exercise 2 — Approximate split gain</h2>
+<p>Increasing \(\lambda\) shrinks the magnitude toward zero. The threshold \(\alpha\) can make the update exactly zero.</p></section><section class="cell" id="cell-cell-004"><h2 id="section-2">Exercise 2 — Approximate split gain</h2>
 <p>The scores are \(S_L=64/12\), \(S_R=25/10\), and \(S_P=9/20\). Hence</p>
 <p>\[
 \tfrac12(S_L+S_R-S_P)-\gamma
 =\tfrac12(5.3333+2.5-0.45)-0.4\approx3.2917.
 \]</p>
-<p>It is positive, so the split reduces this regularized second-order training approximation. That says nothing by itself about held-out generalization, stability, or usefulness under a different loss or data distribution.</p></section><section class="cell"><h2 id="section-3">Exercise 3 — Fit and compare</h2>
-<p>The following code fits all models on the same encoded training rows. Only XGBoost sees validation rows during fitting. The final metrics are calculated on the untouched test rows.</p></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code># Fit preprocessing only on training rows, then use that same representation everywhere.
-X_train_enc = encoder.fit_transform(X_train)
-X_val_enc = encoder.transform(X_val)
-X_test_enc = encoder.transform(X_test)
+<p>It is positive, so the split reduces this regularized second-order training approximation. That says nothing by itself about held-out generalization, stability, or usefulness under a different loss or data distribution.</p></section><section class="cell" id="cell-cell-005"><h2 id="section-3">Exercise 3 — Fit and compare</h2>
+<p>The following code fits all models on the same encoded training rows. Only XGBoost sees validation rows during fitting. The final metrics are calculated on the untouched test rows.</p></section><section class="cell" id="cell-cell-006"><div class="cell-label">Python · run in the notebook</div><div class="highlight"><pre><span></span><span class="c1"># Fit preprocessing only on training rows, then use that same representation everywhere.</span>
+<span class="n">X_train_enc</span> <span class="o">=</span> <span class="n">encoder</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">X_train</span><span class="p">)</span>
+<span class="n">X_val_enc</span> <span class="o">=</span> <span class="n">encoder</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">X_val</span><span class="p">)</span>
+<span class="n">X_test_enc</span> <span class="o">=</span> <span class="n">encoder</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">X_test</span><span class="p">)</span>
 
-dummy = DummyRegressor(strategy=&quot;mean&quot;).fit(X_train_enc, y_train)
-forest = RandomForestRegressor(
-    n_estimators=400, min_samples_leaf=2, max_features=0.9,
-    random_state=SEED, n_jobs=-1,
-).fit(X_train_enc, y_train)
+<span class="n">dummy</span> <span class="o">=</span> <span class="n">DummyRegressor</span><span class="p">(</span><span class="n">strategy</span><span class="o">=</span><span class="s2">"mean"</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train_enc</span><span class="p">,</span> <span class="n">y_train</span><span class="p">)</span>
+<span class="n">forest</span> <span class="o">=</span> <span class="n">RandomForestRegressor</span><span class="p">(</span>
+    <span class="n">n_estimators</span><span class="o">=</span><span class="mi">400</span><span class="p">,</span> <span class="n">min_samples_leaf</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">max_features</span><span class="o">=</span><span class="mf">0.9</span><span class="p">,</span>
+    <span class="n">random_state</span><span class="o">=</span><span class="n">SEED</span><span class="p">,</span> <span class="n">n_jobs</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
+<span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train_enc</span><span class="p">,</span> <span class="n">y_train</span><span class="p">)</span>
 
-# Validation data controls early stopping. The test data is untouched until scoring.
-xgb = XGBRegressor(
-    objective=&quot;reg:squarederror&quot;, eval_metric=&quot;rmse&quot;,
-    n_estimators=2000, learning_rate=0.04, max_depth=4,
-    min_child_weight=5, subsample=0.85, colsample_bytree=0.9,
-    reg_lambda=3.0, reg_alpha=0.0, gamma=0.0,
-    early_stopping_rounds=50,
-    random_state=SEED, n_jobs=-1,
-)
-xgb.fit(X_train_enc, y_train, eval_set=[(X_val_enc, y_val)], verbose=False)
-print(&quot;XGBoost best iteration:&quot;, xgb.best_iteration)
-</code></pre></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>def metric_row(name, model):
-    pred = model.predict(X_test_enc)
-    return {&quot;model&quot;: name,
-            &quot;RMSE&quot;: mean_squared_error(y_test, pred) ** 0.5,
-            &quot;MAE&quot;: mean_absolute_error(y_test, pred),
-            &quot;R²&quot;: r2_score(y_test, pred)}
+<span class="c1"># Validation data controls early stopping. The test data is untouched until scoring.</span>
+<span class="n">xgb</span> <span class="o">=</span> <span class="n">XGBRegressor</span><span class="p">(</span>
+    <span class="n">objective</span><span class="o">=</span><span class="s2">"reg:squarederror"</span><span class="p">,</span> <span class="n">eval_metric</span><span class="o">=</span><span class="s2">"rmse"</span><span class="p">,</span>
+    <span class="n">n_estimators</span><span class="o">=</span><span class="mi">2000</span><span class="p">,</span> <span class="n">learning_rate</span><span class="o">=</span><span class="mf">0.04</span><span class="p">,</span> <span class="n">max_depth</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
+    <span class="n">min_child_weight</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">subsample</span><span class="o">=</span><span class="mf">0.85</span><span class="p">,</span> <span class="n">colsample_bytree</span><span class="o">=</span><span class="mf">0.9</span><span class="p">,</span>
+    <span class="n">reg_lambda</span><span class="o">=</span><span class="mf">3.0</span><span class="p">,</span> <span class="n">reg_alpha</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">gamma</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
+    <span class="n">early_stopping_rounds</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span>
+    <span class="n">random_state</span><span class="o">=</span><span class="n">SEED</span><span class="p">,</span> <span class="n">n_jobs</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">xgb</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train_enc</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">eval_set</span><span class="o">=</span><span class="p">[(</span><span class="n">X_val_enc</span><span class="p">,</span> <span class="n">y_val</span><span class="p">)],</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"XGBoost best iteration:"</span><span class="p">,</span> <span class="n">xgb</span><span class="o">.</span><span class="n">best_iteration</span><span class="p">)</span>
+</pre></div>
+</section><section class="cell" id="cell-cell-007"><div class="cell-label">Python · run in the notebook</div><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">metric_row</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
+    <span class="n">pred</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_test_enc</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">{</span><span class="s2">"model"</span><span class="p">:</span> <span class="n">name</span><span class="p">,</span>
+            <span class="s2">"RMSE"</span><span class="p">:</span> <span class="n">mean_squared_error</span><span class="p">(</span><span class="n">y_test</span><span class="p">,</span> <span class="n">pred</span><span class="p">)</span> <span class="o">**</span> <span class="mf">0.5</span><span class="p">,</span>
+            <span class="s2">"MAE"</span><span class="p">:</span> <span class="n">mean_absolute_error</span><span class="p">(</span><span class="n">y_test</span><span class="p">,</span> <span class="n">pred</span><span class="p">),</span>
+            <span class="s2">"R²"</span><span class="p">:</span> <span class="n">r2_score</span><span class="p">(</span><span class="n">y_test</span><span class="p">,</span> <span class="n">pred</span><span class="p">)}</span>
 
-results = pd.DataFrame([
-    metric_row(&quot;Training-mean baseline&quot;, dummy),
-    metric_row(&quot;Random forest&quot;, forest),
-    metric_row(&quot;XGBoost&quot;, xgb),
-]).sort_values(&quot;RMSE&quot;).reset_index(drop=True)
-results
-</code></pre></section><section class="cell"><p>Read this table as a final comparison of the three prespecified models. Do not use the test scores to choose a model or keep changing parameters; make any such choice from validation data, then evaluate the selected procedure on a new untouched test set.</p></section><section class="cell"><h2 id="section-4">Exercise 4 — Residual diagnostics and scope</h2>
-<p>The plot below shows the XGBoost predictions on test examples. Residual summaries by hour can reveal structured errors that an overall score hides.</p></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>pred = xgb.predict(X_test_enc)
-fig, axes = plt.subplots(1, 2, figsize=(11, 4))
-axes[0].scatter(y_test, pred, alpha=0.35, s=14)
-limits = [min(y_test.min(), pred.min()), max(y_test.max(), pred.max())]
-axes[0].plot(limits, limits, &quot;k--&quot;, linewidth=1)
-axes[0].set(xlabel=&quot;actual rentals&quot;, ylabel=&quot;predicted rentals&quot;, title=&quot;XGBoost test predictions&quot;)
-test_view = X_test.copy()
-test_view[&quot;residual&quot;] = y_test.to_numpy() - pred
-by_hour = test_view.groupby(&quot;hour&quot;)[&quot;residual&quot;].agg([&quot;mean&quot;, &quot;std&quot;])
-axes[1].errorbar(by_hour.index, by_hour[&quot;mean&quot;], yerr=by_hour[&quot;std&quot;], fmt=&quot;o&quot;, capsize=2)
-axes[1].axhline(0, color=&quot;black&quot;, linewidth=1)
-axes[1].set(xlabel=&quot;hour&quot;, ylabel=&quot;residual mean ± SD&quot;, title=&quot;Test residuals by hour&quot;)
-plt.tight_layout()
-by_hour</code></pre></section><section class="cell"><p>A suitable interpretation should describe the observed pattern in your run, for example whether residual means remain near zero across hours or show systematic underprediction at peak demand. Since rows are independent scenarios and there is no date ordering in the split, this result does not establish performance on later dates; a true forecasting study needs chronological splits and an explicitly time-indexed dataset.</p></section></article><nav class="actions" aria-label="Study sequence"><a href="02_classification.html">← 02: Classification</a><a href="index.html#lectures">All lectures</a><a href="04_imbalanced_learning.html">04: Imbalanced learning →</a></nav></main></div><footer>Mathematical ML · Eight practical lectures for mathematicians<br>Readable Python · Reproducible experiments · Synthetic teaching data</footer></body></html>
+<span class="n">results</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">([</span>
+    <span class="n">metric_row</span><span class="p">(</span><span class="s2">"Training-mean baseline"</span><span class="p">,</span> <span class="n">dummy</span><span class="p">),</span>
+    <span class="n">metric_row</span><span class="p">(</span><span class="s2">"Random forest"</span><span class="p">,</span> <span class="n">forest</span><span class="p">),</span>
+    <span class="n">metric_row</span><span class="p">(</span><span class="s2">"XGBoost"</span><span class="p">,</span> <span class="n">xgb</span><span class="p">),</span>
+<span class="p">])</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="s2">"RMSE"</span><span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">results</span>
+</pre></div>
+</section><section class="cell" id="cell-cell-008"><p>Read this table as a final comparison of the three prespecified models. Do not use the test scores to choose a model or keep changing parameters; make any such choice from validation data, then evaluate the selected procedure on a new untouched test set.</p></section><section class="cell" id="cell-cell-009"><h2 id="section-4">Exercise 4 — Residual diagnostics and scope</h2>
+<p>The plot below shows the XGBoost predictions on test examples. Residual summaries by hour can reveal structured errors that an overall score hides.</p></section><section class="cell" id="cell-cell-010"><div class="cell-label">Python · run in the notebook</div><div class="highlight"><pre><span></span><span class="n">pred</span> <span class="o">=</span> <span class="n">xgb</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_test_enc</span><span class="p">)</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">11</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">y_test</span><span class="p">,</span> <span class="n">pred</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.35</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">14</span><span class="p">)</span>
+<span class="n">limits</span> <span class="o">=</span> <span class="p">[</span><span class="nb">min</span><span class="p">(</span><span class="n">y_test</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span> <span class="n">pred</span><span class="o">.</span><span class="n">min</span><span class="p">()),</span> <span class="nb">max</span><span class="p">(</span><span class="n">y_test</span><span class="o">.</span><span class="n">max</span><span class="p">(),</span> <span class="n">pred</span><span class="o">.</span><span class="n">max</span><span class="p">())]</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">limits</span><span class="p">,</span> <span class="n">limits</span><span class="p">,</span> <span class="s2">"k--"</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">xlabel</span><span class="o">=</span><span class="s2">"actual rentals"</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s2">"predicted rentals"</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">"XGBoost test predictions"</span><span class="p">)</span>
+<span class="n">test_view</span> <span class="o">=</span> <span class="n">X_test</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+<span class="n">test_view</span><span class="p">[</span><span class="s2">"residual"</span><span class="p">]</span> <span class="o">=</span> <span class="n">y_test</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span> <span class="o">-</span> <span class="n">pred</span>
+<span class="n">by_hour</span> <span class="o">=</span> <span class="n">test_view</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">"hour"</span><span class="p">)[</span><span class="s2">"residual"</span><span class="p">]</span><span class="o">.</span><span class="n">agg</span><span class="p">([</span><span class="s2">"mean"</span><span class="p">,</span> <span class="s2">"std"</span><span class="p">])</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">errorbar</span><span class="p">(</span><span class="n">by_hour</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="n">by_hour</span><span class="p">[</span><span class="s2">"mean"</span><span class="p">],</span> <span class="n">yerr</span><span class="o">=</span><span class="n">by_hour</span><span class="p">[</span><span class="s2">"std"</span><span class="p">],</span> <span class="n">fmt</span><span class="o">=</span><span class="s2">"o"</span><span class="p">,</span> <span class="n">capsize</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">axhline</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">"black"</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">xlabel</span><span class="o">=</span><span class="s2">"hour"</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s2">"residual mean ± SD"</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">"Test residuals by hour"</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">by_hour</span>
+</pre></div>
+</section><section class="cell" id="cell-cell-011"><p>A suitable interpretation should describe the observed pattern in your run, for example whether residual means remain near zero across hours or show systematic underprediction at peak demand. Since rows are independent scenarios and there is no date ordering in the split, this result does not establish performance on later dates; a true forecasting study needs chronological splits and an explicitly time-indexed dataset.</p></section></article><nav class="actions" aria-label="Study sequence"><a href="02_classification.html">← 02: Classification</a><a href="index.html#lectures">All lectures</a><a href="04_imbalanced_learning.html">04: Imbalanced learning →</a></nav></main></div><footer>Mathematical ML · Eight practical lectures for mathematicians<br>Readable Python · Reproducible experiments · Synthetic teaching data</footer></body></html>

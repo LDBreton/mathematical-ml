@@ -2,6 +2,14 @@
 
 This lesson turns a binary classifier into a small, inspectable deployment unit. It uses a synthetic customer churn table with features `tenure_months`, `monthly_charge`, `support_calls`, and `contract`, and a binary target `churn`. The fitted object is a scikit-learn `Pipeline`: numeric standardization, categorical one-hot encoding, and logistic regression travel together in one artifact.
 
+## Start with the core notebook
+
+Open `lesson.ipynb` and follow one artifact through fit → validation threshold → final assessment → save → reload → API response. It verifies that all inference paths return the same probability and stored policy. No background service is needed. The artifact remains under ignored `.verification/deployment-core` for inspection.
+
+MLflow and Docker are optional extensions. The command-line route below is a separate training workflow with a default threshold of 0.5; it does not automatically reuse the notebook's selected policy. To serve the notebook artifact, set `MODEL_PATH` to its printed saved path.
+
+## Optional command-line and server workflow
+
 From the repository root, train and save the model with:
 
 ```console

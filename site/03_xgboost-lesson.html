@@ -1,19 +1,19 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Eight guided machine learning lectures for mathematicians: theory, readable Python, exercises and worked solutions."><title>XGBoost: lesson · Mathematical ML</title><link rel="stylesheet" href="style.css"><script defer src="site.js"></script><script>window.MathJax={tex:{inlineMath:[['$','$'],['\\(','\\)']]}};</script><script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script></head><body><a class="skip" href="#main">Skip to content</a><header><button class="menu" aria-controls="sidebar" aria-expanded="false" aria-label="Toggle course navigation">☰</button><a class="brand" href="index.html">∑ <span>Mathematical ML</span></a><nav aria-label="Quick links"><a href="setup.html">Get started</a><a href="index.html#lectures">Lectures</a><button id="theme" aria-label="Switch color theme">◐</button></nav></header><div class="layout"><aside id="sidebar" aria-label="Course navigation"><a href="index.html">Course overview</a><h3>Start here</h3><a href="setup.html">Installation &amp; first steps</a><a href="first-steps.html">New to ML? Start here</a><h3>The lectures</h3><details><summary><a href="01_regression.html">01 · Regression</a></summary><a class="sub" href="01_regression-lesson.html">Lesson</a><a class="sub" href="01_regression-exercises.html">Exercises</a><a class="sub" href="01_regression-solutions.html">Solutions</a></details><details><summary><a href="02_classification.html">02 · Classification</a></summary><a class="sub" href="02_classification-lesson.html">Lesson</a><a class="sub" href="02_classification-exercises.html">Exercises</a><a class="sub" href="02_classification-solutions.html">Solutions</a></details><details><summary><a href="03_xgboost.html">03 · XGBoost</a></summary><a class="sub" href="03_xgboost-lesson.html">Lesson</a><a class="sub" href="03_xgboost-exercises.html">Exercises</a><a class="sub" href="03_xgboost-solutions.html">Solutions</a></details><details><summary><a href="04_imbalanced_learning.html">04 · Imbalanced learning</a></summary><a class="sub" href="04_imbalanced_learning-lesson.html">Lesson</a><a class="sub" href="04_imbalanced_learning-exercises.html">Exercises</a><a class="sub" href="04_imbalanced_learning-solutions.html">Solutions</a></details><details><summary><a href="05_text_classification.html">05 · Text classification</a></summary><a class="sub" href="05_text_classification-lesson.html">Lesson</a><a class="sub" href="05_text_classification-exercises.html">Exercises</a><a class="sub" href="05_text_classification-solutions.html">Solutions</a></details><details><summary><a href="06_clustering.html">06 · Clustering</a></summary><a class="sub" href="06_clustering-lesson.html">Lesson</a><a class="sub" href="06_clustering-exercises.html">Exercises</a><a class="sub" href="06_clustering-solutions.html">Solutions</a></details><details><summary><a href="07_time_series.html">07 · Time-series forecasting</a></summary><a class="sub" href="07_time_series-lesson.html">Lesson</a><a class="sub" href="07_time_series-exercises.html">Exercises</a><a class="sub" href="07_time_series-solutions.html">Solutions</a></details><details><summary><a href="08_deployment.html">08 · From model to service</a></summary><a class="sub" href="08_deployment-lesson.html">Lesson</a><a class="sub" href="08_deployment-exercises.html">Exercises</a><a class="sub" href="08_deployment-solutions.html">Solutions</a></details><h3>Resources</h3><a href="datasets.html">Datasets</a><a href="course-project.html">Course project</a><a href="instructor.html">Teaching guide</a><a href="verification.html">Verification</a></aside><main id="main"><div class="eyebrow">Lecture 03 / lesson</div><div class="actions"><a href="03_xgboost.html">← Lecture guide</a><a href="downloads/03_xgboost/lesson.ipynb" download>Download notebook</a></div><p class="note">This page is a reading view. To execute Python, download the complete course and open this notebook in Jupyter. <a href="first-steps.html">First notebook walkthrough →</a></p><details class="contents"><summary>On this page</summary><nav aria-label="Page contents"><a href="#section-1">What is a regression tree?</a><a href="#section-2">1. From gradient descent to a sequence of trees</a><a href="#section-3">2. Deriving the regularized leaf value</a><a href="#section-4">3. Split gain and its limits</a><a href="#section-5">4. A small residual-tree boosting round by round</a><a href="#section-6">5. Load and inspect the scenarios</a><a href="#section-7">6. Fit comparable models</a><a href="#section-8">7. Evaluate once on the test partition</a><a href="#section-9">8. Interpret, do not overclaim</a><a href="#section-10">Takeaways</a></nav></details><article class="reading"><section class="cell"><h1>Lecture 03 — XGBoost: boosting as functional optimization</h1>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Eight guided machine learning lectures for mathematicians: theory, readable Python, exercises and worked solutions."><title>XGBoost: lesson · Mathematical ML</title><link rel="stylesheet" href="style.css"><script defer src="site.js"></script><script>window.MathJax={tex:{inlineMath:[['$','$'],['\\(','\\)']]}};</script><script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script></head><body><a class="skip" href="#main">Skip to content</a><header><button class="menu" aria-controls="sidebar" aria-expanded="false" aria-label="Toggle course navigation">☰</button><a class="brand" href="index.html">∑ <span>Mathematical ML</span></a><nav aria-label="Quick links"><a href="setup.html">Get started</a><a href="index.html#lectures">Lectures</a><button id="theme" aria-label="Switch color theme">◐</button></nav></header><div class="layout"><aside id="sidebar" aria-label="Course navigation"><a href="index.html">Course overview</a><h3>Start here</h3><a href="setup.html">Installation &amp; first steps</a><a href="first-steps.html">New to ML? Start here</a><h3>The lectures</h3><details><summary><a href="01_regression.html">01 · Regression</a></summary><a class="sub" href="01_regression-lesson.html">Lesson</a><a class="sub" href="01_regression-exercises.html">Exercises</a><a class="sub" href="01_regression-solutions.html">Solutions</a></details><details><summary><a href="02_classification.html">02 · Classification</a></summary><a class="sub" href="02_classification-lesson.html">Lesson</a><a class="sub" href="02_classification-exercises.html">Exercises</a><a class="sub" href="02_classification-solutions.html">Solutions</a></details><details><summary><a href="03_xgboost.html">03 · XGBoost</a></summary><a class="sub" href="03_xgboost-lesson.html">Lesson</a><a class="sub" href="03_xgboost-exercises.html">Exercises</a><a class="sub" href="03_xgboost-solutions.html">Solutions</a></details><details><summary><a href="04_imbalanced_learning.html">04 · Imbalanced learning</a></summary><a class="sub" href="04_imbalanced_learning-lesson.html">Lesson</a><a class="sub" href="04_imbalanced_learning-exercises.html">Exercises</a><a class="sub" href="04_imbalanced_learning-solutions.html">Solutions</a></details><details><summary><a href="05_text_classification.html">05 · Text classification</a></summary><a class="sub" href="05_text_classification-lesson.html">Lesson</a><a class="sub" href="05_text_classification-exercises.html">Exercises</a><a class="sub" href="05_text_classification-solutions.html">Solutions</a></details><details><summary><a href="06_clustering.html">06 · Clustering</a></summary><a class="sub" href="06_clustering-lesson.html">Lesson</a><a class="sub" href="06_clustering-exercises.html">Exercises</a><a class="sub" href="06_clustering-solutions.html">Solutions</a></details><details><summary><a href="07_time_series.html">07 · Time-series forecasting</a></summary><a class="sub" href="07_time_series-lesson.html">Lesson</a><a class="sub" href="07_time_series-exercises.html">Exercises</a><a class="sub" href="07_time_series-solutions.html">Solutions</a></details><details><summary><a href="08_deployment.html">08 · From model to service</a></summary><a class="sub" href="08_deployment-lesson.html">Lesson</a><a class="sub" href="08_deployment-exercises.html">Exercises</a><a class="sub" href="08_deployment-solutions.html">Solutions</a></details><h3>Resources</h3><a href="results.html">Executed result galleries</a><a href="datasets.html">Datasets</a><a href="course-project.html">Course project</a><a href="instructor.html">Teaching guide</a><a href="verification.html">Verification</a></aside><main id="main"><div class="eyebrow">Lecture 03 / lesson</div><div class="actions"><a href="03_xgboost.html">← Lecture guide</a><a href="downloads/03_xgboost/lesson.ipynb" download>Download notebook</a></div><p class="note">This page is a reading view. To execute Python, download the complete course and open this notebook in Jupyter. <a href="first-steps.html">First notebook walkthrough →</a></p><details class="contents"><summary>On this page</summary><nav aria-label="Page contents"><a href="#section-1">What is a regression tree?</a><a href="#section-2">1. From gradient descent to a sequence of trees</a><a href="#section-3">2. Deriving the regularized leaf value</a><a href="#section-4">3. Split gain and its limits</a><a href="#section-5">Verify one regularized split by hand</a><a href="#section-6">4. A small residual-tree boosting round by round</a><a href="#section-7">5. Load and inspect the scenarios</a><a href="#section-8">6. Fit comparable models</a><a href="#section-9">7. Evaluate once on the test partition</a><a href="#section-10">8. Interpret, do not overclaim</a><a href="#section-11">Takeaways</a></nav></details><article class="reading"><section class="cell" id="cell-cell-000"><h1>Lecture 03 — XGBoost: boosting as functional optimization</h1>
 <p>We will build an additive predictor one tree at a time, derive the regularized leaf values and split score, then evaluate the method on hourly bike-demand scenarios. The rows are independently generated scenarios, <strong>not a chronological time series</strong>. This lesson studies regression on those scenarios; it does not estimate performance on future dates.</p>
-<p>After this lesson, you should be able to connect negative gradients to residual fitting, derive the second-order tree objective, explain what its regularizers do, and assess the result with a clean train/validation/test design.</p></section><section class="cell"><p><img alt="Teaching figure for xgboost" src="figures/03_xgboost.svg" /></p>
+<p>After this lesson, you should be able to connect negative gradients to residual fitting, derive the second-order tree objective, explain what its regularizers do, and assess the result with a clean train/validation/test design.</p></section><section class="cell" id="cell-beginner-bridge"><p><img alt="Teaching figure for xgboost" src="figures/03_xgboost.svg" /></p>
 <p><em>An actual shallow tree fitted to an illustrative one-dimensional sample. Notice constant predictions inside each leaf.</em></p>
 <h2 id="section-1">What is a regression tree?</h2>
 <p>A split asks a question such as <code>temperature_c &lt;= 18</code>. It sends each row to one of two branches. Repeating splits partitions feature space into leaves, each of which returns a constant. Tree depth counts decisions along a path; a regression tree therefore produces a stepwise surface, not a smooth polynomial.</p>
 <p>A random forest fits randomized trees and averages their predictions. Boosting adds trees sequentially to improve the current predictor. The forest below is a benchmark, not another derivation you need to master first.</p>
 <p><strong>One leaf calculation:</strong> with gradient sum $G=-6$, Hessian sum $H=3$, and $\lambda=1$, the unshrunk optimal leaf value is $-G/(H+\lambda)=1.5$. A learning rate of 0.1 adds 0.15 to predictions in that leaf. These numbers illustrate the formula; they are not diagnostics extracted from the trained model.</p>
-<p>One-hot hour labels avoid imposing a linear order but do not encode that 23:00 and 00:00 are neighbors. Lecture 07 introduces sine/cosine calendar features for that different modeling choice.</p></section><section class="cell"><h2 id="section-2">1. From gradient descent to a sequence of trees</h2>
+<p>One-hot hour labels avoid imposing a linear order but do not encode that 23:00 and 00:00 are neighbors. Lecture 07 introduces sine/cosine calendar features for that different modeling choice.</p></section><section class="cell" id="cell-cell-001"><h2 id="section-2">1. From gradient descent to a sequence of trees</h2>
 <p>Suppose the current predictor is a function \(F_{m-1}(x)\). Functional gradient boosting adds a weak learner in a direction that reduces empirical risk:</p>
 <p>\[
 F_m(x)=F_{m-1}(x)+\eta f_m(x),\qquad
 f_m \text{ chosen to align with }-\nabla_F L.
 \]</p>
 <p>For squared error, \(\ell(y,F)=\tfrac12(y-F)^2\), this convention gives Hessian \(h_i=1\); using \(\ell=(y-F)^2\) doubles both gradient and Hessian. The negative derivative with respect to the current prediction is \(y-F\). Thus a simple boosting algorithm fits each new tree to the current residuals. For a general differentiable loss, the analogous targets are pseudo-residuals \(-\partial \ell(y_i,F(x_i))/\partial F\).</p>
-<p>Trees are not arbitrary vectors in a function space: they partition feature space into leaves and assign one value per leaf. XGBoost uses a second-order expansion of the objective to choose both the tree structure and those values. That curvature information makes the update more informative than plain residual fitting. The learning-rate \(\eta\) shrinks each stagewise update.</p></section><section class="cell"><h2 id="section-3">2. Deriving the regularized leaf value</h2>
+<p>Trees are not arbitrary vectors in a function space: they partition feature space into leaves and assign one value per leaf. XGBoost uses a second-order expansion of the objective to choose both the tree structure and those values. That curvature information makes the update more informative than plain residual fitting. The learning-rate \(\eta\) shrinks each stagewise update.</p></section><section class="cell" id="cell-cell-002"><h2 id="section-3">2. Deriving the regularized leaf value</h2>
 <p>At a boosting round, let \(g_i=\partial_{\hat y_i}\ell(y_i,\hat y_i)\) and \(h_i=\partial^2_{\hat y_i}\ell(y_i,\hat y_i)\), evaluated at the current predictions. For a proposed tree \(f\), a second-order Taylor approximation (dropping constants independent of \(f\)) is</p>
 <p>\[
 \widetilde{L}(f)=\sum_i\left(g_i f(x_i)+\tfrac12h_i f(x_i)^2\right)+\Omega(f),
@@ -24,211 +24,267 @@ f_m \text{ chosen to align with }-\nabla_F L.
 <p>\[
 w_j^*=-\frac{G_j}{H_j+\lambda}.
 \]</p>
-<p>With L1, the minimizer is the soft-thresholded value \(w_j^*=-\operatorname{sgn}(G_j)(|G_j|-\alpha)_+/(H_j+\lambda)\), where \((u)_+=\max(u,0)\). L1 can set a leaf update exactly to zero; L2 continuously shrinks it. These are local optima for the fixed tree partition under the Taylor approximation, not a global optimum of the full learning problem.</p></section><section class="cell"><h2 id="section-4">3. Split gain and its limits</h2>
+<p>With L1, the minimizer is the soft-thresholded value \(w_j^*=-\operatorname{sgn}(G_j)(|G_j|-\alpha)_+/(H_j+\lambda)\), where \((u)_+=\max(u,0)\). L1 can set a leaf update exactly to zero; L2 continuously shrinks it. These are local optima for the fixed tree partition under the Taylor approximation, not a global optimum of the full learning problem.</p></section><section class="cell" id="cell-cell-003"><h2 id="section-4">3. Split gain and its limits</h2>
 <p>For the common L2-only derivation, define the score of a leaf as \(S(G,H)=G^2/(H+\lambda)\). Splitting a parent into left and right children has approximate gain</p>
 <p>\[
 \operatorname{Gain}=\tfrac12\left[S(G_L,H_L)+S(G_R,H_R)-S(G_P,H_P)\right]-\gamma.
 \]</p>
 <p>With L1, replace each squared numerator by \((|G|-\alpha)_+^2\). XGBoost searches candidate feature thresholds and prefers splits with larger objective reduction, subject to constraints. <code>min_child_weight</code> requires a minimum sum of Hessians in each child; for squared error that sum is proportional to the number of rows. <code>max_depth</code>, <code>gamma</code>, <code>reg_lambda</code>, and <code>reg_alpha</code> restrict complexity in different ways.</p>
-<p>This is an approximate training-objective reduction for a particular loss and current model. Positive gain alone does not promise better performance on new rows. Greedy split search, finite precision, constraints, and subsequent stages all matter. Tree regularization and validation answer different questions: regularization shapes fitted trees; validation checks the complete training procedure on held-out examples.</p></section><section class="cell"><h2 id="section-5">4. A small residual-tree boosting round by round</h2>
-<p>Before using XGBoost, we can see first-order boosting directly. For squared error, the negative gradient is the residual. We initialize with the training mean, fit a shallow regression tree to the current residuals, and add a shrunken fraction of its output. Repeating this produces a sequence of functions. The panels compare two learning rates at the same tree depth and number of rounds. This toy is a teaching aid: it uses residual fitting and does not implement XGBoost's second-order split search or regularization.</p></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>import numpy as np
-import matplotlib.pyplot as plt
-from sklearn.tree import DecisionTreeRegressor
+<p>This is an approximate training-objective reduction for a particular loss and current model. Positive gain alone does not promise better performance on new rows. Greedy split search, finite precision, constraints, and subsequent stages all matter. Tree regularization and validation answer different questions: regularization shapes fitted trees; validation checks the complete training procedure on held-out examples.</p></section><section class="cell" id="cell-hand-split-guide"><h3 id="section-5">Verify one regularized split by hand</h3>
+<p>These four illustrative gradients and unit Hessians are local Taylor quantities, not extracted diagnostics from the bike model. With L2 penalty 1, the parent gradient sums to zero. A proposed split separates negative and positive gradient sums. Check the gain after the split penalty and the optimal leaf values before applying a learning rate.</p></section><section class="cell" id="cell-hand-split-code"><div class="cell-label">Python · run in the notebook</div><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 
-TOY_SEED = 42
-rng = np.random.default_rng(TOY_SEED)
-toy_x_train = np.linspace(-3, 3, 100)
-toy_y_train = (
-    np.sin(1.4 * toy_x_train)
-    + 0.25 * toy_x_train
-    + rng.normal(0, 0.12, len(toy_x_train))
-)
-toy_x_grid = np.linspace(-3.2, 3.2, 400)
-toy_truth_grid = np.sin(1.4 * toy_x_grid) + 0.25 * toy_x_grid
-etas = (0.15, 0.8)
-rounds = 8
-toy_predictions = {}
-toy_losses = {}
-for eta in etas:
-    initial = float(toy_y_train.mean())
-    fitted_train = np.full_like(toy_y_train, initial)
-    fitted_grid = np.full_like(toy_x_grid, initial)
-    snapshots = {0: fitted_grid.copy()}
-    losses = [np.mean((toy_y_train - fitted_train) ** 2)]
-    for step in range(1, rounds + 1):
-        residual = toy_y_train - fitted_train
-        tree = DecisionTreeRegressor(
-            max_depth=2, min_samples_leaf=6, random_state=TOY_SEED
-        )
-        tree.fit(toy_x_train.reshape(-1, 1), residual)
-        fitted_train += eta * tree.predict(toy_x_train.reshape(-1, 1))
-        fitted_grid += eta * tree.predict(toy_x_grid.reshape(-1, 1))
-        losses.append(np.mean((toy_y_train - fitted_train) ** 2))
-        if step in (1, 2, 4, 8):
-            snapshots[step] = fitted_grid.copy()
-    toy_predictions[eta] = snapshots
-    toy_losses[eta] = losses
+<span class="n">gradients</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="mf">2.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">])</span>
+<span class="n">hessians</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span>
+<span class="n">l2</span><span class="p">,</span> <span class="n">split_penalty</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.2</span>
+<span class="n">G_left</span><span class="p">,</span> <span class="n">H_left</span> <span class="o">=</span> <span class="n">gradients</span><span class="p">[:</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">(),</span> <span class="n">hessians</span><span class="p">[:</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+<span class="n">G_right</span><span class="p">,</span> <span class="n">H_right</span> <span class="o">=</span> <span class="n">gradients</span><span class="p">[</span><span class="mi">2</span><span class="p">:]</span><span class="o">.</span><span class="n">sum</span><span class="p">(),</span> <span class="n">hessians</span><span class="p">[</span><span class="mi">2</span><span class="p">:]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+<span class="n">G_parent</span><span class="p">,</span> <span class="n">H_parent</span> <span class="o">=</span> <span class="n">gradients</span><span class="o">.</span><span class="n">sum</span><span class="p">(),</span> <span class="n">hessians</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+<span class="n">left_weight</span> <span class="o">=</span> <span class="o">-</span><span class="n">G_left</span> <span class="o">/</span> <span class="p">(</span><span class="n">H_left</span> <span class="o">+</span> <span class="n">l2</span><span class="p">)</span>
+<span class="n">right_weight</span> <span class="o">=</span> <span class="o">-</span><span class="n">G_right</span> <span class="o">/</span> <span class="p">(</span><span class="n">H_right</span> <span class="o">+</span> <span class="n">l2</span><span class="p">)</span>
+<span class="n">gain</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">G_left</span><span class="o">**</span><span class="mi">2</span> <span class="o">/</span> <span class="p">(</span><span class="n">H_left</span> <span class="o">+</span> <span class="n">l2</span><span class="p">)</span> <span class="o">+</span> <span class="n">G_right</span><span class="o">**</span><span class="mi">2</span> <span class="o">/</span> <span class="p">(</span><span class="n">H_right</span> <span class="o">+</span> <span class="n">l2</span><span class="p">)</span>
+              <span class="o">-</span> <span class="n">G_parent</span><span class="o">**</span><span class="mi">2</span> <span class="o">/</span> <span class="p">(</span><span class="n">H_parent</span> <span class="o">+</span> <span class="n">l2</span><span class="p">))</span> <span class="o">-</span> <span class="n">split_penalty</span>
+<span class="nb">print</span><span class="p">({</span><span class="s2">"left_leaf"</span><span class="p">:</span> <span class="n">left_weight</span><span class="p">,</span> <span class="s2">"right_leaf"</span><span class="p">:</span> <span class="n">right_weight</span><span class="p">,</span> <span class="s2">"split_gain"</span><span class="p">:</span> <span class="n">gain</span><span class="p">})</span>
+<span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">gain</span><span class="p">,</span> <span class="mf">2.8</span><span class="p">)</span>
+</pre></div>
+<details class="result-text"><summary>3. Split gain and its limits · computed output</summary><pre>{&#x27;left_leaf&#x27;: np.float64(1.0), &#x27;right_leaf&#x27;: np.float64(-1.0), &#x27;split_gain&#x27;: np.float64(2.8)}
+</pre></details></section><section class="cell" id="cell-cell-004"><h2 id="section-6">4. A small residual-tree boosting round by round</h2>
+<p>Before using XGBoost, we can see first-order boosting directly. For squared error, the negative gradient is the residual. We initialize with the training mean, fit a shallow regression tree to the current residuals, and add a shrunken fraction of its output. Repeating this produces a sequence of functions. The panels compare two learning rates at the same tree depth and number of rounds. This toy is a teaching aid: it uses residual fitting and does not implement XGBoost's second-order split search or regularization.</p></section><section class="cell" id="cell-cell-005"><div class="cell-label">Python · run in the notebook</div><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.tree</span><span class="w"> </span><span class="kn">import</span> <span class="n">DecisionTreeRegressor</span>
 
-fig, axes = plt.subplots(
-    1, 3, figsize=(16, 4.5)
-)
-for ax, eta in zip(axes[:2], etas):
-    ax.scatter(
-        toy_x_train, toy_y_train, s=13, alpha=0.4,
-        label=&quot;noisy training data&quot;,
-    )
-    ax.plot(
-        toy_x_grid, toy_truth_grid, color=&quot;black&quot;, linestyle=&quot;--&quot;,
-        label=&quot;underlying curve&quot;,
-    )
-    stages = (0, 1, 2, 4, 8)
-    colors = (&quot;gray&quot;, &quot;#4c78a8&quot;, &quot;#f58518&quot;, &quot;#54a24b&quot;, &quot;#e45756&quot;)
-    for step, color in zip(stages, colors):
-        ax.plot(
-            toy_x_grid, toy_predictions[eta][step],
-            color=color, label=f&quot;round {step}&quot;,
-        )
-    ax.set(
-        title=f&quot;Residual trees, eta={eta}&quot;,
-        xlabel=&quot;x&quot;, ylabel=&quot;prediction&quot;,
-    )
-    ax.legend(fontsize=8)
-for eta in etas:
-    axes[2].plot(
-        range(rounds + 1), toy_losses[eta], marker=&quot;o&quot;,
-        label=f&quot;eta={eta}&quot;,
-    )
-axes[2].set(
-    title=&quot;Training squared error&quot;,
-    xlabel=&quot;boosting round&quot;, ylabel=&quot;mean squared error&quot;,
-)
-axes[2].legend()
-plt.tight_layout()
-</code></pre></section><section class="cell"><p>A larger learning rate takes bigger steps, so it may reduce training loss faster while also producing larger changes from one round to the next. With this fixed toy and only eight rounds, interpret the curves as an illustration of step size, not a universal ranking. The production experiment below uses XGBoost's second-order objective and stops using a separate validation set.</p></section><section class="cell"><h2 id="section-6">5. Load and inspect the scenarios</h2>
-<p>The data path helper searches the current directory and its parents for <code>data/bike_demand.csv</code>. The expected columns are the six predictors and <code>rentals</code> as the response.</p></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>from pathlib import Path
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
-from sklearn.model_selection import train_test_split
-from sklearn.compose import ColumnTransformer
-from sklearn.preprocessing import OneHotEncoder
-from sklearn.pipeline import make_pipeline
-from sklearn.dummy import DummyRegressor
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
-from xgboost import XGBRegressor
+<span class="n">TOY_SEED</span> <span class="o">=</span> <span class="mi">42</span>
+<span class="n">rng</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(</span><span class="n">TOY_SEED</span><span class="p">)</span>
+<span class="n">toy_x_train</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
+<span class="n">toy_y_train</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="mf">1.4</span> <span class="o">*</span> <span class="n">toy_x_train</span><span class="p">)</span>
+    <span class="o">+</span> <span class="mf">0.25</span> <span class="o">*</span> <span class="n">toy_x_train</span>
+    <span class="o">+</span> <span class="n">rng</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">0.12</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">toy_x_train</span><span class="p">))</span>
+<span class="p">)</span>
+<span class="n">toy_x_grid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mf">3.2</span><span class="p">,</span> <span class="mf">3.2</span><span class="p">,</span> <span class="mi">400</span><span class="p">)</span>
+<span class="n">toy_truth_grid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="mf">1.4</span> <span class="o">*</span> <span class="n">toy_x_grid</span><span class="p">)</span> <span class="o">+</span> <span class="mf">0.25</span> <span class="o">*</span> <span class="n">toy_x_grid</span>
+<span class="n">etas</span> <span class="o">=</span> <span class="p">(</span><span class="mf">0.15</span><span class="p">,</span> <span class="mf">0.8</span><span class="p">)</span>
+<span class="n">rounds</span> <span class="o">=</span> <span class="mi">8</span>
+<span class="n">toy_predictions</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="n">toy_losses</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="k">for</span> <span class="n">eta</span> <span class="ow">in</span> <span class="n">etas</span><span class="p">:</span>
+    <span class="n">initial</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">toy_y_train</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span>
+    <span class="n">fitted_train</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="n">toy_y_train</span><span class="p">,</span> <span class="n">initial</span><span class="p">)</span>
+    <span class="n">fitted_grid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="n">toy_x_grid</span><span class="p">,</span> <span class="n">initial</span><span class="p">)</span>
+    <span class="n">snapshots</span> <span class="o">=</span> <span class="p">{</span><span class="mi">0</span><span class="p">:</span> <span class="n">fitted_grid</span><span class="o">.</span><span class="n">copy</span><span class="p">()}</span>
+    <span class="n">losses</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">((</span><span class="n">toy_y_train</span> <span class="o">-</span> <span class="n">fitted_train</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)]</span>
+    <span class="k">for</span> <span class="n">step</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">rounds</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="n">residual</span> <span class="o">=</span> <span class="n">toy_y_train</span> <span class="o">-</span> <span class="n">fitted_train</span>
+        <span class="n">tree</span> <span class="o">=</span> <span class="n">DecisionTreeRegressor</span><span class="p">(</span>
+            <span class="n">max_depth</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">min_samples_leaf</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="n">TOY_SEED</span>
+        <span class="p">)</span>
+        <span class="n">tree</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">toy_x_train</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">residual</span><span class="p">)</span>
+        <span class="n">fitted_train</span> <span class="o">+=</span> <span class="n">eta</span> <span class="o">*</span> <span class="n">tree</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">toy_x_train</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="n">fitted_grid</span> <span class="o">+=</span> <span class="n">eta</span> <span class="o">*</span> <span class="n">tree</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">toy_x_grid</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="n">losses</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">((</span><span class="n">toy_y_train</span> <span class="o">-</span> <span class="n">fitted_train</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">step</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">8</span><span class="p">):</span>
+            <span class="n">snapshots</span><span class="p">[</span><span class="n">step</span><span class="p">]</span> <span class="o">=</span> <span class="n">fitted_grid</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">toy_predictions</span><span class="p">[</span><span class="n">eta</span><span class="p">]</span> <span class="o">=</span> <span class="n">snapshots</span>
+    <span class="n">toy_losses</span><span class="p">[</span><span class="n">eta</span><span class="p">]</span> <span class="o">=</span> <span class="n">losses</span>
 
-SEED = 42
-FEATURES = [&quot;temperature_c&quot;, &quot;humidity&quot;, &quot;wind_kmh&quot;, &quot;hour&quot;, &quot;weekday&quot;, &quot;season&quot;]
-TARGET = &quot;rentals&quot;
+<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span>
+    <span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="mf">4.5</span><span class="p">)</span>
+<span class="p">)</span>
+<span class="k">for</span> <span class="n">ax</span><span class="p">,</span> <span class="n">eta</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">axes</span><span class="p">[:</span><span class="mi">2</span><span class="p">],</span> <span class="n">etas</span><span class="p">):</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span>
+        <span class="n">toy_x_train</span><span class="p">,</span> <span class="n">toy_y_train</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">13</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.4</span><span class="p">,</span>
+        <span class="n">label</span><span class="o">=</span><span class="s2">"noisy training data"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+        <span class="n">toy_x_grid</span><span class="p">,</span> <span class="n">toy_truth_grid</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">"black"</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s2">"--"</span><span class="p">,</span>
+        <span class="n">label</span><span class="o">=</span><span class="s2">"underlying curve"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">stages</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">8</span><span class="p">)</span>
+    <span class="n">colors</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"gray"</span><span class="p">,</span> <span class="s2">"#4c78a8"</span><span class="p">,</span> <span class="s2">"#f58518"</span><span class="p">,</span> <span class="s2">"#54a24b"</span><span class="p">,</span> <span class="s2">"#e45756"</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">step</span><span class="p">,</span> <span class="n">color</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">stages</span><span class="p">,</span> <span class="n">colors</span><span class="p">):</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+            <span class="n">toy_x_grid</span><span class="p">,</span> <span class="n">toy_predictions</span><span class="p">[</span><span class="n">eta</span><span class="p">][</span><span class="n">step</span><span class="p">],</span>
+            <span class="n">color</span><span class="o">=</span><span class="n">color</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s2">"round </span><span class="si">{</span><span class="n">step</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set</span><span class="p">(</span>
+        <span class="n">title</span><span class="o">=</span><span class="sa">f</span><span class="s2">"Residual trees, eta=</span><span class="si">{</span><span class="n">eta</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+        <span class="n">xlabel</span><span class="o">=</span><span class="s2">"x"</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s2">"prediction"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">eta</span> <span class="ow">in</span> <span class="n">etas</span><span class="p">:</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+        <span class="nb">range</span><span class="p">(</span><span class="n">rounds</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span> <span class="n">toy_losses</span><span class="p">[</span><span class="n">eta</span><span class="p">],</span> <span class="n">marker</span><span class="o">=</span><span class="s2">"o"</span><span class="p">,</span>
+        <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s2">"eta=</span><span class="si">{</span><span class="n">eta</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+    <span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">set</span><span class="p">(</span>
+    <span class="n">title</span><span class="o">=</span><span class="s2">"Training squared error"</span><span class="p">,</span>
+    <span class="n">xlabel</span><span class="o">=</span><span class="s2">"boosting round"</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s2">"mean squared error"</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+</pre></div>
+<figure class="result-figure"><img loading="lazy" src="results/03_xgboost-cell-005-0.png" alt="Executed result: 4. A small residual-tree boosting round by round"><figcaption>4. A small residual-tree boosting round by round · captured notebook output</figcaption></figure></section><section class="cell" id="cell-cell-006"><p>A larger learning rate takes bigger steps, so it may reduce training loss faster while also producing larger changes from one round to the next. With this fixed toy and only eight rounds, interpret the curves as an illustration of step size, not a universal ranking. The production experiment below uses XGBoost's second-order objective and stops using a separate validation set.</p></section><section class="cell" id="cell-cell-007"><h2 id="section-7">5. Load and inspect the scenarios</h2>
+<p>The data path helper searches the current directory and its parents for <code>data/bike_demand.csv</code>. The expected columns are the six predictors and <code>rentals</code> as the response.</p></section><section class="cell" id="cell-cell-008"><div class="cell-label">Python · run in the notebook</div><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.model_selection</span><span class="w"> </span><span class="kn">import</span> <span class="n">train_test_split</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.compose</span><span class="w"> </span><span class="kn">import</span> <span class="n">ColumnTransformer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.preprocessing</span><span class="w"> </span><span class="kn">import</span> <span class="n">OneHotEncoder</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.pipeline</span><span class="w"> </span><span class="kn">import</span> <span class="n">make_pipeline</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.dummy</span><span class="w"> </span><span class="kn">import</span> <span class="n">DummyRegressor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.ensemble</span><span class="w"> </span><span class="kn">import</span> <span class="n">RandomForestRegressor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">mean_absolute_error</span><span class="p">,</span> <span class="n">mean_squared_error</span><span class="p">,</span> <span class="n">r2_score</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">xgboost</span><span class="w"> </span><span class="kn">import</span> <span class="n">XGBRegressor</span>
 
-def find_data_file(filename=&quot;bike_demand.csv&quot;):
-    # In Jupyter, cwd is commonly the repository root or this notebook&#x27;s folder.
-    for start in (Path.cwd(), *Path.cwd().parents):
-        candidate = start / &quot;data&quot; / filename
-        if candidate.is_file():
-            return candidate
-    raise FileNotFoundError(
-        &quot;Could not find data/&quot; + filename + &quot; in the current directory or its parents. &quot;
-        &quot;Open Jupyter from the repository or place the supplied CSV in data/.&quot;
-    )
+<span class="n">SEED</span> <span class="o">=</span> <span class="mi">42</span>
+<span class="n">FEATURES</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"temperature_c"</span><span class="p">,</span> <span class="s2">"humidity"</span><span class="p">,</span> <span class="s2">"wind_kmh"</span><span class="p">,</span> <span class="s2">"hour"</span><span class="p">,</span> <span class="s2">"weekday"</span><span class="p">,</span> <span class="s2">"season"</span><span class="p">]</span>
+<span class="n">TARGET</span> <span class="o">=</span> <span class="s2">"rentals"</span>
 
-data_path = find_data_file()
-df = pd.read_csv(data_path)
-missing = sorted(set(FEATURES + [TARGET]) - set(df.columns))
-if missing:
-    raise ValueError(f&quot;{data_path} is missing required columns: {missing}&quot;)
-df = df[FEATURES + [TARGET]].dropna().copy()
-print(f&quot;Loaded {len(df):,} complete scenario rows from {data_path}&quot;)
-df.head()
-</code></pre></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>df.describe(include=&quot;all&quot;).T</code></pre></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>fig, axes = plt.subplots(1, 2, figsize=(11, 4))
-df[&quot;rentals&quot;].hist(bins=30, ax=axes[0], color=&quot;steelblue&quot;)
-axes[0].set(title=&quot;Demand across generated scenarios&quot;, xlabel=&quot;rentals&quot;, ylabel=&quot;rows&quot;)
-axes[1].scatter(df[&quot;temperature_c&quot;], df[&quot;rentals&quot;], alpha=0.25, s=12)
-axes[1].set(title=&quot;Demand versus temperature&quot;, xlabel=&quot;temperature (°C)&quot;, ylabel=&quot;rentals&quot;)
-plt.tight_layout()</code></pre></section><section class="cell"><p>Because the scenarios are independent samples, a random partition is suitable for this exercise. If these were a time series, this split would leak future regimes into training and would be the wrong evaluation design. We reserve 20% as a final test set, then reserve 18.75% of the remaining 80% (15% overall) as validation data. Early stopping will inspect validation RMSE; only the final comparison uses test rows.</p></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code># Treat hour and weekday as labels, not measurements with meaningful linear distance.
-# One-hot columns are shared across all models so the comparison uses the same inputs.
-categorical = [&quot;hour&quot;, &quot;weekday&quot;, &quot;season&quot;]
-numeric = [&quot;temperature_c&quot;, &quot;humidity&quot;, &quot;wind_kmh&quot;]
-encoder = ColumnTransformer(
-    [(&quot;numeric&quot;, &quot;passthrough&quot;, numeric),
-     (&quot;categories&quot;, OneHotEncoder(handle_unknown=&quot;ignore&quot;, sparse_output=False), categorical)],
-    verbose_feature_names_out=False,
-)
-X = df[FEATURES]
-y = df[TARGET].astype(float)
+<span class="k">def</span><span class="w"> </span><span class="nf">find_data_file</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="s2">"bike_demand.csv"</span><span class="p">):</span>
+    <span class="c1"># In Jupyter, cwd is commonly the repository root or this notebook's folder.</span>
+    <span class="k">for</span> <span class="n">start</span> <span class="ow">in</span> <span class="p">(</span><span class="n">Path</span><span class="o">.</span><span class="n">cwd</span><span class="p">(),</span> <span class="o">*</span><span class="n">Path</span><span class="o">.</span><span class="n">cwd</span><span class="p">()</span><span class="o">.</span><span class="n">parents</span><span class="p">):</span>
+        <span class="n">candidate</span> <span class="o">=</span> <span class="n">start</span> <span class="o">/</span> <span class="s2">"data"</span> <span class="o">/</span> <span class="n">filename</span>
+        <span class="k">if</span> <span class="n">candidate</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
+            <span class="k">return</span> <span class="n">candidate</span>
+    <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span>
+        <span class="s2">"Could not find data/"</span> <span class="o">+</span> <span class="n">filename</span> <span class="o">+</span> <span class="s2">" in the current directory or its parents. "</span>
+        <span class="s2">"Open Jupyter from the repository or place the supplied CSV in data/."</span>
+    <span class="p">)</span>
 
-# First hold out the final test set. Then split the remaining development rows
-# into model-fit and early-stopping validation subsets.
-X_dev, X_test, y_dev, y_test = train_test_split(
-    X, y, test_size=0.20, random_state=SEED
-)
-X_train, X_val, y_train, y_val = train_test_split(
-    X_dev, y_dev, test_size=0.1875, random_state=SEED
-)  # 0.1875 * 0.80 = 0.15 of all rows
-print(f&quot;train={len(X_train)}, validation={len(X_val)}, test={len(X_test)}&quot;)
-</code></pre></section><section class="cell"><h2 id="section-7">6. Fit comparable models</h2>
-<p>Hour, weekday, and season are encoded as categories so the models do not have to infer that, for example, hour 23 is close to hour 0 from a linear numeric scale. We fit the encoder on training rows only. Every model uses the same encoded training and test rows. The validation rows are given to XGBoost only to decide when to stop adding trees.</p></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code># Fit preprocessing only on training rows, then use that same representation everywhere.
-X_train_enc = encoder.fit_transform(X_train)
-X_val_enc = encoder.transform(X_val)
-X_test_enc = encoder.transform(X_test)
+<span class="n">data_path</span> <span class="o">=</span> <span class="n">find_data_file</span><span class="p">()</span>
+<span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">data_path</span><span class="p">)</span>
+<span class="n">missing</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">FEATURES</span> <span class="o">+</span> <span class="p">[</span><span class="n">TARGET</span><span class="p">])</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">))</span>
+<span class="k">if</span> <span class="n">missing</span><span class="p">:</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">data_path</span><span class="si">}</span><span class="s2"> is missing required columns: </span><span class="si">{</span><span class="n">missing</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">FEATURES</span> <span class="o">+</span> <span class="p">[</span><span class="n">TARGET</span><span class="p">]]</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Loaded </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">)</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2"> complete scenario rows from </span><span class="si">{</span><span class="n">data_path</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="n">df</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+</pre></div>
+<details class="result-text"><summary>5. Load and inspect the scenarios · computed output</summary><pre>Loaded 2,000 complete scenario rows from F:\Proyectos\RBF-Machine learning\data\bike_demand.csv
+</pre></details><details class="result-text"><summary>5. Load and inspect the scenarios · computed output</summary><pre>   temperature_c  humidity  wind_kmh  hour  weekday  season  rentals
+0         7.2825   25.1391   11.3271     6        5       3       99
+1        21.9328   46.7671    3.3084    11        4       1      149
+2        15.2928   59.3648   23.6965     8        2       3      180
+3         3.0650   63.2718   11.5156     8        5       1       74
+4        34.4286   27.4304   11.3957    12        3       1      192</pre></details></section><section class="cell" id="cell-cell-009"><div class="cell-label">Python · run in the notebook</div><div class="highlight"><pre><span></span><span class="n">df</span><span class="o">.</span><span class="n">describe</span><span class="p">(</span><span class="n">include</span><span class="o">=</span><span class="s2">"all"</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
+</pre></div>
+<details class="result-text"><summary>5. Load and inspect the scenarios · computed output</summary><pre>                count        mean        std      min        25%       50%  \
+temperature_c  2000.0   17.683749  10.162390   0.0194   9.070150   17.7985   
+humidity       2000.0   58.070462  21.979304  20.0014  38.675425   59.3790   
+wind_kmh       2000.0   17.822632  10.084270   0.0150   8.958100   17.8896   
+hour           2000.0   11.303500   6.851705   0.0000   6.000000   11.0000   
+weekday        2000.0    2.946500   1.959224   0.0000   1.000000    3.0000   
+season         2000.0    1.476000   1.132283   0.0000   0.000000    1.0000   
+rentals        2000.0  122.985000  72.585247   0.0000  66.000000  128.0000   
 
-dummy = DummyRegressor(strategy=&quot;mean&quot;).fit(X_train_enc, y_train)
-forest = RandomForestRegressor(
-    n_estimators=400, min_samples_leaf=2, max_features=0.9,
-    random_state=SEED, n_jobs=-1,
-).fit(X_train_enc, y_train)
+                      75%       max  
+temperature_c   26.446550   34.9846  
+humidity        77.050475   94.9954  
+wind_kmh        26.949250   34.9994  
+hour            17.000000   23.0000  
+weekday          5.000000    6.0000  
+season           3.000000    3.0000  
+rentals        175.000000  322.0000  </pre></details></section><section class="cell" id="cell-cell-010"><div class="cell-label">Python · run in the notebook</div><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">11</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
+<span class="n">df</span><span class="p">[</span><span class="s2">"rentals"</span><span class="p">]</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">bins</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="s2">"steelblue"</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="s2">"Demand across generated scenarios"</span><span class="p">,</span> <span class="n">xlabel</span><span class="o">=</span><span class="s2">"rentals"</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s2">"rows"</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s2">"temperature_c"</span><span class="p">],</span> <span class="n">df</span><span class="p">[</span><span class="s2">"rentals"</span><span class="p">],</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.25</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="s2">"Demand versus temperature"</span><span class="p">,</span> <span class="n">xlabel</span><span class="o">=</span><span class="s2">"temperature (°C)"</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s2">"rentals"</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+</pre></div>
+<figure class="result-figure"><img loading="lazy" src="results/03_xgboost-cell-010-0.png" alt="Executed result: 5. Load and inspect the scenarios"><figcaption>5. Load and inspect the scenarios · captured notebook output</figcaption></figure></section><section class="cell" id="cell-cell-011"><p>Because the scenarios are independent samples, a random partition is suitable for this exercise. If these were a time series, this split would leak future regimes into training and would be the wrong evaluation design. We reserve 20% as a final test set, then reserve 18.75% of the remaining 80% (15% overall) as validation data. Early stopping will inspect validation RMSE; only the final comparison uses test rows.</p></section><section class="cell" id="cell-cell-012"><div class="cell-label">Python · run in the notebook</div><div class="highlight"><pre><span></span><span class="c1"># Treat hour and weekday as labels, not measurements with meaningful linear distance.</span>
+<span class="c1"># One-hot columns are shared across all models so the comparison uses the same inputs.</span>
+<span class="n">categorical</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"hour"</span><span class="p">,</span> <span class="s2">"weekday"</span><span class="p">,</span> <span class="s2">"season"</span><span class="p">]</span>
+<span class="n">numeric</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"temperature_c"</span><span class="p">,</span> <span class="s2">"humidity"</span><span class="p">,</span> <span class="s2">"wind_kmh"</span><span class="p">]</span>
+<span class="n">encoder</span> <span class="o">=</span> <span class="n">ColumnTransformer</span><span class="p">(</span>
+    <span class="p">[(</span><span class="s2">"numeric"</span><span class="p">,</span> <span class="s2">"passthrough"</span><span class="p">,</span> <span class="n">numeric</span><span class="p">),</span>
+     <span class="p">(</span><span class="s2">"categories"</span><span class="p">,</span> <span class="n">OneHotEncoder</span><span class="p">(</span><span class="n">handle_unknown</span><span class="o">=</span><span class="s2">"ignore"</span><span class="p">,</span> <span class="n">sparse_output</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span> <span class="n">categorical</span><span class="p">)],</span>
+    <span class="n">verbose_feature_names_out</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">X</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">FEATURES</span><span class="p">]</span>
+<span class="n">y</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">TARGET</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
 
-# Validation data controls early stopping. The test data is untouched until scoring.
-xgb = XGBRegressor(
-    objective=&quot;reg:squarederror&quot;, eval_metric=&quot;rmse&quot;,
-    n_estimators=2000, learning_rate=0.04, max_depth=4,
-    min_child_weight=5, subsample=0.85, colsample_bytree=0.9,
-    reg_lambda=3.0, reg_alpha=0.0, gamma=0.0,
-    early_stopping_rounds=50,
-    random_state=SEED, n_jobs=-1,
-)
-xgb.fit(X_train_enc, y_train, eval_set=[(X_val_enc, y_val)], verbose=False)
-print(&quot;XGBoost best iteration:&quot;, xgb.best_iteration)
-</code></pre></section><section class="cell"><p><code>n_estimators</code> is a generous upper limit. <code>early_stopping_rounds</code> is passed to the <code>XGBRegressor</code> constructor; the validation score must fail to improve for 50 rounds before fitting stops. <code>best_iteration</code> identifies the best validation round. This is model selection, so report validation as part of the process and keep the test score as a single final assessment.</p></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>history = xgb.evals_result()[&quot;validation_0&quot;][&quot;rmse&quot;]
-plt.figure(figsize=(8, 4))
-plt.plot(np.arange(1, len(history) + 1), history, label=&quot;validation RMSE&quot;)
-plt.axvline(xgb.best_iteration + 1, color=&quot;black&quot;, linestyle=&quot;--&quot;, label=&quot;best iteration&quot;)
-plt.xlabel(&quot;boosting round&quot;)
-plt.ylabel(&quot;RMSE&quot;)
-plt.title(&quot;Early stopping uses the validation partition&quot;)
-plt.legend()
-plt.tight_layout()</code></pre></section><section class="cell"><h2 id="section-8">7. Evaluate once on the test partition</h2>
-<p>RMSE weights larger errors more strongly; MAE is easier to interpret as a typical absolute error; \(R^2\) measures improvement relative to a constant-mean predictor on this test sample. The baseline itself is trained on the same training rows.</p></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>def metric_row(name, model):
-    pred = model.predict(X_test_enc)
-    return {&quot;model&quot;: name,
-            &quot;RMSE&quot;: mean_squared_error(y_test, pred) ** 0.5,
-            &quot;MAE&quot;: mean_absolute_error(y_test, pred),
-            &quot;R²&quot;: r2_score(y_test, pred)}
+<span class="c1"># First hold out the final test set. Then split the remaining development rows</span>
+<span class="c1"># into model-fit and early-stopping validation subsets.</span>
+<span class="n">X_dev</span><span class="p">,</span> <span class="n">X_test</span><span class="p">,</span> <span class="n">y_dev</span><span class="p">,</span> <span class="n">y_test</span> <span class="o">=</span> <span class="n">train_test_split</span><span class="p">(</span>
+    <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">test_size</span><span class="o">=</span><span class="mf">0.20</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="n">SEED</span>
+<span class="p">)</span>
+<span class="n">X_train</span><span class="p">,</span> <span class="n">X_val</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">y_val</span> <span class="o">=</span> <span class="n">train_test_split</span><span class="p">(</span>
+    <span class="n">X_dev</span><span class="p">,</span> <span class="n">y_dev</span><span class="p">,</span> <span class="n">test_size</span><span class="o">=</span><span class="mf">0.1875</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="n">SEED</span>
+<span class="p">)</span>  <span class="c1"># 0.1875 * 0.80 = 0.15 of all rows</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"train=</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">X_train</span><span class="p">)</span><span class="si">}</span><span class="s2">, validation=</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">X_val</span><span class="p">)</span><span class="si">}</span><span class="s2">, test=</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">X_test</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</pre></div>
+<details class="result-text"><summary>5. Load and inspect the scenarios · computed output</summary><pre>train=1300, validation=300, test=400
+</pre></details></section><section class="cell" id="cell-cell-013"><h2 id="section-8">6. Fit comparable models</h2>
+<p>Hour, weekday, and season are encoded as categories so the models do not have to infer that, for example, hour 23 is close to hour 0 from a linear numeric scale. We fit the encoder on training rows only. Every model uses the same encoded training and test rows. The validation rows are given to XGBoost only to decide when to stop adding trees.</p></section><section class="cell" id="cell-cell-014"><div class="cell-label">Python · run in the notebook</div><div class="highlight"><pre><span></span><span class="c1"># Fit preprocessing only on training rows, then use that same representation everywhere.</span>
+<span class="n">X_train_enc</span> <span class="o">=</span> <span class="n">encoder</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">X_train</span><span class="p">)</span>
+<span class="n">X_val_enc</span> <span class="o">=</span> <span class="n">encoder</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">X_val</span><span class="p">)</span>
+<span class="n">X_test_enc</span> <span class="o">=</span> <span class="n">encoder</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">X_test</span><span class="p">)</span>
 
-results = pd.DataFrame([
-    metric_row(&quot;Training-mean baseline&quot;, dummy),
-    metric_row(&quot;Random forest&quot;, forest),
-    metric_row(&quot;XGBoost&quot;, xgb),
-]).reset_index(drop=True)
-results
-</code></pre></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code># This diagnostic was chosen in advance; do not select a model using test scores.
-pred = xgb.predict(X_test_enc)
-plt.figure(figsize=(5, 5))
-plt.scatter(y_test, pred, alpha=0.35, s=14)
-limits = [min(y_test.min(), pred.min()), max(y_test.max(), pred.max())]
-plt.plot(limits, limits, &quot;k--&quot;, linewidth=1)
-plt.xlabel(&quot;actual rentals&quot;)
-plt.ylabel(&quot;XGBoost prediction&quot;)
-plt.title(&quot;XGBoost test predictions&quot;)
-plt.tight_layout()
-</code></pre></section><section class="cell"><h2 id="section-9">8. Interpret, do not overclaim</h2>
+<span class="n">dummy</span> <span class="o">=</span> <span class="n">DummyRegressor</span><span class="p">(</span><span class="n">strategy</span><span class="o">=</span><span class="s2">"mean"</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train_enc</span><span class="p">,</span> <span class="n">y_train</span><span class="p">)</span>
+<span class="n">forest</span> <span class="o">=</span> <span class="n">RandomForestRegressor</span><span class="p">(</span>
+    <span class="n">n_estimators</span><span class="o">=</span><span class="mi">400</span><span class="p">,</span> <span class="n">min_samples_leaf</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">max_features</span><span class="o">=</span><span class="mf">0.9</span><span class="p">,</span>
+    <span class="n">random_state</span><span class="o">=</span><span class="n">SEED</span><span class="p">,</span> <span class="n">n_jobs</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
+<span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train_enc</span><span class="p">,</span> <span class="n">y_train</span><span class="p">)</span>
+
+<span class="c1"># Validation data controls early stopping. The test data is untouched until scoring.</span>
+<span class="n">xgb</span> <span class="o">=</span> <span class="n">XGBRegressor</span><span class="p">(</span>
+    <span class="n">objective</span><span class="o">=</span><span class="s2">"reg:squarederror"</span><span class="p">,</span> <span class="n">eval_metric</span><span class="o">=</span><span class="s2">"rmse"</span><span class="p">,</span>
+    <span class="n">n_estimators</span><span class="o">=</span><span class="mi">2000</span><span class="p">,</span> <span class="n">learning_rate</span><span class="o">=</span><span class="mf">0.04</span><span class="p">,</span> <span class="n">max_depth</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
+    <span class="n">min_child_weight</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">subsample</span><span class="o">=</span><span class="mf">0.85</span><span class="p">,</span> <span class="n">colsample_bytree</span><span class="o">=</span><span class="mf">0.9</span><span class="p">,</span>
+    <span class="n">reg_lambda</span><span class="o">=</span><span class="mf">3.0</span><span class="p">,</span> <span class="n">reg_alpha</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">gamma</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
+    <span class="n">early_stopping_rounds</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span>
+    <span class="n">random_state</span><span class="o">=</span><span class="n">SEED</span><span class="p">,</span> <span class="n">n_jobs</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">xgb</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train_enc</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">eval_set</span><span class="o">=</span><span class="p">[(</span><span class="n">X_val_enc</span><span class="p">,</span> <span class="n">y_val</span><span class="p">)],</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"XGBoost best iteration:"</span><span class="p">,</span> <span class="n">xgb</span><span class="o">.</span><span class="n">best_iteration</span><span class="p">)</span>
+</pre></div>
+<details class="result-text"><summary>6. Fit comparable models · computed output</summary><pre>XGBoost best iteration: 760
+</pre></details></section><section class="cell" id="cell-cell-015"><p><code>n_estimators</code> is a generous upper limit. <code>early_stopping_rounds</code> is passed to the <code>XGBRegressor</code> constructor; the validation score must fail to improve for 50 rounds before fitting stops. <code>best_iteration</code> identifies the best validation round. This is model selection, so report validation as part of the process and keep the test score as a single final assessment.</p></section><section class="cell" id="cell-cell-016"><div class="cell-label">Python · run in the notebook</div><div class="highlight"><pre><span></span><span class="n">history</span> <span class="o">=</span> <span class="n">xgb</span><span class="o">.</span><span class="n">evals_result</span><span class="p">()[</span><span class="s2">"validation_0"</span><span class="p">][</span><span class="s2">"rmse"</span><span class="p">]</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">history</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span> <span class="n">history</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"validation RMSE"</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="n">xgb</span><span class="o">.</span><span class="n">best_iteration</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">"black"</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s2">"--"</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"best iteration"</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">"boosting round"</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">"RMSE"</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">"Early stopping uses the validation partition"</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+</pre></div>
+<figure class="result-figure"><img loading="lazy" src="results/03_xgboost-cell-016-0.png" alt="Executed result: 6. Fit comparable models"><figcaption>6. Fit comparable models · captured notebook output</figcaption></figure></section><section class="cell" id="cell-cell-017"><h2 id="section-9">7. Evaluate once on the test partition</h2>
+<p>RMSE weights larger errors more strongly; MAE is easier to interpret as a typical absolute error; \(R^2\) measures improvement relative to a constant-mean predictor on this test sample. The baseline itself is trained on the same training rows.</p></section><section class="cell" id="cell-cell-018"><div class="cell-label">Python · run in the notebook</div><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">metric_row</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
+    <span class="n">pred</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_test_enc</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">{</span><span class="s2">"model"</span><span class="p">:</span> <span class="n">name</span><span class="p">,</span>
+            <span class="s2">"RMSE"</span><span class="p">:</span> <span class="n">mean_squared_error</span><span class="p">(</span><span class="n">y_test</span><span class="p">,</span> <span class="n">pred</span><span class="p">)</span> <span class="o">**</span> <span class="mf">0.5</span><span class="p">,</span>
+            <span class="s2">"MAE"</span><span class="p">:</span> <span class="n">mean_absolute_error</span><span class="p">(</span><span class="n">y_test</span><span class="p">,</span> <span class="n">pred</span><span class="p">),</span>
+            <span class="s2">"R²"</span><span class="p">:</span> <span class="n">r2_score</span><span class="p">(</span><span class="n">y_test</span><span class="p">,</span> <span class="n">pred</span><span class="p">)}</span>
+
+<span class="n">results</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">([</span>
+    <span class="n">metric_row</span><span class="p">(</span><span class="s2">"Training-mean baseline"</span><span class="p">,</span> <span class="n">dummy</span><span class="p">),</span>
+    <span class="n">metric_row</span><span class="p">(</span><span class="s2">"Random forest"</span><span class="p">,</span> <span class="n">forest</span><span class="p">),</span>
+    <span class="n">metric_row</span><span class="p">(</span><span class="s2">"XGBoost"</span><span class="p">,</span> <span class="n">xgb</span><span class="p">),</span>
+<span class="p">])</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">results</span>
+</pre></div>
+<details class="result-text"><summary>7. Evaluate once on the test partition · computed output</summary><pre>                    model       RMSE        MAE        R²
+0  Training-mean baseline  74.324897  61.899596 -0.006192
+1           Random forest  20.806434  15.811783  0.921149
+2                 XGBoost  13.742325  10.811734  0.965602</pre></details></section><section class="cell" id="cell-cell-019"><div class="cell-label">Python · run in the notebook</div><div class="highlight"><pre><span></span><span class="c1"># This diagnostic was chosen in advance; do not select a model using test scores.</span>
+<span class="n">pred</span> <span class="o">=</span> <span class="n">xgb</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_test_enc</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">y_test</span><span class="p">,</span> <span class="n">pred</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.35</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">14</span><span class="p">)</span>
+<span class="n">limits</span> <span class="o">=</span> <span class="p">[</span><span class="nb">min</span><span class="p">(</span><span class="n">y_test</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span> <span class="n">pred</span><span class="o">.</span><span class="n">min</span><span class="p">()),</span> <span class="nb">max</span><span class="p">(</span><span class="n">y_test</span><span class="o">.</span><span class="n">max</span><span class="p">(),</span> <span class="n">pred</span><span class="o">.</span><span class="n">max</span><span class="p">())]</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">limits</span><span class="p">,</span> <span class="n">limits</span><span class="p">,</span> <span class="s2">"k--"</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">"actual rentals"</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">"XGBoost prediction"</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">"XGBoost test predictions"</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+</pre></div>
+<figure class="result-figure"><img loading="lazy" src="results/03_xgboost-cell-019-0.png" alt="Executed result: 7. Evaluate once on the test partition"><figcaption>7. Evaluate once on the test partition · captured notebook output</figcaption></figure></section><section class="cell" id="cell-cell-020"><h2 id="section-10">8. Interpret, do not overclaim</h2>
 <p>Compare each score to the baseline and ask whether the reduction in error matters for the intended use. Inspect where residuals are largest and whether errors vary by season or time of day. This dataset supports comparison across generated scenarios. It cannot establish chronological forecasting skill, robustness to distribution shift, or causal effects. Trying many parameter settings against this same test partition would turn it into another validation set and make the reported score optimistic.</p>
-<h3 id="section-10">Takeaways</h3>
+<h3 id="section-11">Takeaways</h3>
 <ol>
 <li>Gradient boosting adds trees stage by stage to reduce a loss in function space.</li>
 <li>XGBoost's second-order approximation yields regularized leaf weights and a split score.</li>
 <li><code>gamma</code>, L1/L2 penalties, depth, and child-weight constraints control different aspects of tree complexity.</li>
 <li>Early stopping uses validation data; final test data remains separate until evaluation.</li>
 <li>An independent scenario split does not measure future-time forecasting.</li>
-</ol></section></article><p><a class="button" href="03_xgboost-exercises.html">Next: attempt the exercises →</a></p><nav class="actions" aria-label="Study sequence"><a href="02_classification.html">← 02: Classification</a><a href="index.html#lectures">All lectures</a><a href="04_imbalanced_learning.html">04: Imbalanced learning →</a></nav></main></div><footer>Mathematical ML · Eight practical lectures for mathematicians<br>Readable Python · Reproducible experiments · Synthetic teaching data</footer></body></html>
+</ol></section></article><p><a href="03_xgboost-results.html">Explore this lecture’s executed result gallery →</a></p><p><a class="button" href="03_xgboost-exercises.html">Next: attempt the exercises →</a></p><nav class="actions" aria-label="Study sequence"><a href="02_classification.html">← 02: Classification</a><a href="index.html#lectures">All lectures</a><a href="04_imbalanced_learning.html">04: Imbalanced learning →</a></nav></main></div><footer>Mathematical ML · Eight practical lectures for mathematicians<br>Readable Python · Reproducible experiments · Synthetic teaching data</footer></body></html>

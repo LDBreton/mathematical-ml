@@ -1,209 +1,402 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Eight guided machine learning lectures for mathematicians: theory, readable Python, exercises and worked solutions."><title>Text classification: lesson · Mathematical ML</title><link rel="stylesheet" href="style.css"><script defer src="site.js"></script><script>window.MathJax={tex:{inlineMath:[['$','$'],['\\(','\\)']]}};</script><script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script></head><body><a class="skip" href="#main">Skip to content</a><header><button class="menu" aria-controls="sidebar" aria-expanded="false" aria-label="Toggle course navigation">☰</button><a class="brand" href="index.html">∑ <span>Mathematical ML</span></a><nav aria-label="Quick links"><a href="setup.html">Get started</a><a href="index.html#lectures">Lectures</a><button id="theme" aria-label="Switch color theme">◐</button></nav></header><div class="layout"><aside id="sidebar" aria-label="Course navigation"><a href="index.html">Course overview</a><h3>Start here</h3><a href="setup.html">Installation &amp; first steps</a><a href="first-steps.html">New to ML? Start here</a><h3>The lectures</h3><details><summary><a href="01_regression.html">01 · Regression</a></summary><a class="sub" href="01_regression-lesson.html">Lesson</a><a class="sub" href="01_regression-exercises.html">Exercises</a><a class="sub" href="01_regression-solutions.html">Solutions</a></details><details><summary><a href="02_classification.html">02 · Classification</a></summary><a class="sub" href="02_classification-lesson.html">Lesson</a><a class="sub" href="02_classification-exercises.html">Exercises</a><a class="sub" href="02_classification-solutions.html">Solutions</a></details><details><summary><a href="03_xgboost.html">03 · XGBoost</a></summary><a class="sub" href="03_xgboost-lesson.html">Lesson</a><a class="sub" href="03_xgboost-exercises.html">Exercises</a><a class="sub" href="03_xgboost-solutions.html">Solutions</a></details><details><summary><a href="04_imbalanced_learning.html">04 · Imbalanced learning</a></summary><a class="sub" href="04_imbalanced_learning-lesson.html">Lesson</a><a class="sub" href="04_imbalanced_learning-exercises.html">Exercises</a><a class="sub" href="04_imbalanced_learning-solutions.html">Solutions</a></details><details><summary><a href="05_text_classification.html">05 · Text classification</a></summary><a class="sub" href="05_text_classification-lesson.html">Lesson</a><a class="sub" href="05_text_classification-exercises.html">Exercises</a><a class="sub" href="05_text_classification-solutions.html">Solutions</a></details><details><summary><a href="06_clustering.html">06 · Clustering</a></summary><a class="sub" href="06_clustering-lesson.html">Lesson</a><a class="sub" href="06_clustering-exercises.html">Exercises</a><a class="sub" href="06_clustering-solutions.html">Solutions</a></details><details><summary><a href="07_time_series.html">07 · Time-series forecasting</a></summary><a class="sub" href="07_time_series-lesson.html">Lesson</a><a class="sub" href="07_time_series-exercises.html">Exercises</a><a class="sub" href="07_time_series-solutions.html">Solutions</a></details><details><summary><a href="08_deployment.html">08 · From model to service</a></summary><a class="sub" href="08_deployment-lesson.html">Lesson</a><a class="sub" href="08_deployment-exercises.html">Exercises</a><a class="sub" href="08_deployment-solutions.html">Solutions</a></details><h3>Resources</h3><a href="datasets.html">Datasets</a><a href="course-project.html">Course project</a><a href="instructor.html">Teaching guide</a><a href="verification.html">Verification</a></aside><main id="main"><div class="eyebrow">Lecture 05 / lesson</div><div class="actions"><a href="05_text_classification.html">← Lecture guide</a><a href="downloads/05_text_classification/lesson.ipynb" download>Download notebook</a></div><p class="note">This page is a reading view. To execute Python, download the complete course and open this notebook in Jupyter. <a href="first-steps.html">First notebook walkthrough →</a></p><details class="contents"><summary>On this page</summary><nav aria-label="Page contents"><a href="#section-1">From strings to library objects</a><a href="#section-2">1. Load the fixture and keep template families together</a><a href="#section-3">2. TF-IDF as a weighted sparse vector</a><a href="#section-4">One worked IDF calculation</a><a href="#section-5">3. Multinomial logistic regression</a><a href="#section-6">4. Select regularization on validation, then test once</a><a href="#section-7">5. Read mistakes and coefficients</a><a href="#section-8">6. What this lesson does and does not establish</a></nav></details><article class="reading"><section class="cell"><h1>05 — Text classification with TF-IDF and logistic regression</h1>
-<p>A support team wants to route a short message to one of five queues. We will turn text into sparse vectors, derive what the vectorizer computes, fit a regularized multinomial logistic model, and examine the mistakes. The data are authored synthetic templates; the final score is a lesson result, not a claim about real support traffic.</p></section><section class="cell"><p><img alt="Teaching figure for text classification" src="figures/05_text_classification.svg" /></p>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Eight guided machine learning lectures for mathematicians: theory, readable Python, exercises and worked solutions."><title>Text classification: lesson · Mathematical ML</title><link rel="stylesheet" href="style.css"><script defer src="site.js"></script><script>window.MathJax={tex:{inlineMath:[['$','$'],['\\(','\\)']]}};</script><script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script></head><body><a class="skip" href="#main">Skip to content</a><header><button class="menu" aria-controls="sidebar" aria-expanded="false" aria-label="Toggle course navigation">☰</button><a class="brand" href="index.html">∑ <span>Mathematical ML</span></a><nav aria-label="Quick links"><a href="setup.html">Get started</a><a href="index.html#lectures">Lectures</a><button id="theme" aria-label="Switch color theme">◐</button></nav></header><div class="layout"><aside id="sidebar" aria-label="Course navigation"><a href="index.html">Course overview</a><h3>Start here</h3><a href="setup.html">Installation &amp; first steps</a><a href="first-steps.html">New to ML? Start here</a><h3>The lectures</h3><details><summary><a href="01_regression.html">01 · Regression</a></summary><a class="sub" href="01_regression-lesson.html">Lesson</a><a class="sub" href="01_regression-exercises.html">Exercises</a><a class="sub" href="01_regression-solutions.html">Solutions</a></details><details><summary><a href="02_classification.html">02 · Classification</a></summary><a class="sub" href="02_classification-lesson.html">Lesson</a><a class="sub" href="02_classification-exercises.html">Exercises</a><a class="sub" href="02_classification-solutions.html">Solutions</a></details><details><summary><a href="03_xgboost.html">03 · XGBoost</a></summary><a class="sub" href="03_xgboost-lesson.html">Lesson</a><a class="sub" href="03_xgboost-exercises.html">Exercises</a><a class="sub" href="03_xgboost-solutions.html">Solutions</a></details><details><summary><a href="04_imbalanced_learning.html">04 · Imbalanced learning</a></summary><a class="sub" href="04_imbalanced_learning-lesson.html">Lesson</a><a class="sub" href="04_imbalanced_learning-exercises.html">Exercises</a><a class="sub" href="04_imbalanced_learning-solutions.html">Solutions</a></details><details><summary><a href="05_text_classification.html">05 · Text classification</a></summary><a class="sub" href="05_text_classification-lesson.html">Lesson</a><a class="sub" href="05_text_classification-exercises.html">Exercises</a><a class="sub" href="05_text_classification-solutions.html">Solutions</a></details><details><summary><a href="06_clustering.html">06 · Clustering</a></summary><a class="sub" href="06_clustering-lesson.html">Lesson</a><a class="sub" href="06_clustering-exercises.html">Exercises</a><a class="sub" href="06_clustering-solutions.html">Solutions</a></details><details><summary><a href="07_time_series.html">07 · Time-series forecasting</a></summary><a class="sub" href="07_time_series-lesson.html">Lesson</a><a class="sub" href="07_time_series-exercises.html">Exercises</a><a class="sub" href="07_time_series-solutions.html">Solutions</a></details><details><summary><a href="08_deployment.html">08 · From model to service</a></summary><a class="sub" href="08_deployment-lesson.html">Lesson</a><a class="sub" href="08_deployment-exercises.html">Exercises</a><a class="sub" href="08_deployment-solutions.html">Solutions</a></details><h3>Resources</h3><a href="results.html">Executed result galleries</a><a href="datasets.html">Datasets</a><a href="course-project.html">Course project</a><a href="instructor.html">Teaching guide</a><a href="verification.html">Verification</a></aside><main id="main"><div class="eyebrow">Lecture 05 / lesson</div><div class="actions"><a href="05_text_classification.html">← Lecture guide</a><a href="downloads/05_text_classification/lesson.ipynb" download>Download notebook</a></div><p class="note">This page is a reading view. To execute Python, download the complete course and open this notebook in Jupyter. <a href="first-steps.html">First notebook walkthrough →</a></p><details class="contents"><summary>On this page</summary><nav aria-label="Page contents"><a href="#section-1">From strings to library objects</a><a href="#section-2">1. Load the fixture and keep template families together</a><a href="#section-3">Why group siblings together?</a><a href="#section-4">2. TF-IDF as a weighted sparse vector</a><a href="#section-5">One worked IDF calculation</a><a href="#section-6">Inspect counts, IDF weights, normalized rows, and one angle</a><a href="#section-7">3. Multinomial logistic regression</a><a href="#section-8">4. Select regularization on validation, then test once</a><a href="#section-9">5. Read mistakes and coefficients</a><a href="#section-10">Predict a fresh message and inspect an empty representation</a><a href="#section-11">6. What this lesson does and does not establish</a></nav></details><article class="reading"><section class="cell" id="cell-cell-000"><h1>05 — Text classification with TF-IDF and logistic regression</h1>
+<p>A support team wants to route a short message to one of five queues. We will turn text into sparse vectors, derive what the vectorizer computes, fit a regularized multinomial logistic model, and examine the mistakes. The data are authored synthetic templates; the final score is a lesson result, not a claim about real support traffic.</p></section><section class="cell" id="cell-beginner-bridge"><p><img alt="Teaching figure for text classification" src="figures/05_text_classification.svg" /></p>
 <p><em>Actual normalized TF-IDF weights for four illustrative messages. Rows are documents; columns are vocabulary items.</em></p>
 <h2 id="section-1">From strings to library objects</h2>
 <p>A vocabulary assigns a column index to each learned token. A document becomes a row of counts or weights. Most entries are zero because most words do not appear in any one message, so a sparse matrix stores the nonzero entries and their locations. <code>.nnz</code> counts stored nonzeros; <code>.multiply(other)</code> multiplies element by element; <code>.A1</code> flattens a matrix result to a one-dimensional array.</p>
 <p><code>fit_transform(training_messages)</code> learns the vocabulary and IDF weights, then encodes those messages. <code>transform(new_messages)</code> uses that fixed vocabulary and those fixed weights. If every token is unseen, the transformed row is all zeros: a linear classifier can still return probabilities determined by its intercept. This is not evidence that it understood the message.</p>
-<p>Template groups identify sibling paraphrases. Putting one sibling in training and another in test can reward memorizing wording. Group splitting tests unseen template families instead; it is still a simplified language problem.</p></section><section class="cell"><h2 id="section-2">1. Load the fixture and keep template families together</h2>
-<p>Rows from one authored template are related examples. If one sibling lands in training and another in testing, the test can reward recognition of a template rather than generalization to a new one. We therefore assign whole groups within each category. The rule is fixed before fitting: 8 groups per category for training, 2 for validation, and 2 for the final test. Each group contains eight rows, so every split is balanced.</p></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>from pathlib import Path
-import random
-import pandas as pd
+<p>Template groups identify sibling paraphrases. Putting one sibling in training and another in test can reward memorizing wording. Group splitting tests unseen template families instead; it is still a simplified language problem.</p></section><section class="cell" id="cell-cell-001"><h2 id="section-2">1. Load the fixture and keep template families together</h2>
+<p>Rows from one authored template are related examples. If one sibling lands in training and another in testing, the test can reward recognition of a template rather than generalization to a new one. We therefore assign whole groups within each category. The rule is fixed before fitting: 8 groups per category for training, 2 for validation, and 2 for the final test. Each group contains eight rows, so every split is balanced.</p></section><section class="cell" id="cell-cell-002"><div class="cell-label">Python · run in the notebook</div><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">random</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
 
-for candidate in (Path.cwd(), *Path.cwd().parents):
-    data_path = candidate / &quot;data&quot; / &quot;support_tickets.csv&quot;
-    if data_path.exists():
-        ROOT = candidate
-        break
-else:
-    raise FileNotFoundError(
-        &quot;Run this notebook from the repository or one of its subfolders.&quot;
-    )
+<span class="k">for</span> <span class="n">candidate</span> <span class="ow">in</span> <span class="p">(</span><span class="n">Path</span><span class="o">.</span><span class="n">cwd</span><span class="p">(),</span> <span class="o">*</span><span class="n">Path</span><span class="o">.</span><span class="n">cwd</span><span class="p">()</span><span class="o">.</span><span class="n">parents</span><span class="p">):</span>
+    <span class="n">data_path</span> <span class="o">=</span> <span class="n">candidate</span> <span class="o">/</span> <span class="s2">"data"</span> <span class="o">/</span> <span class="s2">"support_tickets.csv"</span>
+    <span class="k">if</span> <span class="n">data_path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+        <span class="n">ROOT</span> <span class="o">=</span> <span class="n">candidate</span>
+        <span class="k">break</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span>
+        <span class="s2">"Run this notebook from the repository or one of its subfolders."</span>
+    <span class="p">)</span>
 
-tickets = pd.read_csv(data_path)
-print(
-    f&quot;Loaded {len(tickets)} tickets from {tickets[&#x27;template_group&#x27;].nunique()} template groups.&quot;
-)
-tickets.head(3)</code></pre></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>required = {&quot;ticket_id&quot;, &quot;category&quot;, &quot;template_group&quot;, &quot;text&quot;}
-assert required &lt;= set(tickets.columns)
-assert tickets[list(required)].notna().all().all()
-assert tickets.groupby(&quot;template_group&quot;)[&quot;category&quot;].nunique().max() == 1
-assert tickets.groupby(&quot;template_group&quot;).size().nunique() == 1
+<span class="n">tickets</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">data_path</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span>
+    <span class="sa">f</span><span class="s2">"Loaded </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">tickets</span><span class="p">)</span><span class="si">}</span><span class="s2"> tickets from </span><span class="si">{</span><span class="n">tickets</span><span class="p">[</span><span class="s1">'template_group'</span><span class="p">]</span><span class="o">.</span><span class="n">nunique</span><span class="p">()</span><span class="si">}</span><span class="s2"> template groups."</span>
+<span class="p">)</span>
+<span class="n">tickets</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+</pre></div>
+<details class="result-text"><summary>1. Load the fixture and keep template families together · computed output</summary><pre>Loaded 480 tickets from 60 template groups.
+</pre></details><details class="result-text"><summary>1. Load the fixture and keep template families together · computed output</summary><pre>  ticket_id category       template_group  \
+0    T-0001  billing  billing-template-01   
+1    T-0002  billing  billing-template-01   
+2    T-0003  billing  billing-template-01   
 
-categories = sorted(tickets[&quot;category&quot;].unique())
-rng = random.Random(2026)
-split_groups = {&quot;train&quot;: [], &quot;validation&quot;: [], &quot;test&quot;: []}
-for category in categories:
-    groups = sorted(
-        tickets.loc[tickets.category == category, &quot;template_group&quot;].unique()
-    )
-    rng.shuffle(groups)
-    split_groups[&quot;train&quot;].extend(groups[:8])
-    split_groups[&quot;validation&quot;].extend(groups[8:10])
-    split_groups[&quot;test&quot;].extend(groups[10:12])
+                                                text  
+0  My cloud backup statement lists $18.40 for sea...  
+1  My team plan statement lists $42.00 for storag...  
+2  My monthly storage statement lists $7.95 for t...  </pre></details></section><section class="cell" id="cell-cell-003"><div class="cell-label">Python · run in the notebook</div><div class="highlight"><pre><span></span><span class="n">required</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"ticket_id"</span><span class="p">,</span> <span class="s2">"category"</span><span class="p">,</span> <span class="s2">"template_group"</span><span class="p">,</span> <span class="s2">"text"</span><span class="p">}</span>
+<span class="k">assert</span> <span class="n">required</span> <span class="o">&lt;=</span> <span class="nb">set</span><span class="p">(</span><span class="n">tickets</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">tickets</span><span class="p">[</span><span class="nb">list</span><span class="p">(</span><span class="n">required</span><span class="p">)]</span><span class="o">.</span><span class="n">notna</span><span class="p">()</span><span class="o">.</span><span class="n">all</span><span class="p">()</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+<span class="k">assert</span> <span class="n">tickets</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">"template_group"</span><span class="p">)[</span><span class="s2">"category"</span><span class="p">]</span><span class="o">.</span><span class="n">nunique</span><span class="p">()</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">==</span> <span class="mi">1</span>
+<span class="k">assert</span> <span class="n">tickets</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">"template_group"</span><span class="p">)</span><span class="o">.</span><span class="n">size</span><span class="p">()</span><span class="o">.</span><span class="n">nunique</span><span class="p">()</span> <span class="o">==</span> <span class="mi">1</span>
 
-splits = {
-    name: tickets[tickets.template_group.isin(group_ids)].reset_index(drop=True)
-    for name, group_ids in split_groups.items()
-}
-assert set(split_groups[&quot;train&quot;]).isdisjoint(split_groups[&quot;validation&quot;])
-assert set(split_groups[&quot;train&quot;]).isdisjoint(split_groups[&quot;test&quot;])
-assert set(split_groups[&quot;validation&quot;]).isdisjoint(split_groups[&quot;test&quot;])
-for name, frame in splits.items():
-    counts = frame.category.value_counts().reindex(categories, fill_value=0)
-    assert (counts &gt; 0).all() and counts.nunique() == 1
-    print(
-        f&quot;{name:10s}: {len(frame):3d} rows; &quot;
-        + &quot;, &quot;.join(f&quot;{k}={v}&quot; for k, v in counts.items())
-    )</code></pre></section><section class="cell"><h2 id="section-3">2. TF-IDF as a weighted sparse vector</h2>
+<span class="n">categories</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">tickets</span><span class="p">[</span><span class="s2">"category"</span><span class="p">]</span><span class="o">.</span><span class="n">unique</span><span class="p">())</span>
+<span class="n">rng</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">Random</span><span class="p">(</span><span class="mi">2026</span><span class="p">)</span>
+<span class="n">split_groups</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"train"</span><span class="p">:</span> <span class="p">[],</span> <span class="s2">"validation"</span><span class="p">:</span> <span class="p">[],</span> <span class="s2">"test"</span><span class="p">:</span> <span class="p">[]}</span>
+<span class="k">for</span> <span class="n">category</span> <span class="ow">in</span> <span class="n">categories</span><span class="p">:</span>
+    <span class="n">groups</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
+        <span class="n">tickets</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">tickets</span><span class="o">.</span><span class="n">category</span> <span class="o">==</span> <span class="n">category</span><span class="p">,</span> <span class="s2">"template_group"</span><span class="p">]</span><span class="o">.</span><span class="n">unique</span><span class="p">()</span>
+    <span class="p">)</span>
+    <span class="n">rng</span><span class="o">.</span><span class="n">shuffle</span><span class="p">(</span><span class="n">groups</span><span class="p">)</span>
+    <span class="n">split_groups</span><span class="p">[</span><span class="s2">"train"</span><span class="p">]</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">groups</span><span class="p">[:</span><span class="mi">8</span><span class="p">])</span>
+    <span class="n">split_groups</span><span class="p">[</span><span class="s2">"validation"</span><span class="p">]</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">groups</span><span class="p">[</span><span class="mi">8</span><span class="p">:</span><span class="mi">10</span><span class="p">])</span>
+    <span class="n">split_groups</span><span class="p">[</span><span class="s2">"test"</span><span class="p">]</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">groups</span><span class="p">[</span><span class="mi">10</span><span class="p">:</span><span class="mi">12</span><span class="p">])</span>
+
+<span class="n">splits</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="n">name</span><span class="p">:</span> <span class="n">tickets</span><span class="p">[</span><span class="n">tickets</span><span class="o">.</span><span class="n">template_group</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">group_ids</span><span class="p">)]</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">group_ids</span> <span class="ow">in</span> <span class="n">split_groups</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+<span class="p">}</span>
+<span class="k">assert</span> <span class="nb">set</span><span class="p">(</span><span class="n">split_groups</span><span class="p">[</span><span class="s2">"train"</span><span class="p">])</span><span class="o">.</span><span class="n">isdisjoint</span><span class="p">(</span><span class="n">split_groups</span><span class="p">[</span><span class="s2">"validation"</span><span class="p">])</span>
+<span class="k">assert</span> <span class="nb">set</span><span class="p">(</span><span class="n">split_groups</span><span class="p">[</span><span class="s2">"train"</span><span class="p">])</span><span class="o">.</span><span class="n">isdisjoint</span><span class="p">(</span><span class="n">split_groups</span><span class="p">[</span><span class="s2">"test"</span><span class="p">])</span>
+<span class="k">assert</span> <span class="nb">set</span><span class="p">(</span><span class="n">split_groups</span><span class="p">[</span><span class="s2">"validation"</span><span class="p">])</span><span class="o">.</span><span class="n">isdisjoint</span><span class="p">(</span><span class="n">split_groups</span><span class="p">[</span><span class="s2">"test"</span><span class="p">])</span>
+<span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">frame</span> <span class="ow">in</span> <span class="n">splits</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="n">counts</span> <span class="o">=</span> <span class="n">frame</span><span class="o">.</span><span class="n">category</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span><span class="o">.</span><span class="n">reindex</span><span class="p">(</span><span class="n">categories</span><span class="p">,</span> <span class="n">fill_value</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="p">(</span><span class="n">counts</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()</span> <span class="ow">and</span> <span class="n">counts</span><span class="o">.</span><span class="n">nunique</span><span class="p">()</span> <span class="o">==</span> <span class="mi">1</span>
+    <span class="nb">print</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">:</span><span class="s2">10s</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">frame</span><span class="p">)</span><span class="si">:</span><span class="s2">3d</span><span class="si">}</span><span class="s2"> rows; "</span>
+        <span class="o">+</span> <span class="s2">", "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">=</span><span class="si">{</span><span class="n">v</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">counts</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
+    <span class="p">)</span>
+</pre></div>
+<details class="result-text"><summary>1. Load the fixture and keep template families together · computed output</summary><pre>train     : 320 rows; account_access=64, billing=64, order_status=64, refund_return=64, technical_issue=64
+validation:  80 rows; account_access=16, billing=16, order_status=16, refund_return=16, technical_issue=16
+test      :  80 rows; account_access=16, billing=16, order_status=16, refund_return=16, technical_issue=16
+</pre></details></section><section class="cell" id="cell-template-siblings"><h3 id="section-3">Why group siblings together?</h3>
+<p>These messages share one generator template family. A random row split could expose nearly the same wording in both fitting and evaluation. The group split assigns every member of a family to the same partition.</p></section><section class="cell" id="cell-template-siblings-code"><div class="cell-label">Python · run in the notebook</div><div class="highlight"><pre><span></span><span class="n">example_group</span> <span class="o">=</span> <span class="n">tickets</span><span class="o">.</span><span class="n">template_group</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<span class="n">display</span><span class="p">(</span><span class="n">tickets</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">tickets</span><span class="o">.</span><span class="n">template_group</span> <span class="o">==</span> <span class="n">example_group</span><span class="p">,</span>
+                    <span class="p">[</span><span class="s2">"template_group"</span><span class="p">,</span> <span class="s2">"category"</span><span class="p">,</span> <span class="s2">"text"</span><span class="p">]]</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">4</span><span class="p">))</span>
+</pre></div>
+<details class="result-text"><summary>1. Load the fixture and keep template families together · computed output</summary><pre>        template_group category  \
+0  billing-template-01  billing   
+1  billing-template-01  billing   
+2  billing-template-01  billing   
+3  billing-template-01  billing   
+
+                                                text  
+0  My cloud backup statement lists $18.40 for sea...  
+1  My team plan statement lists $42.00 for storag...  
+2  My monthly storage statement lists $7.95 for t...  
+3  My pro account statement lists $63.20 for the ...  </pre></details></section><section class="cell" id="cell-cell-004"><h2 id="section-4">2. TF-IDF as a weighted sparse vector</h2>
 <p>Fix a vocabulary of $p$ terms and let $x_i\in\mathbb{R}^p$ contain the raw count of each term in document $i$. For term $j$, document frequency is $df_j=\#\{i:x_{ij}&gt;0\}$. With scikit-learn's default <code>smooth_idf=True</code>, the inverse document frequency is</p>
 <p>$$\operatorname{idf}_j=\log\!\left(\frac{1+n}{1+df_j}\right)+1.$$</p>
 <p>The added one in numerator and denominator smooths document frequency. A term in every fitted document has weight one. The learned vocabulary contains only terms observed in the fitting corpus, so a genuinely unseen term is not assigned a column. The default word analyzer lowercases text, uses unigrams, and keeps tokens matching <code>(?u)\b\w\w+\b</code> (Unicode word characters, at least two characters). It uses no stop-word list or accent stripping. The default <code>sublinear_tf=False</code> leaves term frequency as the raw count. <code>TfidfVectorizer</code> multiplies count by IDF and, by default, applies L2 normalization to each row. A nonempty document vector $v$ becomes $v/\|v\|_2$; its coordinates therefore have sum of squares one.</p>
 <p>With L2-normalized rows $u$ and $v$, cosine similarity is</p>
 <p>$$\cos(u,v)=\frac{u^Tv}{\|u\|_2\|v\|_2}=u^Tv.$$</p>
-<p>The representation is sparse because any document uses only a small fraction of all vocabulary terms. We will inspect the exact fitted convention. The vocabulary and IDF must be learned from training text only; putting the vectorizer inside a pipeline enforces that rule during fitting.</p></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>from sklearn.feature_extraction.text import TfidfVectorizer
+<p>The representation is sparse because any document uses only a small fraction of all vocabulary terms. We will inspect the exact fitted convention. The vocabulary and IDF must be learned from training text only; putting the vectorizer inside a pipeline enforces that rule during fitting.</p></section><section class="cell" id="cell-cell-005"><div class="cell-label">Python · run in the notebook</div><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.feature_extraction.text</span><span class="w"> </span><span class="kn">import</span> <span class="n">TfidfVectorizer</span>
 
-vectorizer = TfidfVectorizer()
-X_train_preview = vectorizer.fit_transform(splits[&quot;train&quot;].text)
-print(&quot;shape:&quot;, X_train_preview.shape)
-print(&quot;sparse type:&quot;, type(X_train_preview).__name__)
-print(
-    &quot;density:&quot;,
-    X_train_preview.nnz / (X_train_preview.shape[0] * X_train_preview.shape[1]),
-)
-print(
-    &quot;norms of first three rows:&quot;,
-    (X_train_preview[:3].multiply(X_train_preview[:3]).sum(axis=1).A1) ** 0.5,
-)
-print(
-    {
-        name: getattr(vectorizer, name)
-        for name in [
-            &quot;lowercase&quot;,
-            &quot;strip_accents&quot;,
-            &quot;ngram_range&quot;,
-            &quot;stop_words&quot;,
-            &quot;token_pattern&quot;,
-            &quot;use_idf&quot;,
-            &quot;smooth_idf&quot;,
-            &quot;sublinear_tf&quot;,
-            &quot;norm&quot;,
-        ]
-    }
-)</code></pre></section><section class="cell"><h3 id="section-4">One worked IDF calculation</h3>
-<p>Suppose a vocabulary term occurs in 2 of 8 fitted documents. The smoothed IDF is $\log(9/3)+1=\log 3+1$. A ubiquitous term has $df=8$ and receives $\log(9/9)+1=1$. Run the cell to check scikit-learn's stored value for the first case.</p></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>import numpy as np
-from sklearn.feature_extraction.text import TfidfVectorizer
+<span class="n">vectorizer</span> <span class="o">=</span> <span class="n">TfidfVectorizer</span><span class="p">()</span>
+<span class="n">X_train_preview</span> <span class="o">=</span> <span class="n">vectorizer</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">splits</span><span class="p">[</span><span class="s2">"train"</span><span class="p">]</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"shape:"</span><span class="p">,</span> <span class="n">X_train_preview</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"sparse type:"</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">X_train_preview</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span>
+    <span class="s2">"density:"</span><span class="p">,</span>
+    <span class="n">X_train_preview</span><span class="o">.</span><span class="n">nnz</span> <span class="o">/</span> <span class="p">(</span><span class="n">X_train_preview</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">X_train_preview</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span>
+<span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span>
+    <span class="s2">"norms of first three rows:"</span><span class="p">,</span>
+    <span class="p">(</span><span class="n">X_train_preview</span><span class="p">[:</span><span class="mi">3</span><span class="p">]</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span><span class="n">X_train_preview</span><span class="p">[:</span><span class="mi">3</span><span class="p">])</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">A1</span><span class="p">)</span> <span class="o">**</span> <span class="mf">0.5</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span>
+    <span class="p">{</span>
+        <span class="n">name</span><span class="p">:</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">vectorizer</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">[</span>
+            <span class="s2">"lowercase"</span><span class="p">,</span>
+            <span class="s2">"strip_accents"</span><span class="p">,</span>
+            <span class="s2">"ngram_range"</span><span class="p">,</span>
+            <span class="s2">"stop_words"</span><span class="p">,</span>
+            <span class="s2">"token_pattern"</span><span class="p">,</span>
+            <span class="s2">"use_idf"</span><span class="p">,</span>
+            <span class="s2">"smooth_idf"</span><span class="p">,</span>
+            <span class="s2">"sublinear_tf"</span><span class="p">,</span>
+            <span class="s2">"norm"</span><span class="p">,</span>
+        <span class="p">]</span>
+    <span class="p">}</span>
+<span class="p">)</span>
+</pre></div>
+<details class="result-text"><summary>2. TF-IDF as a weighted sparse vector · computed output</summary><pre>shape: (320, 598)
+sparse type: csr_matrix
+density: 0.03517454013377926
+norms of first three rows: [1. 1. 1.]
+{&#x27;lowercase&#x27;: True, &#x27;strip_accents&#x27;: None, &#x27;ngram_range&#x27;: (1, 1), &#x27;stop_words&#x27;: None, &#x27;token_pattern&#x27;: &#x27;(?u)\\b\\w\\w+\\b&#x27;, &#x27;use_idf&#x27;: True, &#x27;smooth_idf&#x27;: True, &#x27;sublinear_tf&#x27;: False, &#x27;norm&#x27;: &#x27;l2&#x27;}
+</pre></details></section><section class="cell" id="cell-cell-006"><h3 id="section-5">One worked IDF calculation</h3>
+<p>Suppose a vocabulary term occurs in 2 of 8 fitted documents. The smoothed IDF is $\log(9/3)+1=\log 3+1$. A ubiquitous term has $df=8$ and receives $\log(9/9)+1=1$. Run the cell to check scikit-learn's stored value for the first case.</p></section><section class="cell" id="cell-cell-007"><div class="cell-label">Python · run in the notebook</div><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.feature_extraction.text</span><span class="w"> </span><span class="kn">import</span> <span class="n">TfidfVectorizer</span>
 
-documents = [&quot;common rare&quot;, &quot;common rare&quot;] + [&quot;common&quot;] * 6
-idf_vectorizer = TfidfVectorizer()
-idf_vectorizer.fit(documents)
-idf_by_term = dict(zip(idf_vectorizer.get_feature_names_out(), idf_vectorizer.idf_))
-n_documents = len(documents)
-document_frequency = sum(&quot;rare&quot; in document.split() for document in documents)
-manual_idf = np.log((1 + n_documents) / (1 + document_frequency)) + 1
-print(&quot;manual smoothed IDF:&quot;, manual_idf)
-print(&quot;scikit-learn stored IDF:&quot;, idf_by_term[&quot;rare&quot;])
-print(&quot;ubiquitous term IDF:&quot;, idf_by_term[&quot;common&quot;])
-assert np.isclose(manual_idf, idf_by_term[&quot;rare&quot;])
-assert np.isclose(idf_by_term[&quot;common&quot;], 1.0)</code></pre></section><section class="cell"><h2 id="section-5">3. Multinomial logistic regression</h2>
+<span class="n">documents</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"common rare"</span><span class="p">,</span> <span class="s2">"common rare"</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="s2">"common"</span><span class="p">]</span> <span class="o">*</span> <span class="mi">6</span>
+<span class="n">idf_vectorizer</span> <span class="o">=</span> <span class="n">TfidfVectorizer</span><span class="p">()</span>
+<span class="n">idf_vectorizer</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">documents</span><span class="p">)</span>
+<span class="n">idf_by_term</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">idf_vectorizer</span><span class="o">.</span><span class="n">get_feature_names_out</span><span class="p">(),</span> <span class="n">idf_vectorizer</span><span class="o">.</span><span class="n">idf_</span><span class="p">))</span>
+<span class="n">n_documents</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">documents</span><span class="p">)</span>
+<span class="n">document_frequency</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="s2">"rare"</span> <span class="ow">in</span> <span class="n">document</span><span class="o">.</span><span class="n">split</span><span class="p">()</span> <span class="k">for</span> <span class="n">document</span> <span class="ow">in</span> <span class="n">documents</span><span class="p">)</span>
+<span class="n">manual_idf</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">((</span><span class="mi">1</span> <span class="o">+</span> <span class="n">n_documents</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">document_frequency</span><span class="p">))</span> <span class="o">+</span> <span class="mi">1</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"manual smoothed IDF:"</span><span class="p">,</span> <span class="n">manual_idf</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"scikit-learn stored IDF:"</span><span class="p">,</span> <span class="n">idf_by_term</span><span class="p">[</span><span class="s2">"rare"</span><span class="p">])</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"ubiquitous term IDF:"</span><span class="p">,</span> <span class="n">idf_by_term</span><span class="p">[</span><span class="s2">"common"</span><span class="p">])</span>
+<span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">manual_idf</span><span class="p">,</span> <span class="n">idf_by_term</span><span class="p">[</span><span class="s2">"rare"</span><span class="p">])</span>
+<span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">idf_by_term</span><span class="p">[</span><span class="s2">"common"</span><span class="p">],</span> <span class="mf">1.0</span><span class="p">)</span>
+</pre></div>
+<details class="result-text"><summary>2. TF-IDF as a weighted sparse vector · computed output</summary><pre>manual smoothed IDF: 2.09861228866811
+scikit-learn stored IDF: 2.09861228866811
+ubiquitous term IDF: 1.0
+</pre></details></section><section class="cell" id="cell-sparse-geometry"><h3 id="section-6">Inspect counts, IDF weights, normalized rows, and one angle</h3>
+<p>This tiny corpus is separate from the ticket experiment. We densify only eight short rows for inspection, not the full sparse ticket matrix. The dot product of two unit-length rows is cosine similarity; document 0 and document 2 share <code>common</code> but differ in <code>rare</code>.</p></section><section class="cell" id="cell-sparse-geometry-code"><div class="cell-label">Python · run in the notebook</div><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.feature_extraction.text</span><span class="w"> </span><span class="kn">import</span> <span class="n">CountVectorizer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.metrics.pairwise</span><span class="w"> </span><span class="kn">import</span> <span class="n">cosine_similarity</span>
+
+<span class="n">counts</span> <span class="o">=</span> <span class="n">CountVectorizer</span><span class="p">(</span><span class="n">vocabulary</span><span class="o">=</span><span class="n">idf_vectorizer</span><span class="o">.</span><span class="n">vocabulary_</span><span class="p">)</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">documents</span><span class="p">)</span>
+<span class="n">weights</span> <span class="o">=</span> <span class="n">idf_vectorizer</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">documents</span><span class="p">)</span>
+<span class="n">terms</span> <span class="o">=</span> <span class="n">idf_vectorizer</span><span class="o">.</span><span class="n">get_feature_names_out</span><span class="p">()</span>
+<span class="n">display</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">counts</span><span class="o">.</span><span class="n">toarray</span><span class="p">(),</span> <span class="n">columns</span><span class="o">=</span><span class="n">terms</span><span class="p">)</span><span class="o">.</span><span class="n">add_prefix</span><span class="p">(</span><span class="s2">"count: "</span><span class="p">))</span>
+<span class="n">display</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">idf_vectorizer</span><span class="o">.</span><span class="n">idf_</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">terms</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">"IDF"</span><span class="p">))</span>
+<span class="n">display</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">weights</span><span class="o">.</span><span class="n">toarray</span><span class="p">(),</span> <span class="n">columns</span><span class="o">=</span><span class="n">terms</span><span class="p">)</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">4</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Cosine(document 0, document 2):"</span><span class="p">,</span> <span class="n">cosine_similarity</span><span class="p">(</span><span class="n">weights</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">weights</span><span class="p">[</span><span class="mi">2</span><span class="p">])[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">7</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
+<span class="n">image</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">weights</span><span class="o">.</span><span class="n">toarray</span><span class="p">(),</span> <span class="n">aspect</span><span class="o">=</span><span class="s2">"auto"</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s2">"Blues"</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xticks</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">terms</span><span class="p">)),</span> <span class="n">terms</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">xlabel</span><span class="o">=</span><span class="s2">"Fitted vocabulary"</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s2">"Illustrative document index"</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">"Executed tiny TF-IDF example"</span><span class="p">)</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"L2-normalized weight"</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+<details class="result-text"><summary>2. TF-IDF as a weighted sparse vector · computed output</summary><pre>   count: common  count: rare
+0              1            1
+1              1            1
+2              1            0
+3              1            0
+4              1            0
+5              1            0
+6              1            0
+7              1            0</pre></details><details class="result-text"><summary>2. TF-IDF as a weighted sparse vector · computed output</summary><pre>common    1.000000
+rare      2.098612
+Name: IDF, dtype: float64</pre></details><details class="result-text"><summary>2. TF-IDF as a weighted sparse vector · computed output</summary><pre>   common    rare
+0  0.4302  0.9028
+1  0.4302  0.9028
+2  1.0000  0.0000
+3  1.0000  0.0000
+4  1.0000  0.0000
+5  1.0000  0.0000
+6  1.0000  0.0000
+7  1.0000  0.0000</pre></details><details class="result-text"><summary>2. TF-IDF as a weighted sparse vector · computed output</summary><pre>Cosine(document 0, document 2): 0.430165282498796
+</pre></details><figure class="result-figure"><img loading="lazy" src="results/05_text_classification-sparse-geometry-code-4.png" alt="Executed result: 2. TF-IDF as a weighted sparse vector"><figcaption>2. TF-IDF as a weighted sparse vector · captured notebook output</figcaption></figure></section><section class="cell" id="cell-cell-008"><h2 id="section-7">3. Multinomial logistic regression</h2>
 <p>For a document vector $x_i$ and $K$ categories, assign a coefficient vector $w_k$ and intercept $b_k$ to each category. Its score is $z_{ik}=w_k^Tx_i+b_k$. Softmax converts scores to probabilities:</p>
 <p>$$p_{ik}=\frac{e^{z_{ik}}}{\sum_{r=1}^{K}e^{z_{ir}}}.$$</p>
 <p>For one-hot labels $y_{ik}$, average cross-entropy is</p>
 <p>$$L(W,b)=-\frac{1}{n}\sum_i\sum_k y_{ik}\log p_{ik}.$$</p>
 <p>Differentiating the softmax-cross-entropy composition gives $\nabla_{w_k}L=\frac{1}{n}\sum_i(p_{ik}-y_{ik})x_i$. Scikit-learn's L2-regularized objective also penalizes large coefficient vectors; in <code>LogisticRegression</code>, larger <code>C</code> means weaker regularization. The <code>lbfgs</code> solver handles the multiclass softmax objective. We set <code>max_iter</code> high enough for this sparse, small problem and inspect convergence as needed.</p>
-<p>Softmax probabilities are unchanged if the same coefficient vector and intercept are added to every category, so a single class coefficient has no absolute interpretation. The pairwise log-odds are <code>log(p_k/p_l) = (w_k - w_l)^T x + (b_k - b_l)</code>. Correlated terms and regularization affect these contrasts, which describe the fitted model rather than causes.</p></section><section class="cell"><h2 id="section-6">4. Select regularization on validation, then test once</h2>
-<p>Macro-F1 computes an F1 score separately for every category, then averages those five scores equally. It is useful when categories deserve equal attention, while ordinary accuracy weights rows. We compare a short, declared list of <code>C</code> values on validation only. After choosing <code>C</code>, we refit the same pipeline on training plus validation and evaluate the held-out test set once. We also compare a <code>DummyClassifier(strategy="most_frequent")</code> fitted on train plus validation. It ignores text and supplies a simple reference on the same frozen test rows.</p></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import f1_score
-from sklearn.pipeline import Pipeline
+<p>Softmax probabilities are unchanged if the same coefficient vector and intercept are added to every category, so a single class coefficient has no absolute interpretation. The pairwise log-odds are <code>log(p_k/p_l) = (w_k - w_l)^T x + (b_k - b_l)</code>. Correlated terms and regularization affect these contrasts, which describe the fitted model rather than causes.</p></section><section class="cell" id="cell-cell-009"><h2 id="section-8">4. Select regularization on validation, then test once</h2>
+<p>Macro-F1 computes an F1 score separately for every category, then averages those five scores equally. It is useful when categories deserve equal attention, while ordinary accuracy weights rows. We compare a short, declared list of <code>C</code> values on validation only. After choosing <code>C</code>, we refit the same pipeline on training plus validation and evaluate the held-out test set once. We also compare a <code>DummyClassifier(strategy="most_frequent")</code> fitted on train plus validation. It ignores text and supplies a simple reference on the same frozen test rows.</p></section><section class="cell" id="cell-cell-010"><div class="cell-label">Python · run in the notebook</div><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.feature_extraction.text</span><span class="w"> </span><span class="kn">import</span> <span class="n">TfidfVectorizer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.linear_model</span><span class="w"> </span><span class="kn">import</span> <span class="n">LogisticRegression</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">f1_score</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.pipeline</span><span class="w"> </span><span class="kn">import</span> <span class="n">Pipeline</span>
 
-X_train = splits[&quot;train&quot;].text
-y_train = splits[&quot;train&quot;].category
-X_validation = splits[&quot;validation&quot;].text
-y_validation = splits[&quot;validation&quot;].category
+<span class="n">X_train</span> <span class="o">=</span> <span class="n">splits</span><span class="p">[</span><span class="s2">"train"</span><span class="p">]</span><span class="o">.</span><span class="n">text</span>
+<span class="n">y_train</span> <span class="o">=</span> <span class="n">splits</span><span class="p">[</span><span class="s2">"train"</span><span class="p">]</span><span class="o">.</span><span class="n">category</span>
+<span class="n">X_validation</span> <span class="o">=</span> <span class="n">splits</span><span class="p">[</span><span class="s2">"validation"</span><span class="p">]</span><span class="o">.</span><span class="n">text</span>
+<span class="n">y_validation</span> <span class="o">=</span> <span class="n">splits</span><span class="p">[</span><span class="s2">"validation"</span><span class="p">]</span><span class="o">.</span><span class="n">category</span>
 
-candidate_C = [0.05, 0.2, 1.0, 5.0, 20.0]
-validation_rows = []
-for C in candidate_C:
-    candidate = Pipeline(
-        [
-            (&quot;tfidf&quot;, TfidfVectorizer()),
-            (&quot;logistic&quot;, LogisticRegression(C=C, solver=&quot;lbfgs&quot;, max_iter=1500)),
-        ]
-    )
-    candidate.fit(X_train, y_train)
-    prediction = candidate.predict(X_validation)
-    validation_rows.append(
-        {&quot;C&quot;: C, &quot;macro_f1&quot;: f1_score(y_validation, prediction, average=&quot;macro&quot;)}
-    )
+<span class="n">candidate_C</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.05</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">,</span> <span class="mf">20.0</span><span class="p">]</span>
+<span class="n">validation_rows</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">C</span> <span class="ow">in</span> <span class="n">candidate_C</span><span class="p">:</span>
+    <span class="n">candidate</span> <span class="o">=</span> <span class="n">Pipeline</span><span class="p">(</span>
+        <span class="p">[</span>
+            <span class="p">(</span><span class="s2">"tfidf"</span><span class="p">,</span> <span class="n">TfidfVectorizer</span><span class="p">()),</span>
+            <span class="p">(</span><span class="s2">"logistic"</span><span class="p">,</span> <span class="n">LogisticRegression</span><span class="p">(</span><span class="n">C</span><span class="o">=</span><span class="n">C</span><span class="p">,</span> <span class="n">solver</span><span class="o">=</span><span class="s2">"lbfgs"</span><span class="p">,</span> <span class="n">max_iter</span><span class="o">=</span><span class="mi">1500</span><span class="p">)),</span>
+        <span class="p">]</span>
+    <span class="p">)</span>
+    <span class="n">candidate</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">)</span>
+    <span class="n">prediction</span> <span class="o">=</span> <span class="n">candidate</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_validation</span><span class="p">)</span>
+    <span class="n">validation_rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+        <span class="p">{</span><span class="s2">"C"</span><span class="p">:</span> <span class="n">C</span><span class="p">,</span> <span class="s2">"macro_f1"</span><span class="p">:</span> <span class="n">f1_score</span><span class="p">(</span><span class="n">y_validation</span><span class="p">,</span> <span class="n">prediction</span><span class="p">,</span> <span class="n">average</span><span class="o">=</span><span class="s2">"macro"</span><span class="p">)}</span>
+    <span class="p">)</span>
 
-validation_scores = pd.DataFrame(validation_rows)
-display(validation_scores)
-best_C = float(
-    validation_scores.sort_values([&quot;macro_f1&quot;, &quot;C&quot;], ascending=[False, True]).iloc[0].C
-)
-print(&quot;Selected C using validation macro-F1:&quot;, best_C)</code></pre></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>from sklearn.dummy import DummyClassifier
-from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+<span class="n">validation_scores</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">validation_rows</span><span class="p">)</span>
+<span class="n">display</span><span class="p">(</span><span class="n">validation_scores</span><span class="p">)</span>
+<span class="n">best_C</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span>
+    <span class="n">validation_scores</span><span class="o">.</span><span class="n">sort_values</span><span class="p">([</span><span class="s2">"macro_f1"</span><span class="p">,</span> <span class="s2">"C"</span><span class="p">],</span> <span class="n">ascending</span><span class="o">=</span><span class="p">[</span><span class="kc">False</span><span class="p">,</span> <span class="kc">True</span><span class="p">])</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">C</span>
+<span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Selected C using validation macro-F1:"</span><span class="p">,</span> <span class="n">best_C</span><span class="p">)</span>
+</pre></div>
+<details class="result-text"><summary>4. Select regularization on validation, then test once · computed output</summary><pre>       C  macro_f1
+0   0.05  0.542456
+1   0.20  0.540300
+2   1.00  0.549523
+3   5.00  0.523175
+4  20.00  0.512367</pre></details><details class="result-text"><summary>4. Select regularization on validation, then test once · computed output</summary><pre>Selected C using validation macro-F1: 1.0
+</pre></details></section><section class="cell" id="cell-cell-011"><div class="cell-label">Python · run in the notebook</div><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.dummy</span><span class="w"> </span><span class="kn">import</span> <span class="n">DummyClassifier</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">accuracy_score</span><span class="p">,</span> <span class="n">classification_report</span><span class="p">,</span> <span class="n">confusion_matrix</span>
 
-train_validation = pd.concat([splits[&quot;train&quot;], splits[&quot;validation&quot;]], ignore_index=True)
-final_model = Pipeline(
-    [
-        (&quot;tfidf&quot;, TfidfVectorizer()),
-        (&quot;logistic&quot;, LogisticRegression(C=best_C, solver=&quot;lbfgs&quot;, max_iter=1500)),
-    ]
-)
-final_model.fit(train_validation.text, train_validation.category)
+<span class="n">train_validation</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">splits</span><span class="p">[</span><span class="s2">"train"</span><span class="p">],</span> <span class="n">splits</span><span class="p">[</span><span class="s2">"validation"</span><span class="p">]],</span> <span class="n">ignore_index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">final_model</span> <span class="o">=</span> <span class="n">Pipeline</span><span class="p">(</span>
+    <span class="p">[</span>
+        <span class="p">(</span><span class="s2">"tfidf"</span><span class="p">,</span> <span class="n">TfidfVectorizer</span><span class="p">()),</span>
+        <span class="p">(</span><span class="s2">"logistic"</span><span class="p">,</span> <span class="n">LogisticRegression</span><span class="p">(</span><span class="n">C</span><span class="o">=</span><span class="n">best_C</span><span class="p">,</span> <span class="n">solver</span><span class="o">=</span><span class="s2">"lbfgs"</span><span class="p">,</span> <span class="n">max_iter</span><span class="o">=</span><span class="mi">1500</span><span class="p">)),</span>
+    <span class="p">]</span>
+<span class="p">)</span>
+<span class="n">final_model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">train_validation</span><span class="o">.</span><span class="n">text</span><span class="p">,</span> <span class="n">train_validation</span><span class="o">.</span><span class="n">category</span><span class="p">)</span>
 
-# This is the one final test evaluation after model selection is frozen.
-test_prediction = final_model.predict(splits[&quot;test&quot;].text)
-test_macro_f1 = f1_score(splits[&quot;test&quot;].category, test_prediction, average=&quot;macro&quot;)
-print(&quot;test accuracy:&quot;, accuracy_score(splits[&quot;test&quot;].category, test_prediction))
-print(&quot;test macro-F1:&quot;, test_macro_f1)
+<span class="c1"># This is the one final test evaluation after model selection is frozen.</span>
+<span class="n">test_prediction</span> <span class="o">=</span> <span class="n">final_model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">splits</span><span class="p">[</span><span class="s2">"test"</span><span class="p">]</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+<span class="n">test_macro_f1</span> <span class="o">=</span> <span class="n">f1_score</span><span class="p">(</span><span class="n">splits</span><span class="p">[</span><span class="s2">"test"</span><span class="p">]</span><span class="o">.</span><span class="n">category</span><span class="p">,</span> <span class="n">test_prediction</span><span class="p">,</span> <span class="n">average</span><span class="o">=</span><span class="s2">"macro"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"test accuracy:"</span><span class="p">,</span> <span class="n">accuracy_score</span><span class="p">(</span><span class="n">splits</span><span class="p">[</span><span class="s2">"test"</span><span class="p">]</span><span class="o">.</span><span class="n">category</span><span class="p">,</span> <span class="n">test_prediction</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"test macro-F1:"</span><span class="p">,</span> <span class="n">test_macro_f1</span><span class="p">)</span>
 
-baseline = DummyClassifier(strategy=&quot;most_frequent&quot;)
-baseline.fit(train_validation.text, train_validation.category)
-baseline_prediction = baseline.predict(splits[&quot;test&quot;].text)
-print(
-    &quot;most-frequent baseline accuracy:&quot;,
-    accuracy_score(splits[&quot;test&quot;].category, baseline_prediction),
-)
-print(
-    &quot;most-frequent baseline macro-F1:&quot;,
-    f1_score(splits[&quot;test&quot;].category, baseline_prediction, average=&quot;macro&quot;),
-)
-print(
-    classification_report(
-        splits[&quot;test&quot;].category, test_prediction, labels=categories, zero_division=0
-    )
-)
-confusion = pd.DataFrame(
-    confusion_matrix(splits[&quot;test&quot;].category, test_prediction, labels=categories),
-    index=[f&quot;actual: {c}&quot; for c in categories],
-    columns=[f&quot;predicted: {c}&quot; for c in categories],
-)
-display(confusion)</code></pre></section><section class="cell"><h2 id="section-7">5. Read mistakes and coefficients</h2>
-<p>A confusion matrix counts actual rows in its rows and predictions in its columns. Off-diagonal cells identify category pairs worth inspecting. Error review asks whether a ticket really fits one queue, whether a phrase is ambiguous, and whether the model relies on a shared template cue. The synthetic test examples remain related to the same small set of authored situations, even though their groups were withheld.</p></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>test_review = splits[&quot;test&quot;][[&quot;ticket_id&quot;, &quot;template_group&quot;, &quot;category&quot;, &quot;text&quot;]].copy()
-test_review[&quot;predicted&quot;] = test_prediction
-errors = test_review[test_review.category != test_review.predicted].copy()
-print(f&quot;{len(errors)} errors among {len(test_review)} held-out rows.&quot;)
-if errors.empty:
-    print(&quot;There are no test errors to inspect in this run.&quot;)
-else:
-    errors[&quot;actual/predicted&quot;] = errors.category + &quot; -&gt; &quot; + errors.predicted
-    display(
-        errors[[&quot;ticket_id&quot;, &quot;template_group&quot;, &quot;actual/predicted&quot;, &quot;text&quot;]].head(12)
-    )</code></pre></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>fitted_tfidf = final_model.named_steps[&quot;tfidf&quot;]
-fitted_logistic = final_model.named_steps[&quot;logistic&quot;]
-feature_names = fitted_tfidf.get_feature_names_out()
+<span class="n">baseline</span> <span class="o">=</span> <span class="n">DummyClassifier</span><span class="p">(</span><span class="n">strategy</span><span class="o">=</span><span class="s2">"most_frequent"</span><span class="p">)</span>
+<span class="n">baseline</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">train_validation</span><span class="o">.</span><span class="n">text</span><span class="p">,</span> <span class="n">train_validation</span><span class="o">.</span><span class="n">category</span><span class="p">)</span>
+<span class="n">baseline_prediction</span> <span class="o">=</span> <span class="n">baseline</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">splits</span><span class="p">[</span><span class="s2">"test"</span><span class="p">]</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span>
+    <span class="s2">"most-frequent baseline accuracy:"</span><span class="p">,</span>
+    <span class="n">accuracy_score</span><span class="p">(</span><span class="n">splits</span><span class="p">[</span><span class="s2">"test"</span><span class="p">]</span><span class="o">.</span><span class="n">category</span><span class="p">,</span> <span class="n">baseline_prediction</span><span class="p">),</span>
+<span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span>
+    <span class="s2">"most-frequent baseline macro-F1:"</span><span class="p">,</span>
+    <span class="n">f1_score</span><span class="p">(</span><span class="n">splits</span><span class="p">[</span><span class="s2">"test"</span><span class="p">]</span><span class="o">.</span><span class="n">category</span><span class="p">,</span> <span class="n">baseline_prediction</span><span class="p">,</span> <span class="n">average</span><span class="o">=</span><span class="s2">"macro"</span><span class="p">),</span>
+<span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span>
+    <span class="n">classification_report</span><span class="p">(</span>
+        <span class="n">splits</span><span class="p">[</span><span class="s2">"test"</span><span class="p">]</span><span class="o">.</span><span class="n">category</span><span class="p">,</span> <span class="n">test_prediction</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="n">categories</span><span class="p">,</span> <span class="n">zero_division</span><span class="o">=</span><span class="mi">0</span>
+    <span class="p">)</span>
+<span class="p">)</span>
+<span class="n">confusion</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+    <span class="n">confusion_matrix</span><span class="p">(</span><span class="n">splits</span><span class="p">[</span><span class="s2">"test"</span><span class="p">]</span><span class="o">.</span><span class="n">category</span><span class="p">,</span> <span class="n">test_prediction</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="n">categories</span><span class="p">),</span>
+    <span class="n">index</span><span class="o">=</span><span class="p">[</span><span class="sa">f</span><span class="s2">"actual: </span><span class="si">{</span><span class="n">c</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">categories</span><span class="p">],</span>
+    <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="sa">f</span><span class="s2">"predicted: </span><span class="si">{</span><span class="n">c</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">categories</span><span class="p">],</span>
+<span class="p">)</span>
+<span class="n">display</span><span class="p">(</span><span class="n">confusion</span><span class="p">)</span>
+</pre></div>
+<details class="result-text"><summary>4. Select regularization on validation, then test once · computed output</summary><pre>test accuracy: 0.675
+test macro-F1: 0.6715063520871143
+most-frequent baseline accuracy: 0.2
+most-frequent baseline macro-F1: 0.06666666666666667
+                 precision    recall  f1-score   support
 
-for category_index, category in enumerate(fitted_logistic.classes_):
-    weights = fitted_logistic.coef_[category_index]
-    highest = np.argsort(weights)[-8:][::-1]
-    lowest = np.argsort(weights)[:5]
-    print(f&quot;\n{category}: terms most associated with its logit&quot;)
-    print([(feature_names[i], round(weights[i], 3)) for i in highest])
-    print(
-        &quot;terms lowering its logit:&quot;,
-        [(feature_names[i], round(weights[i], 3)) for i in lowest],
-    )</code></pre></section><section class="cell"><h2 id="section-8">6. What this lesson does and does not establish</h2>
+ account_access       0.53      0.50      0.52        16
+        billing       1.00      0.94      0.97        16
+   order_status       0.69      0.56      0.62        16
+  refund_return       0.64      0.88      0.74        16
+technical_issue       0.53      0.50      0.52        16
+
+       accuracy                           0.68        80
+      macro avg       0.68      0.68      0.67        80
+   weighted avg       0.68      0.68      0.67        80
+
+</pre></details><details class="result-text"><summary>4. Select regularization on validation, then test once · computed output</summary><pre>                         predicted: account_access  predicted: billing  \
+actual: account_access                           8                   0   
+actual: billing                                  0                  15   
+actual: order_status                             7                   0   
+actual: refund_return                            0                   0   
+actual: technical_issue                          0                   0   
+
+                         predicted: order_status  predicted: refund_return  \
+actual: account_access                         1                         0   
+actual: billing                                1                         0   
+actual: order_status                           9                         0   
+actual: refund_return                          2                        14   
+actual: technical_issue                        0                         8   
+
+                         predicted: technical_issue  
+actual: account_access                            7  
+actual: billing                                   0  
+actual: order_status                              0  
+actual: refund_return                             0  
+actual: technical_issue                           8  </pre></details></section><section class="cell" id="cell-cell-012"><h2 id="section-9">5. Read mistakes and coefficients</h2>
+<p>A confusion matrix counts actual rows in its rows and predictions in its columns. Off-diagonal cells identify category pairs worth inspecting. Error review asks whether a ticket really fits one queue, whether a phrase is ambiguous, and whether the model relies on a shared template cue. The synthetic test examples remain related to the same small set of authored situations, even though their groups were withheld.</p></section><section class="cell" id="cell-cell-013"><div class="cell-label">Python · run in the notebook</div><div class="highlight"><pre><span></span><span class="n">test_review</span> <span class="o">=</span> <span class="n">splits</span><span class="p">[</span><span class="s2">"test"</span><span class="p">][[</span><span class="s2">"ticket_id"</span><span class="p">,</span> <span class="s2">"template_group"</span><span class="p">,</span> <span class="s2">"category"</span><span class="p">,</span> <span class="s2">"text"</span><span class="p">]]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+<span class="n">test_review</span><span class="p">[</span><span class="s2">"predicted"</span><span class="p">]</span> <span class="o">=</span> <span class="n">test_prediction</span>
+<span class="n">errors</span> <span class="o">=</span> <span class="n">test_review</span><span class="p">[</span><span class="n">test_review</span><span class="o">.</span><span class="n">category</span> <span class="o">!=</span> <span class="n">test_review</span><span class="o">.</span><span class="n">predicted</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">errors</span><span class="p">)</span><span class="si">}</span><span class="s2"> errors among </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">test_review</span><span class="p">)</span><span class="si">}</span><span class="s2"> held-out rows."</span><span class="p">)</span>
+<span class="k">if</span> <span class="n">errors</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"There are no test errors to inspect in this run."</span><span class="p">)</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="n">errors</span><span class="p">[</span><span class="s2">"actual/predicted"</span><span class="p">]</span> <span class="o">=</span> <span class="n">errors</span><span class="o">.</span><span class="n">category</span> <span class="o">+</span> <span class="s2">" -&gt; "</span> <span class="o">+</span> <span class="n">errors</span><span class="o">.</span><span class="n">predicted</span>
+    <span class="n">display</span><span class="p">(</span>
+        <span class="n">errors</span><span class="p">[[</span><span class="s2">"ticket_id"</span><span class="p">,</span> <span class="s2">"template_group"</span><span class="p">,</span> <span class="s2">"actual/predicted"</span><span class="p">,</span> <span class="s2">"text"</span><span class="p">]]</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">12</span><span class="p">)</span>
+    <span class="p">)</span>
+</pre></div>
+<details class="result-text"><summary>5. Read mistakes and coefficients · computed output</summary><pre>26 errors among 80 held-out rows.
+</pre></details><details class="result-text"><summary>5. Read mistakes and coefficients · computed output</summary><pre>   ticket_id               template_group                   actual/predicted  \
+3     T-0060          billing-template-08            billing -&gt; order_status   
+24    T-0137   account_access-template-06  account_access -&gt; technical_issue   
+25    T-0138   account_access-template-06  account_access -&gt; technical_issue   
+26    T-0139   account_access-template-06  account_access -&gt; technical_issue   
+27    T-0140   account_access-template-06     account_access -&gt; order_status   
+28    T-0141   account_access-template-06  account_access -&gt; technical_issue   
+29    T-0142   account_access-template-06  account_access -&gt; technical_issue   
+30    T-0143   account_access-template-06  account_access -&gt; technical_issue   
+31    T-0144   account_access-template-06  account_access -&gt; technical_issue   
+40    T-0249  technical_issue-template-08   technical_issue -&gt; refund_return   
+41    T-0250  technical_issue-template-08   technical_issue -&gt; refund_return   
+42    T-0251  technical_issue-template-08   technical_issue -&gt; refund_return   
+
+                                                 text  
+3   I was billed a second workspace after removing...  
+24  The one-time code arrives after it has already...  
+25  The one-time code arrives after it has already...  
+26  The one-time code arrives after it has already...  
+27  The one-time code arrives after it has already...  
+28  The one-time code arrives after it has already...  
+29  The one-time code arrives after it has already...  
+30  The one-time code arrives after it has already...  
+31  The one-time code arrives after it has already...  
+40  Keyboard shortcut Ctrl+K used to open search, ...  
+41  Keyboard shortcut Alt+Enter used to open calen...  
+42  Keyboard shortcut Ctrl+Shift+P used to open up...  </pre></details></section><section class="cell" id="cell-cell-014"><div class="cell-label">Python · run in the notebook</div><div class="highlight"><pre><span></span><span class="n">fitted_tfidf</span> <span class="o">=</span> <span class="n">final_model</span><span class="o">.</span><span class="n">named_steps</span><span class="p">[</span><span class="s2">"tfidf"</span><span class="p">]</span>
+<span class="n">fitted_logistic</span> <span class="o">=</span> <span class="n">final_model</span><span class="o">.</span><span class="n">named_steps</span><span class="p">[</span><span class="s2">"logistic"</span><span class="p">]</span>
+<span class="n">feature_names</span> <span class="o">=</span> <span class="n">fitted_tfidf</span><span class="o">.</span><span class="n">get_feature_names_out</span><span class="p">()</span>
+
+<span class="k">for</span> <span class="n">category_index</span><span class="p">,</span> <span class="n">category</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">fitted_logistic</span><span class="o">.</span><span class="n">classes_</span><span class="p">):</span>
+    <span class="n">weights</span> <span class="o">=</span> <span class="n">fitted_logistic</span><span class="o">.</span><span class="n">coef_</span><span class="p">[</span><span class="n">category_index</span><span class="p">]</span>
+    <span class="n">highest</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">weights</span><span class="p">)[</span><span class="o">-</span><span class="mi">8</span><span class="p">:][::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">lowest</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">weights</span><span class="p">)[:</span><span class="mi">5</span><span class="p">]</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="si">{</span><span class="n">category</span><span class="si">}</span><span class="s2">: terms most associated with its logit"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">([(</span><span class="n">feature_names</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="nb">round</span><span class="p">(</span><span class="n">weights</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="mi">3</span><span class="p">))</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">highest</span><span class="p">])</span>
+    <span class="nb">print</span><span class="p">(</span>
+        <span class="s2">"terms lowering its logit:"</span><span class="p">,</span>
+        <span class="p">[(</span><span class="n">feature_names</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="nb">round</span><span class="p">(</span><span class="n">weights</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="mi">3</span><span class="p">))</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">lowest</span><span class="p">],</span>
+    <span class="p">)</span>
+</pre></div>
+<details class="result-text"><summary>5. Read mistakes and coefficients · computed output</summary><pre>
+account_access: terms most associated with its logit
+[(&#x27;sign&#x27;, np.float64(1.765)), (&#x27;access&#x27;, np.float64(1.349)), (&#x27;to&#x27;, np.float64(1.234)), (&#x27;example&#x27;, np.float64(1.177)), (&#x27;as&#x27;, np.float64(1.153)), (&#x27;test&#x27;, np.float64(1.138)), (&#x27;my&#x27;, np.float64(1.062)), (&#x27;form&#x27;, np.float64(1.0))]
+terms lowering its logit: [(&#x27;order&#x27;, np.float64(-0.542)), (&#x27;of&#x27;, np.float64(-0.525)), (&#x27;00&#x27;, np.float64(-0.523)), (&#x27;return&#x27;, np.float64(-0.5)), (&#x27;invoice&#x27;, np.float64(-0.469))]
+
+billing: terms most associated with its logit
+[(&#x27;invoice&#x27;, np.float64(1.879)), (&#x27;00&#x27;, np.float64(1.379)), (&#x27;month&#x27;, np.float64(0.984)), (&#x27;card&#x27;, np.float64(0.981)), (&#x27;cycle&#x27;, np.float64(0.978)), (&#x27;team&#x27;, np.float64(0.89)), (&#x27;uses&#x27;, np.float64(0.836)), (&#x27;bill&#x27;, np.float64(0.836))]
+terms lowering its logit: [(&#x27;return&#x27;, np.float64(-0.616)), (&#x27;has&#x27;, np.float64(-0.601)), (&#x27;refund&#x27;, np.float64(-0.599)), (&#x27;to&#x27;, np.float64(-0.543)), (&#x27;delivery&#x27;, np.float64(-0.514))]
+
+order_status: terms most associated with its logit
+[(&#x27;delivery&#x27;, np.float64(1.771)), (&#x27;order&#x27;, np.float64(1.591)), (&#x27;tracking&#x27;, np.float64(1.534)), (&#x27;from&#x27;, np.float64(1.351)), (&#x27;is&#x27;, np.float64(1.191)), (&#x27;arrival&#x27;, np.float64(1.186)), (&#x27;or&#x27;, np.float64(1.153)), (&#x27;has&#x27;, np.float64(1.13))]
+terms lowering its logit: [(&#x27;00&#x27;, np.float64(-0.552)), (&#x27;refund&#x27;, np.float64(-0.523)), (&#x27;return&#x27;, np.float64(-0.521)), (&#x27;and&#x27;, np.float64(-0.491)), (&#x27;card&#x27;, np.float64(-0.464))]
+
+refund_return: terms most associated with its logit
+[(&#x27;return&#x27;, np.float64(2.137)), (&#x27;refund&#x27;, np.float64(2.056)), (&#x27;send&#x27;, np.float64(1.257)), (&#x27;product&#x27;, np.float64(1.221)), (&#x27;wrong&#x27;, np.float64(1.124)), (&#x27;returned&#x27;, np.float64(1.089)), (&#x27;item&#x27;, np.float64(1.085)), (&#x27;would&#x27;, np.float64(1.059))]
+terms lowering its logit: [(&#x27;in&#x27;, np.float64(-0.88)), (&#x27;says&#x27;, np.float64(-0.808)), (&#x27;from&#x27;, np.float64(-0.617)), (&#x27;my&#x27;, np.float64(-0.596)), (&#x27;has&#x27;, np.float64(-0.497))]
+
+technical_issue: terms most associated with its logit
+[(&#x27;whenever&#x27;, np.float64(1.208)), (&#x27;text&#x27;, np.float64(1.123)), (&#x27;with&#x27;, np.float64(1.046)), (&#x27;since&#x27;, np.float64(0.972)), (&#x27;app&#x27;, np.float64(0.928)), (&#x27;exported&#x27;, np.float64(0.801)), (&#x27;opens&#x27;, np.float64(0.801)), (&#x27;file&#x27;, np.float64(0.801))]
+terms lowering its logit: [(&#x27;is&#x27;, np.float64(-1.086)), (&#x27;my&#x27;, np.float64(-0.866)), (&#x27;but&#x27;, np.float64(-0.778)), (&#x27;says&#x27;, np.float64(-0.724)), (&#x27;can&#x27;, np.float64(-0.677))]
+</pre></details></section><section class="cell" id="cell-fresh-text"><h3 id="section-10">Predict a fresh message and inspect an empty representation</h3>
+<p>The deliberately unseen token below transforms to an all-zero row. Its probabilities reflect the fitted intercepts; do not interpret them as understanding the message. These examples are diagnostic probes, not further model-selection data.</p></section><section class="cell" id="cell-fresh-text-code"><div class="cell-label">Python · run in the notebook</div><div class="highlight"><pre><span></span><span class="n">new_messages</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"Please help me reset my password"</span><span class="p">,</span> <span class="s2">"zzzzunseenword987654321"</span><span class="p">]</span>
+<span class="n">new_vectors</span> <span class="o">=</span> <span class="n">final_model</span><span class="o">.</span><span class="n">named_steps</span><span class="p">[</span><span class="s2">"tfidf"</span><span class="p">]</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">new_messages</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">new_vectors</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">nnz</span> <span class="o">==</span> <span class="mi">0</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Stored nonzeros:"</span><span class="p">,</span> <span class="n">new_vectors</span><span class="o">.</span><span class="n">getnnz</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
+<span class="n">display</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">final_model</span><span class="o">.</span><span class="n">predict_proba</span><span class="p">(</span><span class="n">new_messages</span><span class="p">),</span>
+                     <span class="n">columns</span><span class="o">=</span><span class="n">final_model</span><span class="o">.</span><span class="n">classes_</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">new_messages</span><span class="p">)</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span>
+</pre></div>
+<details class="result-text"><summary>5. Read mistakes and coefficients · computed output</summary><pre>Stored nonzeros: [4 0]
+</pre></details><details class="result-text"><summary>5. Read mistakes and coefficients · computed output</summary><pre>                                  account_access  billing  order_status  \
+Please help me reset my password           0.422    0.189         0.142   
+zzzzunseenword987654321                    0.164    0.221         0.154   
+
+                                  refund_return  technical_issue  
+Please help me reset my password          0.123            0.124  
+zzzzunseenword987654321                   0.178            0.283  </pre></details></section><section class="cell" id="cell-cell-015"><h2 id="section-11">6. What this lesson does and does not establish</h2>
 <p>TF-IDF plus a linear classifier is a clear supervised baseline: it is fast, sparse, inspectable, and often a useful first comparison. A pretrained embedding model uses dense vectors designed to encode semantic relationships, which may help match paraphrases with few shared words; performance depends on the model, domain, and evaluation. Embeddings do not remove the need for labels, group-aware evaluation, or error review when the task is supervised routing; adapting or scoring a model still needs a defensible evaluation. This course uses no external model and downloads no pretrained weights.</p>
-<p>Our split tests new authored template families from the same generator. It prevents sibling leakage but cannot reveal performance on naturally written, evolving, multilingual, imbalanced, or sensitive customer messages. A real deployment study would require appropriately governed representative data, a time-aware or source-aware evaluation, operational costs, and human review.</p></section></article><p><a class="button" href="05_text_classification-exercises.html">Next: attempt the exercises →</a></p><nav class="actions" aria-label="Study sequence"><a href="04_imbalanced_learning.html">← 04: Imbalanced learning</a><a href="index.html#lectures">All lectures</a><a href="06_clustering.html">06: Clustering →</a></nav></main></div><footer>Mathematical ML · Eight practical lectures for mathematicians<br>Readable Python · Reproducible experiments · Synthetic teaching data</footer></body></html>
+<p>Our split tests new authored template families from the same generator. It prevents sibling leakage but cannot reveal performance on naturally written, evolving, multilingual, imbalanced, or sensitive customer messages. A real deployment study would require appropriately governed representative data, a time-aware or source-aware evaluation, operational costs, and human review.</p></section></article><p><a href="05_text_classification-results.html">Explore this lecture’s executed result gallery →</a></p><p><a class="button" href="05_text_classification-exercises.html">Next: attempt the exercises →</a></p><nav class="actions" aria-label="Study sequence"><a href="04_imbalanced_learning.html">← 04: Imbalanced learning</a><a href="index.html#lectures">All lectures</a><a href="06_clustering.html">06: Clustering →</a></nav></main></div><footer>Mathematical ML · Eight practical lectures for mathematicians<br>Readable Python · Reproducible experiments · Synthetic teaching data</footer></body></html>

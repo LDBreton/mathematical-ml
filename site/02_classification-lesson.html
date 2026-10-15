@@ -1,209 +1,297 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Eight guided machine learning lectures for mathematicians: theory, readable Python, exercises and worked solutions."><title>Classification: lesson · Mathematical ML</title><link rel="stylesheet" href="style.css"><script defer src="site.js"></script><script>window.MathJax={tex:{inlineMath:[['$','$'],['\\(','\\)']]}};</script><script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script></head><body><a class="skip" href="#main">Skip to content</a><header><button class="menu" aria-controls="sidebar" aria-expanded="false" aria-label="Toggle course navigation">☰</button><a class="brand" href="index.html">∑ <span>Mathematical ML</span></a><nav aria-label="Quick links"><a href="setup.html">Get started</a><a href="index.html#lectures">Lectures</a><button id="theme" aria-label="Switch color theme">◐</button></nav></header><div class="layout"><aside id="sidebar" aria-label="Course navigation"><a href="index.html">Course overview</a><h3>Start here</h3><a href="setup.html">Installation &amp; first steps</a><a href="first-steps.html">New to ML? Start here</a><h3>The lectures</h3><details><summary><a href="01_regression.html">01 · Regression</a></summary><a class="sub" href="01_regression-lesson.html">Lesson</a><a class="sub" href="01_regression-exercises.html">Exercises</a><a class="sub" href="01_regression-solutions.html">Solutions</a></details><details><summary><a href="02_classification.html">02 · Classification</a></summary><a class="sub" href="02_classification-lesson.html">Lesson</a><a class="sub" href="02_classification-exercises.html">Exercises</a><a class="sub" href="02_classification-solutions.html">Solutions</a></details><details><summary><a href="03_xgboost.html">03 · XGBoost</a></summary><a class="sub" href="03_xgboost-lesson.html">Lesson</a><a class="sub" href="03_xgboost-exercises.html">Exercises</a><a class="sub" href="03_xgboost-solutions.html">Solutions</a></details><details><summary><a href="04_imbalanced_learning.html">04 · Imbalanced learning</a></summary><a class="sub" href="04_imbalanced_learning-lesson.html">Lesson</a><a class="sub" href="04_imbalanced_learning-exercises.html">Exercises</a><a class="sub" href="04_imbalanced_learning-solutions.html">Solutions</a></details><details><summary><a href="05_text_classification.html">05 · Text classification</a></summary><a class="sub" href="05_text_classification-lesson.html">Lesson</a><a class="sub" href="05_text_classification-exercises.html">Exercises</a><a class="sub" href="05_text_classification-solutions.html">Solutions</a></details><details><summary><a href="06_clustering.html">06 · Clustering</a></summary><a class="sub" href="06_clustering-lesson.html">Lesson</a><a class="sub" href="06_clustering-exercises.html">Exercises</a><a class="sub" href="06_clustering-solutions.html">Solutions</a></details><details><summary><a href="07_time_series.html">07 · Time-series forecasting</a></summary><a class="sub" href="07_time_series-lesson.html">Lesson</a><a class="sub" href="07_time_series-exercises.html">Exercises</a><a class="sub" href="07_time_series-solutions.html">Solutions</a></details><details><summary><a href="08_deployment.html">08 · From model to service</a></summary><a class="sub" href="08_deployment-lesson.html">Lesson</a><a class="sub" href="08_deployment-exercises.html">Exercises</a><a class="sub" href="08_deployment-solutions.html">Solutions</a></details><h3>Resources</h3><a href="datasets.html">Datasets</a><a href="course-project.html">Course project</a><a href="instructor.html">Teaching guide</a><a href="verification.html">Verification</a></aside><main id="main"><div class="eyebrow">Lecture 02 / lesson</div><div class="actions"><a href="02_classification.html">← Lecture guide</a><a href="downloads/02_classification/lesson.ipynb" download>Download notebook</a></div><p class="note">This page is a reading view. To execute Python, download the complete course and open this notebook in Jupyter. <a href="first-steps.html">First notebook walkthrough →</a></p><details class="contents"><summary>On this page</summary><nav aria-label="Page contents"><a href="#section-1">A score, a probability, and an action</a><a href="#section-2">1. Bernoulli likelihood and convex optimization</a><a href="#section-3">2. Load synthetic data</a><a href="#section-4">3. Training, validation, and final test</a><a href="#section-5">4. Pipeline for mixed inputs</a><a href="#section-6">5. Regularization on training rows</a><a href="#section-7">6. Validation metrics before choosing a threshold</a><a href="#section-8">7. Choose a threshold on validation, then test once</a><a href="#section-9">8. Coefficients as conditional log-odds associations</a><a href="#section-10">Takeaways</a></nav></details><article class="reading"><section class="cell"><h1>02 — Classification: predicting a binary outcome</h1>
-<p>We estimate whether a customer churns using generated data. This is a lesson about modeling and evaluation, not a claim about actual customers.</p></section><section class="cell"><p><img alt="Teaching figure for classification" src="figures/02_classification.svg" /></p>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Eight guided machine learning lectures for mathematicians: theory, readable Python, exercises and worked solutions."><title>Classification: lesson · Mathematical ML</title><link rel="stylesheet" href="style.css"><script defer src="site.js"></script><script>window.MathJax={tex:{inlineMath:[['$','$'],['\\(','\\)']]}};</script><script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script></head><body><a class="skip" href="#main">Skip to content</a><header><button class="menu" aria-controls="sidebar" aria-expanded="false" aria-label="Toggle course navigation">☰</button><a class="brand" href="index.html">∑ <span>Mathematical ML</span></a><nav aria-label="Quick links"><a href="setup.html">Get started</a><a href="index.html#lectures">Lectures</a><button id="theme" aria-label="Switch color theme">◐</button></nav></header><div class="layout"><aside id="sidebar" aria-label="Course navigation"><a href="index.html">Course overview</a><h3>Start here</h3><a href="setup.html">Installation &amp; first steps</a><a href="first-steps.html">New to ML? Start here</a><h3>The lectures</h3><details><summary><a href="01_regression.html">01 · Regression</a></summary><a class="sub" href="01_regression-lesson.html">Lesson</a><a class="sub" href="01_regression-exercises.html">Exercises</a><a class="sub" href="01_regression-solutions.html">Solutions</a></details><details><summary><a href="02_classification.html">02 · Classification</a></summary><a class="sub" href="02_classification-lesson.html">Lesson</a><a class="sub" href="02_classification-exercises.html">Exercises</a><a class="sub" href="02_classification-solutions.html">Solutions</a></details><details><summary><a href="03_xgboost.html">03 · XGBoost</a></summary><a class="sub" href="03_xgboost-lesson.html">Lesson</a><a class="sub" href="03_xgboost-exercises.html">Exercises</a><a class="sub" href="03_xgboost-solutions.html">Solutions</a></details><details><summary><a href="04_imbalanced_learning.html">04 · Imbalanced learning</a></summary><a class="sub" href="04_imbalanced_learning-lesson.html">Lesson</a><a class="sub" href="04_imbalanced_learning-exercises.html">Exercises</a><a class="sub" href="04_imbalanced_learning-solutions.html">Solutions</a></details><details><summary><a href="05_text_classification.html">05 · Text classification</a></summary><a class="sub" href="05_text_classification-lesson.html">Lesson</a><a class="sub" href="05_text_classification-exercises.html">Exercises</a><a class="sub" href="05_text_classification-solutions.html">Solutions</a></details><details><summary><a href="06_clustering.html">06 · Clustering</a></summary><a class="sub" href="06_clustering-lesson.html">Lesson</a><a class="sub" href="06_clustering-exercises.html">Exercises</a><a class="sub" href="06_clustering-solutions.html">Solutions</a></details><details><summary><a href="07_time_series.html">07 · Time-series forecasting</a></summary><a class="sub" href="07_time_series-lesson.html">Lesson</a><a class="sub" href="07_time_series-exercises.html">Exercises</a><a class="sub" href="07_time_series-solutions.html">Solutions</a></details><details><summary><a href="08_deployment.html">08 · From model to service</a></summary><a class="sub" href="08_deployment-lesson.html">Lesson</a><a class="sub" href="08_deployment-exercises.html">Exercises</a><a class="sub" href="08_deployment-solutions.html">Solutions</a></details><h3>Resources</h3><a href="results.html">Executed result galleries</a><a href="datasets.html">Datasets</a><a href="course-project.html">Course project</a><a href="instructor.html">Teaching guide</a><a href="verification.html">Verification</a></aside><main id="main"><div class="eyebrow">Lecture 02 / lesson</div><div class="actions"><a href="02_classification.html">← Lecture guide</a><a href="downloads/02_classification/lesson.ipynb" download>Download notebook</a></div><p class="note">This page is a reading view. To execute Python, download the complete course and open this notebook in Jupyter. <a href="first-steps.html">First notebook walkthrough →</a></p><details class="contents"><summary>On this page</summary><nav aria-label="Page contents"><a href="#section-1">A score, a probability, and an action</a><a href="#section-2">1. Bernoulli likelihood and convex optimization</a><a href="#section-3">2. Load synthetic data</a><a href="#section-4">3. Training, validation, and final test</a><a href="#section-5">4. Pipeline for mixed inputs</a><a href="#section-6">5. Regularization on training rows</a><a href="#section-7">6. Validation metrics before choosing a threshold</a><a href="#section-8">See the validation counts and probability calibration</a><a href="#section-9">7. Choose a threshold on validation, then test once</a><a href="#section-10">8. Coefficients as conditional log-odds associations</a><a href="#section-11">Takeaways</a></nav></details><article class="reading"><section class="cell" id="cell-cell-000"><h1>02 — Classification: predicting a binary outcome</h1>
+<p>We estimate whether a customer churns using generated data. This is a lesson about modeling and evaluation, not a claim about actual customers.</p></section><section class="cell" id="cell-beginner-bridge"><p><img alt="Teaching figure for classification" src="figures/02_classification.svg" /></p>
 <p><em>Illustrative sigmoid and decision threshold. A continuous probability and a discrete action are different outputs.</em></p>
 <h2 id="section-1">A score, a probability, and an action</h2>
 <p>The sigmoid is $\sigma(z)=1/(1+e^{-z})$. A logit $z=\log 3$ gives probability $p=0.75$. For a positive observation, its negative log-likelihood is $-\log(0.75)\approx0.288$, and the derivative with respect to the logit is $p-y=-0.25$. For numerical code, evaluate the logistic loss as <code>np.logaddexp(0, z) - y*z</code> rather than forming unstable exponentials.</p>
 <p>A probability of 0.75 becomes class 1 under threshold 0.5, but class 0 under threshold 0.8. Neither threshold changes the probability. <code>predict_proba</code> returns one column for each entry of the fitted classifier's <code>classes_</code>; <code>[:, 1]</code> denotes the positive class here because our fitted class order is <code>[0, 1]</code>. Always inspect that order when adapting the example.</p>
-<p>If 10 people are flagged and 6 churn, precision is 6/10. If 8 people churn in total, recall is 6/8. The confusion counts are TP=6, FP=4, FN=2; TN needs the total population size. Calibration asks a different question: among many cases assigned probability near 0.75, does approximately 75% have outcome 1? Good ranking does not guarantee calibration.</p></section><section class="cell"><h2 id="section-2">1. Bernoulli likelihood and convex optimization</h2>
+<p>If 10 people are flagged and 6 churn, precision is 6/10. If 8 people churn in total, recall is 6/8. The confusion counts are TP=6, FP=4, FN=2; TN needs the total population size. Calibration asks a different question: among many cases assigned probability near 0.75, does approximately 75% have outcome 1? Good ranking does not guarantee calibration.</p></section><section class="cell" id="cell-cell-001"><h2 id="section-2">1. Bernoulli likelihood and convex optimization</h2>
 <p>With linear predictor $\eta_i=\beta_0+x_i^T\beta$ and $p_i=\sigma(\eta_i)$, Bernoulli likelihood is $p_i^{y_i}(1-p_i)^{1-y_i}$. The negative log likelihood per observation is</p>
 <p>$$\ell_i(\beta)=\log(1+e^{\eta_i})-y_i\eta_i,$$</p>
-<p>and empirical risk is $L(\beta)=n^{-1}\sum_i\ell_i(\beta)$. Differentiating through $p_i=\sigma(\eta_i)$ gives slope gradient $X^T(p-y)/n$ and Hessian $X^TWX/n$, where $W_{ii}=p_i(1-p_i)\ge0$. The Hessian is positive semidefinite, so the logistic loss is convex. Adding $\lambda\|\beta\|_2^2/2$ adds $\lambda\beta$ to the gradient and $\lambda I$ to the slope Hessian block. A positive penalty makes that block positive definite. The intercept is conventionally unpenalized; scikit-learn handles it separately.</p></section><section class="cell"><h2 id="section-3">2. Load synthetic data</h2>
-<p>Rows were generated for instruction. They do not represent real customers, prevalence, or intervention effects.</p></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>from pathlib import Path
+<p>and empirical risk is $L(\beta)=n^{-1}\sum_i\ell_i(\beta)$. Differentiating through $p_i=\sigma(\eta_i)$ gives slope gradient $X^T(p-y)/n$ and Hessian $X^TWX/n$, where $W_{ii}=p_i(1-p_i)\ge0$. The Hessian is positive semidefinite, so the logistic loss is convex. Adding $\lambda\|\beta\|_2^2/2$ adds $\lambda\beta$ to the gradient and $\lambda I$ to the slope Hessian block. A positive penalty makes that block positive definite. The intercept is conventionally unpenalized; scikit-learn handles it separately.</p></section><section class="cell" id="cell-cell-002"><h2 id="section-3">2. Load synthetic data</h2>
+<p>Rows were generated for instruction. They do not represent real customers, prevalence, or intervention effects.</p></section><section class="cell" id="cell-cell-003"><div class="cell-label">Python · run in the notebook</div><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 
-import numpy as np
-import pandas as pd
-
-
-def find_data_file(filename):
-    &quot;&quot;&quot;Search the current directory and its parents for a repository data file.&quot;&quot;&quot;
-    for directory in (Path.cwd(), *Path.cwd().parents):
-        data_path = directory / &quot;data&quot; / filename
-        if data_path.is_file():
-            return data_path
-    raise FileNotFoundError(
-        f&quot;Could not find data/{filename}. Start Jupyter at the repository root &quot;
-        &quot;or inside this lecture directory.&quot;
-    )
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
 
 
-churn_path = find_data_file(&quot;churn.csv&quot;)
-customer_data = pd.read_csv(churn_path)
-print(f&quot;Loaded {len(customer_data)} synthetic rows from {churn_path}&quot;)
-customer_data.head()</code></pre></section><section class="cell"><h2 id="section-4">3. Training, validation, and final test</h2>
-<p>We reserve 20% of observations as a final test set. The remaining development data are split into training and validation partitions. Stratification keeps class proportions similar. Cross-validation and regularization selection use training rows; validation selects a threshold under a stated toy cost; the final test set evaluates the frozen model and threshold once.</p></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>from sklearn.model_selection import train_test_split
+<span class="k">def</span><span class="w"> </span><span class="nf">find_data_file</span><span class="p">(</span><span class="n">filename</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Search the current directory and its parents for a repository data file."""</span>
+    <span class="k">for</span> <span class="n">directory</span> <span class="ow">in</span> <span class="p">(</span><span class="n">Path</span><span class="o">.</span><span class="n">cwd</span><span class="p">(),</span> <span class="o">*</span><span class="n">Path</span><span class="o">.</span><span class="n">cwd</span><span class="p">()</span><span class="o">.</span><span class="n">parents</span><span class="p">):</span>
+        <span class="n">data_path</span> <span class="o">=</span> <span class="n">directory</span> <span class="o">/</span> <span class="s2">"data"</span> <span class="o">/</span> <span class="n">filename</span>
+        <span class="k">if</span> <span class="n">data_path</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
+            <span class="k">return</span> <span class="n">data_path</span>
+    <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">"Could not find data/</span><span class="si">{</span><span class="n">filename</span><span class="si">}</span><span class="s2">. Start Jupyter at the repository root "</span>
+        <span class="s2">"or inside this lecture directory."</span>
+    <span class="p">)</span>
 
-feature_data = customer_data.drop(columns=&quot;churn&quot;)
-churn_response = customer_data[&quot;churn&quot;].astype(int)
 
-(
-    development_features,
-    final_test_features,
-    development_response,
-    final_test_response,
-) = train_test_split(
-    feature_data,
-    churn_response,
-    test_size=0.20,
-    random_state=19,
-    stratify=churn_response,
-)
-(
-    training_features,
-    validation_features,
-    training_response,
-    validation_response,
-) = train_test_split(
-    development_features,
-    development_response,
-    test_size=0.25,
-    random_state=20,
-    stratify=development_response,
-)
+<span class="n">churn_path</span> <span class="o">=</span> <span class="n">find_data_file</span><span class="p">(</span><span class="s2">"churn.csv"</span><span class="p">)</span>
+<span class="n">customer_data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">churn_path</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Loaded </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">customer_data</span><span class="p">)</span><span class="si">}</span><span class="s2"> synthetic rows from </span><span class="si">{</span><span class="n">churn_path</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="n">customer_data</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+</pre></div>
+<details class="result-text"><summary>2. Load synthetic data · computed output</summary><pre>Loaded 1800 synthetic rows from F:\Proyectos\RBF-Machine learning\data\churn.csv
+</pre></details><details class="result-text"><summary>2. Load synthetic data · computed output</summary><pre>   tenure_months  monthly_charge  support_calls  contract  churn
+0             10         86.0045              0    annual      0
+1             48         63.7697              1   monthly      0
+2             42        129.0949              1    annual      0
+3             18         62.8151              1   monthly      0
+4             59         41.0848              1  two_year      0</pre></details></section><section class="cell" id="cell-cell-004"><h2 id="section-4">3. Training, validation, and final test</h2>
+<p>We reserve 20% of observations as a final test set. The remaining development data are split into training and validation partitions. Stratification keeps class proportions similar. Cross-validation and regularization selection use training rows; validation selects a threshold under a stated toy cost; the final test set evaluates the frozen model and threshold once.</p></section><section class="cell" id="cell-cell-005"><div class="cell-label">Python · run in the notebook</div><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.model_selection</span><span class="w"> </span><span class="kn">import</span> <span class="n">train_test_split</span>
 
-print(f&quot;Training rows: {len(training_features)}&quot;)
-print(f&quot;Validation rows: {len(validation_features)}&quot;)
-print(f&quot;Final test rows: {len(final_test_features)}&quot;)
-print(&quot;Training class proportions:&quot;)
-training_response.value_counts(normalize=True).sort_index()</code></pre></section><section class="cell"><h2 id="section-5">4. Pipeline for mixed inputs</h2>
-<p>Scale numerical features and one-hot encode contract type. Encoding categories as integers would suggest an artificial order. All transformations are part of the pipeline, so cross-validation refits them within each fold.</p></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>from sklearn.compose import ColumnTransformer
-from sklearn.impute import SimpleImputer
-from sklearn.linear_model import LogisticRegression
-from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import OneHotEncoder, StandardScaler
+<span class="n">feature_data</span> <span class="o">=</span> <span class="n">customer_data</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="s2">"churn"</span><span class="p">)</span>
+<span class="n">churn_response</span> <span class="o">=</span> <span class="n">customer_data</span><span class="p">[</span><span class="s2">"churn"</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
 
-numeric_columns = [&quot;tenure_months&quot;, &quot;monthly_charge&quot;, &quot;support_calls&quot;]
-categorical_columns = [&quot;contract&quot;]
+<span class="p">(</span>
+    <span class="n">development_features</span><span class="p">,</span>
+    <span class="n">final_test_features</span><span class="p">,</span>
+    <span class="n">development_response</span><span class="p">,</span>
+    <span class="n">final_test_response</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">=</span> <span class="n">train_test_split</span><span class="p">(</span>
+    <span class="n">feature_data</span><span class="p">,</span>
+    <span class="n">churn_response</span><span class="p">,</span>
+    <span class="n">test_size</span><span class="o">=</span><span class="mf">0.20</span><span class="p">,</span>
+    <span class="n">random_state</span><span class="o">=</span><span class="mi">19</span><span class="p">,</span>
+    <span class="n">stratify</span><span class="o">=</span><span class="n">churn_response</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="p">(</span>
+    <span class="n">training_features</span><span class="p">,</span>
+    <span class="n">validation_features</span><span class="p">,</span>
+    <span class="n">training_response</span><span class="p">,</span>
+    <span class="n">validation_response</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">=</span> <span class="n">train_test_split</span><span class="p">(</span>
+    <span class="n">development_features</span><span class="p">,</span>
+    <span class="n">development_response</span><span class="p">,</span>
+    <span class="n">test_size</span><span class="o">=</span><span class="mf">0.25</span><span class="p">,</span>
+    <span class="n">random_state</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
+    <span class="n">stratify</span><span class="o">=</span><span class="n">development_response</span><span class="p">,</span>
+<span class="p">)</span>
 
-numeric_preprocessing = Pipeline(
-    steps=[
-        (&quot;impute&quot;, SimpleImputer(strategy=&quot;median&quot;)),
-        (&quot;scale&quot;, StandardScaler()),
-    ]
-)
-categorical_preprocessing = Pipeline(
-    steps=[
-        (&quot;impute&quot;, SimpleImputer(strategy=&quot;most_frequent&quot;)),
-        (&quot;one_hot&quot;, OneHotEncoder(handle_unknown=&quot;ignore&quot;)),
-    ]
-)
-preprocessing = ColumnTransformer(
-    transformers=[
-        (&quot;numeric&quot;, numeric_preprocessing, numeric_columns),
-        (&quot;category&quot;, categorical_preprocessing, categorical_columns),
-    ]
-)
-classification_pipeline = Pipeline(
-    steps=[
-        (&quot;preprocessing&quot;, preprocessing),
-        (&quot;model&quot;, LogisticRegression(max_iter=2000)),
-    ]
-)</code></pre></section><section class="cell"><h2 id="section-6">5. Regularization on training rows</h2>
-<p>The derivation above writes a penalty $\lambda\|\beta\|^2/2$. scikit-learn exposes inverse strength $C$: smaller $C$ means stronger regularization, though the exact scaling convention depends on sample size and solver. We select $C$ with stratified folds inside the training partition. Validation and final test data do not participate in this selection.</p></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>from sklearn.model_selection import GridSearchCV, StratifiedKFold
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Training rows: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">training_features</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Validation rows: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">validation_features</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Final test rows: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">final_test_features</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Training class proportions:"</span><span class="p">)</span>
+<span class="n">training_response</span><span class="o">.</span><span class="n">value_counts</span><span class="p">(</span><span class="n">normalize</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">sort_index</span><span class="p">()</span>
+</pre></div>
+<details class="result-text"><summary>3. Training, validation, and final test · computed output</summary><pre>Training rows: 1080
+Validation rows: 360
+Final test rows: 360
+Training class proportions:
+</pre></details><details class="result-text"><summary>3. Training, validation, and final test · computed output</summary><pre>churn
+0    0.768519
+1    0.231481
+Name: proportion, dtype: float64</pre></details></section><section class="cell" id="cell-cell-006"><h2 id="section-5">4. Pipeline for mixed inputs</h2>
+<p>Scale numerical features and one-hot encode contract type. Encoding categories as integers would suggest an artificial order. All transformations are part of the pipeline, so cross-validation refits them within each fold.</p></section><section class="cell" id="cell-cell-007"><div class="cell-label">Python · run in the notebook</div><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.compose</span><span class="w"> </span><span class="kn">import</span> <span class="n">ColumnTransformer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.impute</span><span class="w"> </span><span class="kn">import</span> <span class="n">SimpleImputer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.linear_model</span><span class="w"> </span><span class="kn">import</span> <span class="n">LogisticRegression</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.pipeline</span><span class="w"> </span><span class="kn">import</span> <span class="n">Pipeline</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.preprocessing</span><span class="w"> </span><span class="kn">import</span> <span class="n">OneHotEncoder</span><span class="p">,</span> <span class="n">StandardScaler</span>
 
-training_folds = StratifiedKFold(n_splits=5, shuffle=True, random_state=19)
-regularization_search = GridSearchCV(
-    estimator=classification_pipeline,
-    param_grid={&quot;model__C&quot;: [0.03, 0.1, 0.3, 1.0, 3.0, 10.0]},
-    scoring=&quot;roc_auc&quot;,
-    cv=training_folds,
-    refit=True,
-)
-regularization_search.fit(training_features, training_response)
+<span class="n">numeric_columns</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"tenure_months"</span><span class="p">,</span> <span class="s2">"monthly_charge"</span><span class="p">,</span> <span class="s2">"support_calls"</span><span class="p">]</span>
+<span class="n">categorical_columns</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"contract"</span><span class="p">]</span>
 
-selected_inverse_penalty = regularization_search.best_params_[&quot;model__C&quot;]
-print(f&quot;Selected C: {selected_inverse_penalty}&quot;)
-print(f&quot;Mean training-fold ROC-AUC: {regularization_search.best_score_:.3f}&quot;)</code></pre></section><section class="cell"><h2 id="section-7">6. Validation metrics before choosing a threshold</h2>
+<span class="n">numeric_preprocessing</span> <span class="o">=</span> <span class="n">Pipeline</span><span class="p">(</span>
+    <span class="n">steps</span><span class="o">=</span><span class="p">[</span>
+        <span class="p">(</span><span class="s2">"impute"</span><span class="p">,</span> <span class="n">SimpleImputer</span><span class="p">(</span><span class="n">strategy</span><span class="o">=</span><span class="s2">"median"</span><span class="p">)),</span>
+        <span class="p">(</span><span class="s2">"scale"</span><span class="p">,</span> <span class="n">StandardScaler</span><span class="p">()),</span>
+    <span class="p">]</span>
+<span class="p">)</span>
+<span class="n">categorical_preprocessing</span> <span class="o">=</span> <span class="n">Pipeline</span><span class="p">(</span>
+    <span class="n">steps</span><span class="o">=</span><span class="p">[</span>
+        <span class="p">(</span><span class="s2">"impute"</span><span class="p">,</span> <span class="n">SimpleImputer</span><span class="p">(</span><span class="n">strategy</span><span class="o">=</span><span class="s2">"most_frequent"</span><span class="p">)),</span>
+        <span class="p">(</span><span class="s2">"one_hot"</span><span class="p">,</span> <span class="n">OneHotEncoder</span><span class="p">(</span><span class="n">handle_unknown</span><span class="o">=</span><span class="s2">"ignore"</span><span class="p">)),</span>
+    <span class="p">]</span>
+<span class="p">)</span>
+<span class="n">preprocessing</span> <span class="o">=</span> <span class="n">ColumnTransformer</span><span class="p">(</span>
+    <span class="n">transformers</span><span class="o">=</span><span class="p">[</span>
+        <span class="p">(</span><span class="s2">"numeric"</span><span class="p">,</span> <span class="n">numeric_preprocessing</span><span class="p">,</span> <span class="n">numeric_columns</span><span class="p">),</span>
+        <span class="p">(</span><span class="s2">"category"</span><span class="p">,</span> <span class="n">categorical_preprocessing</span><span class="p">,</span> <span class="n">categorical_columns</span><span class="p">),</span>
+    <span class="p">]</span>
+<span class="p">)</span>
+<span class="n">classification_pipeline</span> <span class="o">=</span> <span class="n">Pipeline</span><span class="p">(</span>
+    <span class="n">steps</span><span class="o">=</span><span class="p">[</span>
+        <span class="p">(</span><span class="s2">"preprocessing"</span><span class="p">,</span> <span class="n">preprocessing</span><span class="p">),</span>
+        <span class="p">(</span><span class="s2">"model"</span><span class="p">,</span> <span class="n">LogisticRegression</span><span class="p">(</span><span class="n">max_iter</span><span class="o">=</span><span class="mi">2000</span><span class="p">)),</span>
+    <span class="p">]</span>
+<span class="p">)</span>
+</pre></div>
+</section><section class="cell" id="cell-cell-008"><h2 id="section-6">5. Regularization on training rows</h2>
+<p>The derivation above writes a penalty $\lambda\|\beta\|^2/2$. scikit-learn exposes inverse strength $C$: smaller $C$ means stronger regularization, though the exact scaling convention depends on sample size and solver. We select $C$ with stratified folds inside the training partition. Validation and final test data do not participate in this selection.</p></section><section class="cell" id="cell-cell-009"><div class="cell-label">Python · run in the notebook</div><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.model_selection</span><span class="w"> </span><span class="kn">import</span> <span class="n">GridSearchCV</span><span class="p">,</span> <span class="n">StratifiedKFold</span>
+
+<span class="n">training_folds</span> <span class="o">=</span> <span class="n">StratifiedKFold</span><span class="p">(</span><span class="n">n_splits</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">19</span><span class="p">)</span>
+<span class="n">regularization_search</span> <span class="o">=</span> <span class="n">GridSearchCV</span><span class="p">(</span>
+    <span class="n">estimator</span><span class="o">=</span><span class="n">classification_pipeline</span><span class="p">,</span>
+    <span class="n">param_grid</span><span class="o">=</span><span class="p">{</span><span class="s2">"model__C"</span><span class="p">:</span> <span class="p">[</span><span class="mf">0.03</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">,</span> <span class="mf">10.0</span><span class="p">]},</span>
+    <span class="n">scoring</span><span class="o">=</span><span class="s2">"roc_auc"</span><span class="p">,</span>
+    <span class="n">cv</span><span class="o">=</span><span class="n">training_folds</span><span class="p">,</span>
+    <span class="n">refit</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">regularization_search</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">training_features</span><span class="p">,</span> <span class="n">training_response</span><span class="p">)</span>
+
+<span class="n">selected_inverse_penalty</span> <span class="o">=</span> <span class="n">regularization_search</span><span class="o">.</span><span class="n">best_params_</span><span class="p">[</span><span class="s2">"model__C"</span><span class="p">]</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Selected C: </span><span class="si">{</span><span class="n">selected_inverse_penalty</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Mean training-fold ROC-AUC: </span><span class="si">{</span><span class="n">regularization_search</span><span class="o">.</span><span class="n">best_score_</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</pre></div>
+<details class="result-text"><summary>5. Regularization on training rows · computed output</summary><pre>Selected C: 3.0
+Mean training-fold ROC-AUC: 0.771
+</pre></details></section><section class="cell" id="cell-cell-010"><h2 id="section-7">6. Validation metrics before choosing a threshold</h2>
 <p>At threshold 0.5, accuracy is the fraction of correct class decisions. Precision is the share of predicted churners who actually churn; recall is the share of churners found. Their harmonic mean is $F_1=2PR/(P+R)$. ROC-AUC is the probability that a randomly selected positive receives a higher score than a randomly selected negative, counting ties as one half. It assesses ranking, not probability calibration or a particular policy.</p>
-<p>The default 0.5 cutoff is a reference, not a universal policy. This section reports validation metrics at 0.5 and a majority-class baseline. The final test partition remains untouched.</p></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>from sklearn.dummy import DummyClassifier
-from sklearn.metrics import (
-    accuracy_score,
-    confusion_matrix,
-    f1_score,
-    precision_score,
-    recall_score,
-    roc_auc_score,
-)
+<p>The default 0.5 cutoff is a reference, not a universal policy. This section reports validation metrics at 0.5 and a majority-class baseline. The final test partition remains untouched.</p></section><section class="cell" id="cell-cell-011"><div class="cell-label">Python · run in the notebook</div><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.dummy</span><span class="w"> </span><span class="kn">import</span> <span class="n">DummyClassifier</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">accuracy_score</span><span class="p">,</span>
+    <span class="n">confusion_matrix</span><span class="p">,</span>
+    <span class="n">f1_score</span><span class="p">,</span>
+    <span class="n">precision_score</span><span class="p">,</span>
+    <span class="n">recall_score</span><span class="p">,</span>
+    <span class="n">roc_auc_score</span><span class="p">,</span>
+<span class="p">)</span>
 
-best_classifier = regularization_search.best_estimator_
-validation_probabilities = best_classifier.predict_proba(validation_features)[:, 1]
-validation_predictions_at_half = (validation_probabilities &gt;= 0.5).astype(int)
+<span class="n">best_classifier</span> <span class="o">=</span> <span class="n">regularization_search</span><span class="o">.</span><span class="n">best_estimator_</span>
+<span class="n">validation_probabilities</span> <span class="o">=</span> <span class="n">best_classifier</span><span class="o">.</span><span class="n">predict_proba</span><span class="p">(</span><span class="n">validation_features</span><span class="p">)[:,</span> <span class="mi">1</span><span class="p">]</span>
+<span class="n">validation_predictions_at_half</span> <span class="o">=</span> <span class="p">(</span><span class="n">validation_probabilities</span> <span class="o">&gt;=</span> <span class="mf">0.5</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
 
-majority_baseline = DummyClassifier(strategy=&quot;most_frequent&quot;)
-majority_baseline.fit(training_features, training_response)
-baseline_predictions = majority_baseline.predict(validation_features)
+<span class="n">majority_baseline</span> <span class="o">=</span> <span class="n">DummyClassifier</span><span class="p">(</span><span class="n">strategy</span><span class="o">=</span><span class="s2">"most_frequent"</span><span class="p">)</span>
+<span class="n">majority_baseline</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">training_features</span><span class="p">,</span> <span class="n">training_response</span><span class="p">)</span>
+<span class="n">baseline_predictions</span> <span class="o">=</span> <span class="n">majority_baseline</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">validation_features</span><span class="p">)</span>
 
-print(&quot;Validation majority-baseline accuracy:&quot;,
-      round(accuracy_score(validation_response, baseline_predictions), 3))
-print(&quot;Validation metrics at threshold 0.5:&quot;, {
-    &quot;accuracy&quot;: round(accuracy_score(validation_response, validation_predictions_at_half), 3),
-    &quot;precision&quot;: round(precision_score(validation_response, validation_predictions_at_half, zero_division=0), 3),
-    &quot;recall&quot;: round(recall_score(validation_response, validation_predictions_at_half, zero_division=0), 3),
-    &quot;F1&quot;: round(f1_score(validation_response, validation_predictions_at_half, zero_division=0), 3),
-    &quot;ROC-AUC&quot;: round(roc_auc_score(validation_response, validation_probabilities), 3),
-})
-print(&quot;Validation confusion matrix [actual rows, predicted columns]:\n&quot;,
-      confusion_matrix(validation_response, validation_predictions_at_half))</code></pre></section><section class="cell"><p>Accuracy alone can hide failure to identify the positive class. A majority baseline can score well if non-churn is common while detecting no churners. Compare precision and recall with the actual use case.</p></section><section class="cell"><h2 id="section-8">7. Choose a threshold on validation, then test once</h2>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Validation majority-baseline accuracy:"</span><span class="p">,</span>
+      <span class="nb">round</span><span class="p">(</span><span class="n">accuracy_score</span><span class="p">(</span><span class="n">validation_response</span><span class="p">,</span> <span class="n">baseline_predictions</span><span class="p">),</span> <span class="mi">3</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Validation metrics at threshold 0.5:"</span><span class="p">,</span> <span class="p">{</span>
+    <span class="s2">"accuracy"</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">accuracy_score</span><span class="p">(</span><span class="n">validation_response</span><span class="p">,</span> <span class="n">validation_predictions_at_half</span><span class="p">),</span> <span class="mi">3</span><span class="p">),</span>
+    <span class="s2">"precision"</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">precision_score</span><span class="p">(</span><span class="n">validation_response</span><span class="p">,</span> <span class="n">validation_predictions_at_half</span><span class="p">,</span> <span class="n">zero_division</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span> <span class="mi">3</span><span class="p">),</span>
+    <span class="s2">"recall"</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">recall_score</span><span class="p">(</span><span class="n">validation_response</span><span class="p">,</span> <span class="n">validation_predictions_at_half</span><span class="p">,</span> <span class="n">zero_division</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span> <span class="mi">3</span><span class="p">),</span>
+    <span class="s2">"F1"</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">f1_score</span><span class="p">(</span><span class="n">validation_response</span><span class="p">,</span> <span class="n">validation_predictions_at_half</span><span class="p">,</span> <span class="n">zero_division</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span> <span class="mi">3</span><span class="p">),</span>
+    <span class="s2">"ROC-AUC"</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">roc_auc_score</span><span class="p">(</span><span class="n">validation_response</span><span class="p">,</span> <span class="n">validation_probabilities</span><span class="p">),</span> <span class="mi">3</span><span class="p">),</span>
+<span class="p">})</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Validation confusion matrix [actual rows, predicted columns]:</span><span class="se">\n</span><span class="s2">"</span><span class="p">,</span>
+      <span class="n">confusion_matrix</span><span class="p">(</span><span class="n">validation_response</span><span class="p">,</span> <span class="n">validation_predictions_at_half</span><span class="p">))</span>
+</pre></div>
+<details class="result-text"><summary>6. Validation metrics before choosing a threshold · computed output</summary><pre>Validation majority-baseline accuracy: 0.769
+Validation metrics at threshold 0.5: {&#x27;accuracy&#x27;: 0.781, &#x27;precision&#x27;: 0.556, &#x27;recall&#x27;: 0.241, &#x27;F1&#x27;: 0.336, &#x27;ROC-AUC&#x27;: 0.793}
+Validation confusion matrix [actual rows, predicted columns]:
+ [[261  16]
+ [ 63  20]]
+</pre></details></section><section class="cell" id="cell-calibration-guide"><h3 id="section-8">See the validation counts and probability calibration</h3>
+<p>Rows of a confusion matrix are actual classes; columns are predicted classes. Calibration compares mean predicted probability with the observed positive fraction within a bin. The dashed diagonal is the ideal relation. Bin counts matter: a small bin can depart from the line through sampling variation. This is a validation diagnostic, not a new calibration fit or a test-driven choice.</p></section><section class="cell" id="cell-calibration-code"><div class="cell-label">Python · run in the notebook</div><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.calibration</span><span class="w"> </span><span class="kn">import</span> <span class="n">calibration_curve</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConfusionMatrixDisplay</span>
+
+<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">11</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
+<span class="n">ConfusionMatrixDisplay</span><span class="o">.</span><span class="n">from_predictions</span><span class="p">(</span>
+    <span class="n">validation_response</span><span class="p">,</span> <span class="n">validation_predictions_at_half</span><span class="p">,</span>
+    <span class="n">labels</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">display_labels</span><span class="o">=</span><span class="p">[</span><span class="s2">"stays"</span><span class="p">,</span> <span class="s2">"churns"</span><span class="p">],</span>
+    <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">colorbar</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s2">"Blues"</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">"Validation counts at threshold 0.5"</span><span class="p">)</span>
+<span class="n">observed</span><span class="p">,</span> <span class="n">predicted</span> <span class="o">=</span> <span class="n">calibration_curve</span><span class="p">(</span>
+    <span class="n">validation_response</span><span class="p">,</span> <span class="n">validation_probabilities</span><span class="p">,</span> <span class="n">n_bins</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span> <span class="n">strategy</span><span class="o">=</span><span class="s2">"uniform"</span>
+<span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">predicted</span><span class="p">,</span> <span class="n">observed</span><span class="p">,</span> <span class="s2">"o-"</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"Validation bins"</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="s2">"--"</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">"gray"</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"Ideal calibration"</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">xlabel</span><span class="o">=</span><span class="s2">"Mean predicted probability"</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s2">"Observed churn fraction"</span><span class="p">,</span>
+            <span class="n">xlim</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">ylim</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">title</span><span class="o">=</span><span class="s2">"Reliability diagram"</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+<span class="n">bins</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">cut</span><span class="p">(</span><span class="n">validation_probabilities</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">7</span><span class="p">),</span> <span class="n">include_lowest</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">display</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s2">"bin"</span><span class="p">:</span> <span class="n">bins</span><span class="p">,</span> <span class="s2">"probability"</span><span class="p">:</span> <span class="n">validation_probabilities</span><span class="p">,</span>
+                      <span class="s2">"outcome"</span><span class="p">:</span> <span class="n">validation_response</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()})</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">"bin"</span><span class="p">,</span> <span class="n">observed</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">agg</span><span class="p">(</span>
+    <span class="n">rows</span><span class="o">=</span><span class="p">(</span><span class="s2">"outcome"</span><span class="p">,</span> <span class="s2">"size"</span><span class="p">),</span> <span class="n">mean_probability</span><span class="o">=</span><span class="p">(</span><span class="s2">"probability"</span><span class="p">,</span> <span class="s2">"mean"</span><span class="p">),</span>
+    <span class="n">observed_fraction</span><span class="o">=</span><span class="p">(</span><span class="s2">"outcome"</span><span class="p">,</span> <span class="s2">"mean"</span><span class="p">)))</span>
+</pre></div>
+<figure class="result-figure"><img loading="lazy" src="results/02_classification-calibration-code-0.png" alt="Executed result: 6. Validation metrics before choosing a threshold"><figcaption>6. Validation metrics before choosing a threshold · captured notebook output</figcaption></figure><details class="result-text"><summary>6. Validation metrics before choosing a threshold · computed output</summary><pre>                 rows  mean_probability  observed_fraction
+bin                                                       
+(-0.001, 0.167]   167          0.081809           0.065868
+(0.167, 0.333]    112          0.239926           0.285714
+(0.333, 0.5]       45          0.399132           0.444444
+(0.5, 0.667]       24          0.579287           0.583333
+(0.667, 0.833]     11          0.729602           0.454545
+(0.833, 1.0]        1          0.899345           1.000000</pre></details></section><section class="cell" id="cell-cell-012"><p>Accuracy alone can hide failure to identify the positive class. A majority baseline can score well if non-churn is common while detecting no churners. Compare precision and recall with the actual use case.</p></section><section class="cell" id="cell-cell-013"><h2 id="section-9">7. Choose a threshold on validation, then test once</h2>
 <p>Suppose a false positive has cost $C_{FP}$ and a false negative has cost $C_{FN}$; correct decisions have zero cost. With calibrated probability $p$, predicting churn costs $C_{FP}(1-p)$ in expectation, while predicting stay costs $C_{FN}p$. Choose churn when</p>
 <p>$$C_{FP}(1-p)\le C_{FN}p\quad\Longleftrightarrow\quad p\ge\frac{C_{FP}}{C_{FP}+C_{FN}}.$$</p>
-<p>This threshold assumes the probabilities are calibrated for the decision population, costs are known and constant, and decisions have no shared capacity constraint. Here we use a toy ratio $C_{FP}=1$, $C_{FN}=5$, giving a theoretical cutoff $1/6\approx0.167$. We inspect several cutoffs on validation data to see the finite-sample tradeoff and select the lowest estimated cost. Then we freeze the threshold and evaluate the held-out test set once. The exercise's costs are for mathematics practice only.</p></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>import matplotlib.pyplot as plt
-from sklearn.metrics import RocCurveDisplay
+<p>This threshold assumes the probabilities are calibrated for the decision population, costs are known and constant, and decisions have no shared capacity constraint. Here we use a toy ratio $C_{FP}=1$, $C_{FN}=5$, giving a theoretical cutoff $1/6\approx0.167$. We inspect several cutoffs on validation data to see the finite-sample tradeoff and select the lowest estimated cost. Then we freeze the threshold and evaluate the held-out test set once. The exercise's costs are for mathematics practice only.</p></section><section class="cell" id="cell-cell-014"><div class="cell-label">Python · run in the notebook</div><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">RocCurveDisplay</span>
 
-RocCurveDisplay.from_predictions(validation_response, validation_probabilities)
-plt.title(&quot;Validation ROC curve&quot;)
-plt.show()
+<span class="n">RocCurveDisplay</span><span class="o">.</span><span class="n">from_predictions</span><span class="p">(</span><span class="n">validation_response</span><span class="p">,</span> <span class="n">validation_probabilities</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">"Validation ROC curve"</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 
-false_positive_cost = 1.0
-false_negative_cost = 5.0
-threshold_candidates = [0.10, 0.17, 0.25, 0.35, 0.50, 0.65]
-threshold_results = []
+<span class="n">false_positive_cost</span> <span class="o">=</span> <span class="mf">1.0</span>
+<span class="n">false_negative_cost</span> <span class="o">=</span> <span class="mf">5.0</span>
+<span class="n">threshold_candidates</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.10</span><span class="p">,</span> <span class="mf">0.17</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">,</span> <span class="mf">0.35</span><span class="p">,</span> <span class="mf">0.50</span><span class="p">,</span> <span class="mf">0.65</span><span class="p">]</span>
+<span class="n">threshold_results</span> <span class="o">=</span> <span class="p">[]</span>
 
-for threshold in threshold_candidates:
-    validation_decisions = (validation_probabilities &gt;= threshold).astype(int)
-    true_negative, false_positive, false_negative, true_positive = confusion_matrix(
-        validation_response, validation_decisions, labels=[0, 1]
-    ).ravel()
-    estimated_cost = (false_positive_cost * false_positive
-                      + false_negative_cost * false_negative)
-    threshold_results.append(
-        {
-            &quot;threshold&quot;: threshold,
-            &quot;flagged&quot;: int(validation_decisions.sum()),
-            &quot;false_positives&quot;: false_positive,
-            &quot;false_negatives&quot;: false_negative,
-            &quot;estimated_cost&quot;: estimated_cost,
-        }
-    )
+<span class="k">for</span> <span class="n">threshold</span> <span class="ow">in</span> <span class="n">threshold_candidates</span><span class="p">:</span>
+    <span class="n">validation_decisions</span> <span class="o">=</span> <span class="p">(</span><span class="n">validation_probabilities</span> <span class="o">&gt;=</span> <span class="n">threshold</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+    <span class="n">true_negative</span><span class="p">,</span> <span class="n">false_positive</span><span class="p">,</span> <span class="n">false_negative</span><span class="p">,</span> <span class="n">true_positive</span> <span class="o">=</span> <span class="n">confusion_matrix</span><span class="p">(</span>
+        <span class="n">validation_response</span><span class="p">,</span> <span class="n">validation_decisions</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
+    <span class="p">)</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
+    <span class="n">estimated_cost</span> <span class="o">=</span> <span class="p">(</span><span class="n">false_positive_cost</span> <span class="o">*</span> <span class="n">false_positive</span>
+                      <span class="o">+</span> <span class="n">false_negative_cost</span> <span class="o">*</span> <span class="n">false_negative</span><span class="p">)</span>
+    <span class="n">threshold_results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+        <span class="p">{</span>
+            <span class="s2">"threshold"</span><span class="p">:</span> <span class="n">threshold</span><span class="p">,</span>
+            <span class="s2">"flagged"</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">validation_decisions</span><span class="o">.</span><span class="n">sum</span><span class="p">()),</span>
+            <span class="s2">"false_positives"</span><span class="p">:</span> <span class="n">false_positive</span><span class="p">,</span>
+            <span class="s2">"false_negatives"</span><span class="p">:</span> <span class="n">false_negative</span><span class="p">,</span>
+            <span class="s2">"estimated_cost"</span><span class="p">:</span> <span class="n">estimated_cost</span><span class="p">,</span>
+        <span class="p">}</span>
+    <span class="p">)</span>
 
-validation_cost_table = pd.DataFrame(threshold_results)
-validation_cost_table</code></pre></section><section class="cell"><p>The validation table is sorted by the toy estimated cost. We select the threshold from validation and keep it fixed. The final test data will be evaluated once with that threshold.</p></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>validation_cost_table = validation_cost_table.sort_values(
-    [&quot;estimated_cost&quot;, &quot;threshold&quot;]
-)
-selected_threshold = float(validation_cost_table.iloc[0][&quot;threshold&quot;])
+<span class="n">validation_cost_table</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">threshold_results</span><span class="p">)</span>
+<span class="n">validation_cost_table</span>
+</pre></div>
+<figure class="result-figure"><img loading="lazy" src="results/02_classification-cell-014-0.png" alt="Executed result: 7. Choose a threshold on validation, then test once"><figcaption>7. Choose a threshold on validation, then test once · captured notebook output</figcaption></figure><details class="result-text"><summary>7. Choose a threshold on validation, then test once · computed output</summary><pre>   threshold  flagged  false_positives  false_negatives  estimated_cost
+0       0.10      252              174                5           199.0
+1       0.17      188              117               12           177.0
+2       0.25      127               70               26           200.0
+3       0.35       71               32               44           252.0
+4       0.50       36               16               63           331.0
+5       0.65       15                6               74           376.0</pre></details></section><section class="cell" id="cell-cell-015"><p>The validation table is sorted by the toy estimated cost. We select the threshold from validation and keep it fixed. The final test data will be evaluated once with that threshold.</p></section><section class="cell" id="cell-cell-016"><div class="cell-label">Python · run in the notebook</div><div class="highlight"><pre><span></span><span class="n">validation_cost_table</span> <span class="o">=</span> <span class="n">validation_cost_table</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span>
+    <span class="p">[</span><span class="s2">"estimated_cost"</span><span class="p">,</span> <span class="s2">"threshold"</span><span class="p">]</span>
+<span class="p">)</span>
+<span class="n">selected_threshold</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">validation_cost_table</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s2">"threshold"</span><span class="p">])</span>
 
-final_test_probabilities = best_classifier.predict_proba(final_test_features)[:, 1]
-final_test_predictions = (final_test_probabilities &gt;= selected_threshold).astype(int)
+<span class="n">final_test_probabilities</span> <span class="o">=</span> <span class="n">best_classifier</span><span class="o">.</span><span class="n">predict_proba</span><span class="p">(</span><span class="n">final_test_features</span><span class="p">)[:,</span> <span class="mi">1</span><span class="p">]</span>
+<span class="n">final_test_predictions</span> <span class="o">=</span> <span class="p">(</span><span class="n">final_test_probabilities</span> <span class="o">&gt;=</span> <span class="n">selected_threshold</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
 
-print(f&quot;Chosen validation threshold: {selected_threshold:.2f}&quot;)
-print(&quot;Final test metrics:&quot;, {
-    &quot;accuracy&quot;: round(accuracy_score(final_test_response, final_test_predictions), 3),
-    &quot;precision&quot;: round(precision_score(final_test_response, final_test_predictions, zero_division=0), 3),
-    &quot;recall&quot;: round(recall_score(final_test_response, final_test_predictions, zero_division=0), 3),
-    &quot;F1&quot;: round(f1_score(final_test_response, final_test_predictions, zero_division=0), 3),
-    &quot;ROC-AUC&quot;: round(roc_auc_score(final_test_response, final_test_probabilities), 3),
-})
-print(&quot;Final test confusion matrix [actual rows, predicted columns]:\n&quot;,
-      confusion_matrix(final_test_response, final_test_predictions))</code></pre></section><section class="cell"><h2 id="section-9">8. Coefficients as conditional log-odds associations</h2>
-<p>A coefficient changes fitted log odds by its value for a one-unit increase, or a one-standard-deviation increase for a scaled numerical feature, conditional on the other encoded inputs. Exponentiating gives a model odds ratio. Odds ratios are not risk ratios, and observational coefficients do not establish causal effects.</p></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>encoded_feature_names = best_classifier.named_steps[&quot;preprocessing&quot;].get_feature_names_out()
-log_odds_coefficients = pd.Series(
-    best_classifier.named_steps[&quot;model&quot;].coef_[0],
-    index=encoded_feature_names,
-)
-log_odds_coefficients.reindex(
-    log_odds_coefficients.abs().sort_values(ascending=False).index
-).head(10).round(3)</code></pre></section><section class="cell"><h2 id="section-10">Takeaways</h2>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Chosen validation threshold: </span><span class="si">{</span><span class="n">selected_threshold</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Final test metrics:"</span><span class="p">,</span> <span class="p">{</span>
+    <span class="s2">"accuracy"</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">accuracy_score</span><span class="p">(</span><span class="n">final_test_response</span><span class="p">,</span> <span class="n">final_test_predictions</span><span class="p">),</span> <span class="mi">3</span><span class="p">),</span>
+    <span class="s2">"precision"</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">precision_score</span><span class="p">(</span><span class="n">final_test_response</span><span class="p">,</span> <span class="n">final_test_predictions</span><span class="p">,</span> <span class="n">zero_division</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span> <span class="mi">3</span><span class="p">),</span>
+    <span class="s2">"recall"</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">recall_score</span><span class="p">(</span><span class="n">final_test_response</span><span class="p">,</span> <span class="n">final_test_predictions</span><span class="p">,</span> <span class="n">zero_division</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span> <span class="mi">3</span><span class="p">),</span>
+    <span class="s2">"F1"</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">f1_score</span><span class="p">(</span><span class="n">final_test_response</span><span class="p">,</span> <span class="n">final_test_predictions</span><span class="p">,</span> <span class="n">zero_division</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span> <span class="mi">3</span><span class="p">),</span>
+    <span class="s2">"ROC-AUC"</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">roc_auc_score</span><span class="p">(</span><span class="n">final_test_response</span><span class="p">,</span> <span class="n">final_test_probabilities</span><span class="p">),</span> <span class="mi">3</span><span class="p">),</span>
+<span class="p">})</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Final test confusion matrix [actual rows, predicted columns]:</span><span class="se">\n</span><span class="s2">"</span><span class="p">,</span>
+      <span class="n">confusion_matrix</span><span class="p">(</span><span class="n">final_test_response</span><span class="p">,</span> <span class="n">final_test_predictions</span><span class="p">))</span>
+</pre></div>
+<details class="result-text"><summary>7. Choose a threshold on validation, then test once · computed output</summary><pre>Chosen validation threshold: 0.17
+Final test metrics: {&#x27;accuracy&#x27;: 0.656, &#x27;precision&#x27;: 0.384, &#x27;recall&#x27;: 0.819, &#x27;F1&#x27;: 0.523, &#x27;ROC-AUC&#x27;: 0.772}
+Final test confusion matrix [actual rows, predicted columns]:
+ [[168 109]
+ [ 15  68]]
+</pre></details></section><section class="cell" id="cell-cell-017"><h2 id="section-10">8. Coefficients as conditional log-odds associations</h2>
+<p>A coefficient changes fitted log odds by its value for a one-unit increase, or a one-standard-deviation increase for a scaled numerical feature, conditional on the other encoded inputs. Exponentiating gives a model odds ratio. Odds ratios are not risk ratios, and observational coefficients do not establish causal effects.</p></section><section class="cell" id="cell-cell-018"><div class="cell-label">Python · run in the notebook</div><div class="highlight"><pre><span></span><span class="n">encoded_feature_names</span> <span class="o">=</span> <span class="n">best_classifier</span><span class="o">.</span><span class="n">named_steps</span><span class="p">[</span><span class="s2">"preprocessing"</span><span class="p">]</span><span class="o">.</span><span class="n">get_feature_names_out</span><span class="p">()</span>
+<span class="n">log_odds_coefficients</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span>
+    <span class="n">best_classifier</span><span class="o">.</span><span class="n">named_steps</span><span class="p">[</span><span class="s2">"model"</span><span class="p">]</span><span class="o">.</span><span class="n">coef_</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+    <span class="n">index</span><span class="o">=</span><span class="n">encoded_feature_names</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">log_odds_coefficients</span><span class="o">.</span><span class="n">reindex</span><span class="p">(</span>
+    <span class="n">log_odds_coefficients</span><span class="o">.</span><span class="n">abs</span><span class="p">()</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="n">ascending</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">index</span>
+<span class="p">)</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+</pre></div>
+<details class="result-text"><summary>8. Coefficients as conditional log-odds associations · computed output</summary><pre>category__contract_monthly     0.860
+category__contract_two_year   -0.752
+numeric__support_calls         0.602
+numeric__monthly_charge        0.598
+numeric__tenure_months        -0.559
+category__contract_annual     -0.099
+dtype: float64</pre></details></section><section class="cell" id="cell-cell-019"><h2 id="section-11">Takeaways</h2>
 <ul>
 <li>Train on one partition, select regularization with training-only cross-validation, and select a decision threshold on validation data.</li>
 <li>Evaluate the frozen model and threshold once on final test data.</li>
 <li>Report class counts, confusion matrix, and metrics relevant to the intended decision.</li>
 <li>Generated-data performance does not establish real customer outcomes or causal effects.</li>
-</ul></section></article><p><a class="button" href="02_classification-exercises.html">Next: attempt the exercises →</a></p><nav class="actions" aria-label="Study sequence"><a href="01_regression.html">← 01: Regression</a><a href="index.html#lectures">All lectures</a><a href="03_xgboost.html">03: XGBoost →</a></nav></main></div><footer>Mathematical ML · Eight practical lectures for mathematicians<br>Readable Python · Reproducible experiments · Synthetic teaching data</footer></body></html>
+</ul></section></article><p><a href="02_classification-results.html">Explore this lecture’s executed result gallery →</a></p><p><a class="button" href="02_classification-exercises.html">Next: attempt the exercises →</a></p><nav class="actions" aria-label="Study sequence"><a href="01_regression.html">← 01: Regression</a><a href="index.html#lectures">All lectures</a><a href="03_xgboost.html">03: XGBoost →</a></nav></main></div><footer>Mathematical ML · Eight practical lectures for mathematicians<br>Readable Python · Reproducible experiments · Synthetic teaching data</footer></body></html>

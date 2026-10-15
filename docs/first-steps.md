@@ -27,6 +27,10 @@ In numerical analysis, you may know the governing equation and study discretizat
 
 Cross-validation repeatedly partitions development data to estimate performance for model choices. It does not replace a final test assessment. Temporal and grouped observations need splits that respect their dependence; random row splitting is not universal.
 
+![Training, validation, and final-test roles](figures/evaluation-workflow.svg)
+
+The diagram follows lecture 02's design: internal cross-validation selects model settings; a separate validation partition selects the action rule. Fitted coefficients are parameters; settings such as regularization strength are hyperparameters. Keep the final test outside both choices.
+
 ## Know which tool does what
 
 | Library | Role | First objects to recognize |
@@ -82,7 +86,7 @@ This is a deliberately fixed, two-model demonstration with no hyperparameter sel
 5. When you change an early cell, rerun the dependent cells. Before trusting a result, choose **Kernel → Restart Kernel and Run All Cells** to check that it does not depend on stale variables.
 6. Attempt `exercises.ipynb`, writing explanations as well as code. Then consult `solutions.ipynb`.
 
-The website is a static reading view. Its code blocks do not execute Python. Your notebook runs locally, including its plots and printed results. The website's teaching figures are labeled illustrations, not automatically refreshed notebook outputs.
+The website is a static reading view. Its code blocks do not execute Python. Your notebook runs locally, including its plots and printed results. The website labels conceptual illustrations separately from computed result snapshots. Each executed-result gallery links outputs back to the source cells and records the environment used to produce them.
 
 ## Read the estimator API as mathematics
 

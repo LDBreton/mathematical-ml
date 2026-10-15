@@ -16,21 +16,24 @@ The course is stronger on mathematical qualifications and evaluation discipline 
 - Labeled the deployment threshold of 0.4 as an illustrative software-contract policy, rather than implying it carries forward validation selection.
 - Added anchored contents on notebook reading pages, an explicit static-reading notice, and lesson → exercises → solutions navigation.
 
-## Strong recommendations for the next teaching iteration
+## Follow-up implementation
 
-| Priority | Recommendation | Why it matters |
-|---|---|---|
-| High | Display final silhouette-selected cluster sizes, profiles, and a matching PCA plot | The initial k=4 picture must not stand in for a different selected fit |
-| High | Build selected result galleries from verified notebook executions | These authored concept figures complement, but do not replace, actual residual, PR, and forecast diagnostics |
-| High | Present one artifact lifecycle through training, threshold selection, saving, loading, and API parity | Several independent deployment demonstrations currently require extra explanation |
-| Medium | Add a validation-cost/alert-count threshold plot and place always-negative cost in the same comparison | Makes rare-event decisions operational rather than just metric-driven |
-| Medium | Add a calibration reliability example and labeled confusion-matrix counts | Ranking, probability quality, and policy quality are separate questions |
-| Medium | Show a count matrix, IDF vector, normalized rows, and one cosine calculation | Extend the existing strong manual-IDF example into sparse geometry |
-| Medium | Add a compact five-date forecast-feature table and more than two clustering starts | Make information availability and stability more observable |
+All eight prioritized follow-ups are now implemented:
+
+- Selected clustering sizes, original-unit and standardized centroids, PCA colors, and a discrete legend all refer to the silhouette-selected model. Ten single-start fits supplement the initialization diagnostic; two actual customer-pair distances illustrate scaling.
+- Eight result galleries and inline lesson outputs are exported from successfully executed notebooks, with source/data hashes and dependency versions. They distinguish computed results from conceptual illustrations and link each output to its source cell.
+- Deployment follows a single fitted pipeline and validation-selected threshold through saving, loading, and the API. Assertions verify probability, threshold, and decision parity. Cleanup is isolated in a documented notebook helper; MLflow tracks the same artifact without retraining. Docker is an extension.
+- Rare-event validation cost and alert-count curves explain the threshold tie rule; the always-negative policy's test cost appears in the same comparison.
+- Classification includes a validation reliability diagram, bin counts, and a labeled confusion matrix. It does not claim to recalibrate the model.
+- Text includes count/IDF/normalized-matrix displays, cosine similarity, sibling-template rows, and new-message/all-unseen-token probes.
+- Forecasting includes a five-date feature table and a perturbation check covering the contemporaneous target as well as the future. The long expanding-window function is moved to a documented helper while preserving development-only evaluation.
+- Small numerical Ridge and split-gain calculations, objective-matched mean/median baselines, a data-role diagram, and build-time syntax highlighting improve the mathematical and software bridges.
+
+The finite random-start check remains an initialization diagnostic, not a claim about stability under new data. Result snapshots document one successful run rather than promising byte-identical figures across platforms.
 
 ## What to shorten or remove
 
-Keep the present eight-topic scope before adding deep learning or further libraries. Use lecture READMEs primarily for orientation and deliverables rather than repeating notebook theory. Consolidate repeated qualifications into concise limits sections while preserving substantive assumptions. Move environment restoration and cleanup machinery in deployment into clearly labeled setup helpers or an appendix in a future refactor. Treat MLflow and Docker as extensions for first-time learners.
+Keep the present eight-topic scope before adding deep learning or further libraries. Use lecture READMEs primarily for orientation and deliverables rather than repeating notebook theory. Consolidate repeated qualifications into concise limits sections while preserving substantive assumptions. Move environment restoration and cleanup machinery in deployment into clearly labeled setup helpers or an appendix in the optional extension. Treat MLflow and Docker as extensions for first-time learners.
 
 ## Strengths to preserve
 

@@ -10,6 +10,7 @@ from pydantic import ValidationError
 from course_ml import app as api
 from course_ml.app import ChurnInput
 from course_ml.train import FEATURES, train_model
+from course_ml.teaching import local_prediction_client
 
 
 def _dataset(path, rows: int = 80) -> pd.DataFrame:
@@ -45,6 +46,23 @@ def trained(tmp_path):
     _dataset(data_path)
     metadata = train_model(data_path, artifact_path, threshold=0.42)
     return data_path, artifact_path, metadata
+
+
+@pytest.mark.parametrize("previous", [None, "previous-artifact.joblib"])
+def test_teaching_client_restores_environment_on_error(trained, monkeypatch, previous):
+    import os
+
+    _, artifact_path, _ = trained
+    if previous is None:
+        monkeypatch.delenv("MODEL_PATH", raising=False)
+    else:
+        monkeypatch.setenv("MODEL_PATH", previous)
+    with pytest.raises(RuntimeError, match="demonstration interrupted"):
+        with local_prediction_client(artifact_path) as client:
+            assert client.get("/health").status_code == 200
+            raise RuntimeError("demonstration interrupted")
+    assert os.environ.get("MODEL_PATH") == previous
+    assert api._load_artifact.cache_info().currsize == 0
 
 
 def test_training_artifact_roundtrip_has_schema_metrics_and_same_predictions(trained):
