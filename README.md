@@ -40,7 +40,7 @@ python scripts/build_site.py
 python -m http.server 8000 --bind 127.0.0.1
 ```
 
-Open **http://127.0.0.1:8000/site/**. The navigator includes rendered theory and code, lecture instructions, and notebook downloads. Math rendering uses MathJax from a CDN when online; the local notebooks remain the offline mathematics reference. Press Ctrl+C to stop the server. The generated website can be hosted through GitHub Pages using the included manual workflow.
+Open **http://127.0.0.1:8000/site/**. The navigator includes rendered theory and code, lecture instructions, and notebook downloads. Math rendering uses MathJax from a CDN when online; the local notebooks remain the offline mathematics reference. Press Ctrl+C to stop the server. The generated website can be hosted through GitHub Pages using the included GitHub Actions workflow.
 
 ## Verify the course
 
@@ -67,4 +67,18 @@ Finish with the [course project](docs/course-project.md), which asks you to just
 
 This folder is a GitHub-ready source repository. To publish, create an empty GitHub repository, add its remote, and push the local branch. No remote is created or uploaded automatically.
 
-For GitHub Pages, select **GitHub Actions** as the Pages source in repository settings, then manually run **Publish course navigator** under Actions. The workflow builds the `site/` directory and publishes it. The verification workflow runs tests and all notebooks on pushes and pull requests. Select a code/content license before distributing the course publicly.
+For GitHub Pages, select **GitHub Actions** as the Pages source in repository settings, then push to `main` or manually run **Publish course navigator** under Actions. The workflow builds the `site/` directory and publishes it. The verification workflow runs tests and all notebooks on pushes and pull requests. Select a code/content license before distributing the course publicly.
+
+### Your github.io address
+
+A project repository named `mathematical-ml` under `LDBreton` would publish at
+`https://ldbreton.github.io/mathematical-ml/`. This is an example address, not an existing deployment.
+The site uses relative links, so it works under a repository subpath without configuration changes.
+
+1. Create an empty GitHub repository in the intended account.
+2. Add that repository as `origin` and push `main`.
+3. In **Settings → Pages → Build and deployment**, choose **GitHub Actions**.
+4. Run **Publish course navigator** under **Actions** if the initial push happened before Pages was enabled.
+5. Open the URL reported by the completed deployment. Later pushes to `main` update the website.
+
+GitHub Pages serves the course documentation and downloads. Run notebooks and the lecture 08 Python API locally; Pages does not run Python servers.

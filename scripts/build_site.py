@@ -19,10 +19,9 @@ LECTURES = [
     ("07_time_series", "07", "Time-series forecasting", "Lagged information and rolling-origin prediction"),
     ("08_deployment", "08", "From model to service", "Reproducible training and validated inference"),
 ]
-CSS = '''
-:root{--paper:#f5f2e9;--ink:#182d32;--teal:#16675f;--line:#d5d9cc;--muted:#536667}
-*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:17px/1.7 system-ui,sans-serif}a{color:var(--teal);text-underline-offset:4px}header{border-bottom:1px solid var(--line);padding:20px 5%;display:flex;gap:25px;justify-content:space-between}header a{text-decoration:none;font-weight:650}nav{display:flex;gap:22px;flex-wrap:wrap}main{max-width:1120px;margin:auto;padding:50px 28px}h1,h2,h3{line-height:1.18}h1{font-family:Georgia,serif;font-weight:400;font-size:clamp(40px,6vw,72px);max-width:850px;margin:20px 0}h2{font-size:28px;margin-top:40px}.eyebrow{text-transform:uppercase;letter-spacing:.16em;font-size:12px;color:var(--teal);font-weight:700}.intro{font-size:21px;max-width:760px;color:var(--muted)}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:20px;margin-top:40px}.card{border:1px solid var(--line);background:#fffdf7;padding:28px;border-radius:4px}.number{font:italic 38px Georgia;color:var(--teal)}.card h2{margin:8px 0 14px}.card p{color:var(--muted)}.actions{display:flex;gap:20px;flex-wrap:wrap}.button{display:inline-block;padding:10px 18px;background:var(--teal);color:white;text-decoration:none;border-radius:3px}.note{padding:22px;border-left:4px solid var(--teal);background:#e7ece2;margin:30px 0}.reading{max-width:850px}pre{background:#152c32;color:#eaf2ee;padding:22px;overflow-x:auto;border-radius:4px;font-size:14px;line-height:1.6}code{font-family:Consolas,monospace}p code,li code{background:#e5e9df;padding:2px 5px}table{border-collapse:collapse;width:100%;display:block;overflow:auto}td,th{border-bottom:1px solid var(--line);padding:10px;text-align:left}.cell{margin:30px 0}.cell-label{font-size:12px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted)}footer{max-width:1120px;margin:auto;padding:30px;border-top:1px solid var(--line);color:var(--muted);font-size:14px}.search{width:100%;max-width:520px;padding:13px;border:1px solid var(--line);font:inherit;background:#fffdf7}.skip{position:absolute;left:-9999px}.skip:focus{left:20px;top:10px;background:white;padding:10px}[hidden]{display:none!important}@media(max-width:680px){.grid{grid-template-columns:1fr}header{flex-direction:column}main{padding:30px 20px}}
-'''
+CSS = (ROOT / "scripts/site.css").read_text(encoding="utf-8")
+SCRIPT = (ROOT / "scripts/site.js").read_text(encoding="utf-8")
+
 
 
 def render_markdown(source: str) -> str:
@@ -39,7 +38,15 @@ def render_markdown(source: str) -> str:
 
 
 def page(title: str, body: str) -> str:
-    return '''<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>''' + html.escape(title) + ''' · Mathematical ML</title><link rel="stylesheet" href="style.css"><script>window.MathJax={tex:{inlineMath:[['$','$'],['\\\\(','\\\\)']]}};</script><script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script></head><body><a class="skip" href="#main">Skip to content</a><header><a href="index.html">∑ Mathematical ML</a><nav aria-label="Course"><a href="index.html#lectures">Lectures</a><a href="setup.html">Getting started</a><a href="datasets.html">Datasets</a><a href="instructor.html">Teaching guide</a></nav></header><main id="main">''' + body + '''</main><footer>Eight practical lectures for mathematicians · Local, reproducible, CPU-friendly · Synthetic teaching data</footer></body></html>'''
+    navigation = '<a href="index.html">Course overview</a><h3>Start here</h3><a href="setup.html">Installation &amp; first steps</a>'
+    navigation += '<h3>The lectures</h3>'
+    for folder, number, name, _ in LECTURES:
+        navigation += f'<details><summary><a href="{folder}.html">{number} · {name}</a></summary>'
+        for kind in ["lesson", "exercises", "solutions"]:
+            navigation += f'<a class="sub" href="{folder}-{kind}.html">{kind.title()}</a>'
+        navigation += '</details>'
+    navigation += '<h3>Resources</h3><a href="datasets.html">Datasets</a><a href="course-project.html">Course project</a><a href="instructor.html">Teaching guide</a><a href="verification.html">Verification</a>'
+    return f'''<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Eight guided machine learning lectures for mathematicians: theory, readable Python, exercises and worked solutions."><title>{html.escape(title)} · Mathematical ML</title><link rel="stylesheet" href="style.css"><script defer src="site.js"></script><script>window.MathJax={{tex:{{inlineMath:[['$','$'],['\\\\(','\\\\)']]}}}};</script><script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script></head><body><a class="skip" href="#main">Skip to content</a><header><button class="menu" aria-controls="sidebar" aria-expanded="false" aria-label="Toggle course navigation">☰</button><a class="brand" href="index.html">∑ <span>Mathematical ML</span></a><nav aria-label="Quick links"><a href="setup.html">Get started</a><a href="index.html#lectures">Lectures</a><button id="theme" aria-label="Switch color theme">◐</button></nav></header><div class="layout"><aside id="sidebar" aria-label="Course navigation">{navigation}</aside><main id="main">{body}</main></div><footer>Mathematical ML · Eight practical lectures for mathematicians<br>Readable Python · Reproducible experiments · Synthetic teaching data</footer></body></html>'''
 
 
 def rewrite_links(body: str, folder: str | None = None) -> str:
@@ -78,6 +85,7 @@ def lecture_navigation(folder: str) -> str:
 def build() -> None:
     SITE.mkdir(exist_ok=True)
     (SITE / "style.css").write_text(CSS, encoding="utf-8")
+    (SITE / "site.js").write_text(SCRIPT, encoding="utf-8")
     cards = []
     for folder, number, title, description in LECTURES:
         source = ROOT / "lectures" / folder
@@ -109,26 +117,28 @@ def build() -> None:
         cards.append(f'<article class="card" data-search="{html.escape((title+description).lower())}"><div class="number">{number}</div><h2>{title}</h2><p>{description}</p><a href="{folder}.html">Open lecture →</a></article>')
     route = " → ".join(number for _, number, _, _ in LECTURES)
     body = """
-<div class="eyebrow">A hands-on course / Python + mathematics</div>
-<h1>From mathematical models<br>to machine learning.</h1>
-<p class="intro">Understand the objective. Read the implementation. Test the assumptions.
-Eight guided lectures connect familiar mathematics to a working prediction service.</p>
-<div class="actions">
-  <a class="button" href="setup.html">Set up your environment</a>
-  <a href="01_regression.html">Begin with regression →</a>
-</div>
-<div class="note"><strong>Your route: ROUTE.</strong>
-Each lecture includes theory, runnable Python, exercises, and worked solutions.
-Start with basic Python, linear algebra, calculus, and probability. No GPU or service account required.</div>
+<section class="hero">
+<div class="eyebrow">Mathematical ML · A practical course in Python</div>
+<h1>Machine learning.<br><span>From equations to decisions.</span></h1>
+<p class="intro">Turn linear algebra, probability, and optimization into working models.
+Follow each mathematical idea into readable Python, test it on data, and understand what the result actually means.</p>
+<div class="actions"><a class="button" href="01_regression.html">Start learning →</a><a class="button secondary" href="setup.html">Set up Python</a><a class="button secondary" href="downloads/course.zip" download>Download the course</a></div>
+<p class="meta">8 lectures &nbsp; · &nbsp; 24 notebooks &nbsp; · &nbsp; 7 datasets &nbsp; · &nbsp; CPU-friendly</p>
+</section>
+<section class="roadmap" aria-label="Learning roadmap">
+<div class="eyebrow">An idea becomes an experiment</div><h2>Follow the mathematics into code.</h2>
+<div class="stages"><div><span>01 / FORMULATE</span><strong>Choose an objective</strong><code>minimize empirical risk</code><p>Projection, likelihood,<br>regularization.</p></div><b aria-hidden="true">→</b><div><span>02 / LEARN</span><strong>Fit a model</strong><code>pipeline.fit(X, y)</code><p>Linear models, trees,<br>text, and clusters.</p></div><b aria-hidden="true">→</b><div><span>03 / QUESTION</span><strong>Test the assumptions</strong><code>evaluate on held-out data</code><p>Leakage, uncertainty,<br>costs, and drift.</p></div></div>
+<p class="caption">A conceptual roadmap. Each lecture makes the objective, implementation, and evaluation explicit.</p></section>
+<section class="orientation"><h2>A course built for mathematical minds</h2><p>You already know how to reason about an equation. Here you learn how to turn that reasoning into a reliable experiment.</p><div class="features"><div><h3>Understand the model</h3><p>Derive the objective and connect its assumptions to the quantities the code computes.</p></div><div><h3>Work through the details</h3><p>Run a guided notebook, change the experiment, then compare your work with explained solutions.</p></div><div><h3>Make a defensible decision</h3><p>Compare baselines, select metrics, and distinguish a good score from a useful model.</p></div></div></section>
 <h2 id="lectures">Explore the lectures</h2>
 <label for="search">Filter by topic</label><br>
 <input class="search" id="search" type="search" placeholder="Try likelihood, trees, or service">
 <div class="grid">CARDS</div>
 <p id="empty" hidden>No matching lectures. Try a broader term.</p>
-<h2>Make the assumptions explicit</h2>
+<section class="finish"><div class="eyebrow">Put it together</div><h2>One project. A complete learning workflow.</h2>
 <p class="intro">The datasets come from documented equations. Compare what the model learns
 with the mechanism that generated the observations—and explain where your conclusions stop.</p>
-<a href="course-project.html">Finish with the course project →</a>
+<a class="button" href="course-project.html">Explore the course project →</a></section><div class="note"><strong>Before you begin.</strong> Bring basic Python, linear algebra, calculus, and probability. Start at lecture 01 and work through 08. No GPU or service account is required. <a href="instructor.html">Teaching this course?</a></div>
 <script>
 document.querySelector('#search').addEventListener('input', event => {
   const query = event.target.value.toLowerCase().trim();
