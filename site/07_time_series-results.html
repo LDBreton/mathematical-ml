@@ -13,37 +13,35 @@
 1  2023-01-29 2023-01-30 2023-01-23  1128.91   929.07    1019.008571   962.44
 2  2023-01-30 2023-01-31 2023-01-24   962.44   832.95    1023.775714   997.18
 3  2023-01-31 2023-02-01 2023-01-25   997.18  1031.74    1047.237143   857.27
-4  2023-02-01 2023-02-02 2023-01-26   857.27  1062.29    1022.312857   927.99</pre></details><a class="result-source" href="07_time_series-lesson.html#cell-forecast-five-rows-code">Source cell and explanation →</a></section><section class="gallery-result"><details class="result-text"><summary>4. Generate features without looking forward · computed output</summary><pre>Feature boundary checks passed: 2023-01-29
-</pre></details><a class="result-source" href="07_time_series-lesson.html#cell-cell-008">Source cell and explanation →</a></section><section class="gallery-result"><details class="result-text"><summary>4. Generate features without looking forward · computed output</summary><pre>Changing the target at the forecast date and all future targets leaves its predictors unchanged.
-</pre></details><a class="result-source" href="07_time_series-lesson.html#cell-cell-010">Source cell and explanation →</a></section><section class="gallery-result"><details class="result-text"><summary>5. Chronological train, validation, and test boundaries · computed output</summary><pre>    partition  rows  first_date   last_date
+4  2023-02-01 2023-02-02 2023-01-26   857.27  1062.29    1022.312857   927.99</pre></details><a class="result-source" href="07_time_series-lesson.html#cell-forecast-five-rows-code">Source cell and explanation →</a></section><section class="gallery-result"><details class="result-text"><summary>4. Generate features without looking forward · computed output</summary><pre>Feature boundary checks passed: 2023-01-29</pre></details><a class="result-source" href="07_time_series-lesson.html#cell-cell-008">Source cell and explanation →</a></section><section class="gallery-result"><details class="result-text"><summary>4. Generate features without looking forward · computed output</summary><pre>Changing the target at the forecast date and all future targets leaves its predictors unchanged.</pre></details><a class="result-source" href="07_time_series-lesson.html#cell-cell-010">Source cell and explanation →</a></section><section class="gallery-result"><details class="result-text"><summary>5. Chronological train, validation, and test boundaries · computed output</summary><pre>    partition  rows  first_date   last_date
 0       train   680  2023-01-29  2024-12-08
 1  validation   146  2024-12-09  2025-05-03
 2        test   146  2025-05-04  2025-09-26</pre></details><a class="result-source" href="07_time_series-lesson.html#cell-cell-012">Source cell and explanation →</a></section><section class="gallery-result"><details class="result-text"><summary>6. Expanding-window development backtest · computed output</summary><pre>   fold fit_through validation_through evaluation_start evaluation_end  \
-0     1  2024-01-13         2024-03-23       2024-03-24     2024-06-01   
-1     2  2024-03-23         2024-06-01       2024-06-02     2024-08-10   
-2     3  2024-06-01         2024-08-10       2024-08-11     2024-10-19   
-3     4  2024-08-10         2024-10-19       2024-10-20     2024-12-28   
-4     5  2024-10-19         2024-12-28       2024-12-29     2025-03-08   
+0     1  2024-01-13         2024-03-23       2024-03-24     2024-06-01
+1     2  2024-03-23         2024-06-01       2024-06-02     2024-08-10
+2     3  2024-06-01         2024-08-10       2024-08-11     2024-10-19
+3     4  2024-08-10         2024-10-19       2024-10-20     2024-12-28
+4     5  2024-10-19         2024-12-28       2024-12-29     2025-03-08
 
    selected_rounds        MAE       RMSE  seasonal_naive_MAE  \
-0               85  78.340047  93.297652           71.788429   
-1               68  77.203933  92.319095           75.685429   
-2              163  59.924720  73.510938           71.940286   
-3               61  61.097561  77.437779           85.038000   
-4              129  44.793420  57.371597           58.131143   
+0               85  78.340047  93.297652           71.788429
+1               68  77.203933  92.319095           75.685429
+2              163  59.924720  73.510938           71.940286
+3               61  61.097561  77.437779           85.038000
+4              129  44.793420  57.371597           58.131143
 
-   seasonal_naive_RMSE  
-0            86.434215  
-1            88.781853  
-2            90.732181  
-3           110.121673  
-4            73.936372  </pre></details><a class="result-source" href="07_time_series-lesson.html#cell-cell-015">Source cell and explanation →</a></section><section class="gallery-result"><details class="result-text"><summary>7. Choose model complexity on validation only · computed output</summary><pre>128</pre></details><a class="result-source" href="07_time_series-lesson.html#cell-cell-018">Source cell and explanation →</a></section><section class="gallery-result"><details class="result-text"><summary>8. Rolling one-step test evaluation · computed output</summary><pre>                      MAE      RMSE  MAE improvement vs naive  \
-seasonal naive  61.941575  78.95166                  0.000000   
-XGBoost         65.324087  79.41873                 -3.382512   
+   seasonal_naive_RMSE
+0            86.434215
+1            88.781853
+2            90.732181
+3           110.121673
+4            73.936372</pre></details><a class="result-source" href="07_time_series-lesson.html#cell-cell-015">Source cell and explanation →</a></section><section class="gallery-result"><details class="result-text"><summary>7. Choose model complexity on validation only · computed output</summary><pre>128</pre></details><a class="result-source" href="07_time_series-lesson.html#cell-cell-018">Source cell and explanation →</a></section><section class="gallery-result"><details class="result-text"><summary>8. Rolling one-step test evaluation · computed output</summary><pre>                      MAE      RMSE  MAE improvement vs naive  \
+seasonal naive  61.941575  78.95166                  0.000000
+XGBoost         65.324087  79.41873                 -3.382512
 
-                RMSE improvement vs naive  
-seasonal naive                    0.00000  
-XGBoost                          -0.46707  </pre></details><a class="result-source" href="07_time_series-lesson.html#cell-cell-020">Source cell and explanation →</a></section><details class="contents"><summary>Execution environment and provenance</summary><pre>{
+                RMSE improvement vs naive
+seasonal naive                    0.00000
+XGBoost                          -0.46707</pre></details><a class="result-source" href="07_time_series-lesson.html#cell-cell-020">Source cell and explanation →</a></section><details class="contents"><summary>Execution environment and provenance</summary><pre>{
   &quot;python&quot;: &quot;3.12.10&quot;,
   &quot;numpy&quot;: &quot;2.5.4&quot;,
   &quot;pandas&quot;: &quot;2.3.3&quot;,

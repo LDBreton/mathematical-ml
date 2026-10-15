@@ -31,8 +31,7 @@
 <span class="nb">print</span><span class="p">(</span><span class="s2">"Rows:"</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">))</span>
 <span class="n">display</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span>
 </pre></div>
-<details class="result-text"><summary>1. What crosses the boundary? · computed output</summary><pre>Rows: 1800
-</pre></details><details class="result-text"><summary>1. What crosses the boundary? · computed output</summary><pre>   tenure_months  monthly_charge  support_calls contract  churn
+<details class="result-text"><summary>1. What crosses the boundary? · computed output</summary><pre>Rows: 1800</pre></details><details class="result-text"><summary>1. What crosses the boundary? · computed output</summary><pre>   tenure_months  monthly_charge  support_calls contract  churn
 0             10         86.0045              0   annual      0
 1             48         63.7697              1  monthly      0
 2             42        129.0949              1   annual      0</pre></details></section><section class="cell" id="cell-deployment-04"><h2 id="section-2">2. Fit once, choose a policy on validation</h2>
@@ -67,8 +66,7 @@
 <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 </pre></div>
-<details class="result-text"><summary>2. Fit once, choose a policy on validation · computed output</summary><pre>Validation-selected threshold: 0.25
-</pre></details><details class="result-text"><summary>2. Fit once, choose a policy on validation · computed output</summary><pre>    threshold   cost  alerts
+<details class="result-text"><summary>2. Fit once, choose a policy on validation · computed output</summary><pre>Validation-selected threshold: 0.25</pre></details><details class="result-text"><summary>2. Fit once, choose a policy on validation · computed output</summary><pre>    threshold   cost  alerts
 0        0.05  180.0     236
 1        0.10  160.0     198
 2        0.15  147.0     173
@@ -110,8 +108,7 @@
 <span class="nb">print</span><span class="p">(</span><span class="s2">"Saved:"</span><span class="p">,</span> <span class="n">artifact_path</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
 <span class="n">display</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">metrics</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">"Final test metrics"</span><span class="p">))</span>
 </pre></div>
-<details class="result-text"><summary>3. Assess the frozen pipeline and save the same policy · computed output</summary><pre>Saved: churn-181f14b661a6455bb253cd5a3d2eb346.joblib
-</pre></details><details class="result-text"><summary>3. Assess the frozen pipeline and save the same policy · computed output</summary><pre>roc_auc        0.764312
+<details class="result-text"><summary>3. Assess the frozen pipeline and save the same policy · computed output</summary><pre>Saved: churn-181f14b661a6455bb253cd5a3d2eb346.joblib</pre></details><details class="result-text"><summary>3. Assess the frozen pipeline and save the same policy · computed output</summary><pre>roc_auc        0.764312
 precision      0.464286
 recall         0.625000
 cost         270.000000
@@ -127,8 +124,7 @@ Name: Final test metrics, dtype: float64</pre></details></section><section class
        <span class="s2">"threshold"</span><span class="p">:</span> <span class="n">loaded</span><span class="p">[</span><span class="s2">"metadata"</span><span class="p">][</span><span class="s2">"threshold"</span><span class="p">],</span>
        <span class="s2">"decision"</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">after_loading</span> <span class="o">&gt;=</span> <span class="n">loaded</span><span class="p">[</span><span class="s2">"metadata"</span><span class="p">][</span><span class="s2">"threshold"</span><span class="p">])})</span>
 </pre></div>
-<details class="result-text"><summary>4. A successful prediction before and after saving · computed output</summary><pre>{&#x27;before_saving&#x27;: 0.7378078852870725, &#x27;after_loading&#x27;: 0.7378078852870725, &#x27;threshold&#x27;: 0.25, &#x27;decision&#x27;: 1}
-</pre></details></section><section class="cell" id="cell-deployment-10"><h2 id="section-5">5. Send the same customer to the API</h2>
+<details class="result-text"><summary>4. A successful prediction before and after saving · computed output</summary><pre>{&#x27;before_saving&#x27;: 0.7378078852870725, &#x27;after_loading&#x27;: 0.7378078852870725, &#x27;threshold&#x27;: 0.25, &#x27;decision&#x27;: 1}</pre></details></section><section class="cell" id="cell-deployment-10"><h2 id="section-5">5. Send the same customer to the API</h2>
 <p>The helper below points a local test client at our saved artifact. <code>client.post</code> sends the record to the actual FastAPI endpoint in this process. <code>.json()</code> decodes the response. The assertions verify probability, threshold, and decision parity across all three paths. The helper's environment restoration is explained in the appendix.</p></section><section class="cell" id="cell-deployment-11"><div class="cell-label">Python · run in the notebook</div><div class="highlight"><pre><span></span><span class="k">with</span> <span class="n">local_prediction_client</span><span class="p">(</span><span class="n">artifact_path</span><span class="p">)</span> <span class="k">as</span> <span class="n">client</span><span class="p">:</span>
     <span class="n">response</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">"/predict"</span><span class="p">,</span> <span class="n">json</span><span class="o">=</span><span class="n">customer</span><span class="p">)</span>
     <span class="k">assert</span> <span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">200</span>
@@ -146,8 +142,7 @@ Name: Final test metrics, dtype: float64</pre></details></section><section class
   &quot;threshold&quot;: 0.25,
   &quot;prediction&quot;: 1
 }
-Parity verified: before saving = after loading = API probability.
-</pre></details></section><section class="cell" id="cell-deployment-12"><h2 id="section-6">6. Reject an invalid request</h2>
+Parity verified: before saving = after loading = API probability.</pre></details></section><section class="cell" id="cell-deployment-12"><h2 id="section-6">6. Reject an invalid request</h2>
 <p>A contract value of <code>quarterly</code> is outside the documented schema. The API rejects this input before scoring it. A working statistical model and a working request contract are separate obligations.</p></section><section class="cell" id="cell-deployment-13"><div class="cell-label">Python · run in the notebook</div><div class="highlight"><pre><span></span><span class="k">with</span> <span class="n">local_prediction_client</span><span class="p">(</span><span class="n">artifact_path</span><span class="p">)</span> <span class="k">as</span> <span class="n">client</span><span class="p">:</span>
     <span class="n">invalid</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">"/predict"</span><span class="p">,</span> <span class="n">json</span><span class="o">=</span><span class="p">{</span><span class="o">**</span><span class="n">customer</span><span class="p">,</span> <span class="s2">"contract"</span><span class="p">:</span> <span class="s2">"quarterly"</span><span class="p">})</span>
 <span class="k">assert</span> <span class="n">invalid</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">422</span>
@@ -170,8 +165,7 @@ Parity verified: before saving = after loading = API probability.
       }
     }
   ]
-}
-</pre></details></section><section class="cell" id="cell-deployment-14"><h2 id="section-7">7. Inspect the contract you will hand off</h2>
+}</pre></details></section><section class="cell" id="cell-deployment-14"><h2 id="section-7">7. Inspect the contract you will hand off</h2>
 <p>The artifact on disk is loaded into memory by a process. Changing a file is not the same as retraining; a long-running process may cache the old model and require a controlled reload. Input drift can invalidate statistical assumptions even while every HTTP request succeeds. API correctness does not guarantee calibration or real-world usefulness.</p>
 <p>The synthetic-data example is a local teaching service. Authentication, TLS, rate limits, privacy controls, and operational monitoring are not implemented. Use fictional records and keep the service local.</p></section><section class="cell" id="cell-deployment-15"><div class="cell-label">Python · run in the notebook</div><div class="highlight"><pre><span></span><span class="n">display</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">loaded</span><span class="p">[</span><span class="s2">"metadata"</span><span class="p">]))</span>
 <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
@@ -213,8 +207,7 @@ dtype: object</pre></details><figure class="result-figure"><img loading="lazy" s
 <span class="n">tracking_client</span><span class="o">.</span><span class="n">set_terminated</span><span class="p">(</span><span class="n">run_id</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="s2">"Tracked the same saved artifact in run:"</span><span class="p">,</span> <span class="n">run_id</span><span class="p">)</span>
 </pre></div>
-<details class="result-text"><summary>Optional extension: track this exact artifact with MLflow · computed output</summary><pre>Tracked the same saved artifact in run: 4c655f02312e4e7aa20de9c884684f40
-</pre></details></section><section class="cell" id="cell-deployment-18"><h2 id="section-9">Optional extension: a separate server process and Docker</h2>
+<details class="result-text"><summary>Optional extension: track this exact artifact with MLflow · computed output</summary><pre>Tracked the same saved artifact in run: 4c655f02312e4e7aa20de9c884684f40</pre></details></section><section class="cell" id="cell-deployment-18"><h2 id="section-9">Optional extension: a separate server process and Docker</h2>
 <p>The README gives commands for starting Uvicorn and building the Docker image. The command-line trainer there produces its own independently trained artifact with its documented default threshold; it does not automatically use the notebook artifact. To serve this notebook's policy, set <code>MODEL_PATH</code> to the saved path printed above before starting <code>python -m uvicorn course_ml.app:app --host 127.0.0.1 --port 8001</code>. Do not confuse that process with the website server on port 8000.</p>
 <h2 id="section-10">Appendix: what the helper hides</h2>
 <p><code>course_ml.teaching.local_prediction_client</code> temporarily sets <code>MODEL_PATH</code>, clears the API's artifact cache, opens <code>TestClient</code>, then restores environment and cache in a <code>finally</code> block. It is for sequential notebook demonstrations, not concurrent server routing. Inspect <code>src/course_ml/teaching.py</code> after you understand the core workflow. Artifact files remain under ignored <code>.verification/deployment-core</code> so you can inspect them. Only remove them after closing processes that use them.</p>

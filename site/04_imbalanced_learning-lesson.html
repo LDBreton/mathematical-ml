@@ -62,8 +62,7 @@
     <span class="k">return</span> <span class="n">c_fn</span> <span class="o">*</span> <span class="n">false_negative</span> <span class="o">+</span> <span class="n">c_fp</span> <span class="o">*</span> <span class="n">false_positive</span>
 </pre></div>
 <details class="result-text"><summary>1. Why accuracy can mislead · computed output</summary><pre>rows=5000, positives=217, prevalence=4.340%
-sizes: 3000 1000 1000
-</pre></details></section><section class="cell" id="cell-cell-003"><h2 id="section-3">2. Logistic risk and class weights</h2>
+sizes: 3000 1000 1000</pre></details></section><section class="cell" id="cell-cell-003"><h2 id="section-3">2. Logistic risk and class weights</h2>
 <p>For $p=\sigma(\eta)$ and $\eta=x^T\beta$, Bernoulli negative log likelihood is $\ell=\log(1+e^\eta)-y\eta$. Its gradient is $(p-y)x$; Hessian is $p(1-p)xx^T\succeq0$. An L2 penalty adds curvature and shrinks slopes.</p>
 <p>Weighting multiplies loss by $w_y$. Under ideal constant class weights, the weighted optimum satisfies $q/(1-q)=(w_1/w_0)p/(1-p)$, so weighting shifts posterior odds and probability scale. It may also change finite-sample ranking, but it does not guarantee calibrated natural probabilities.</p></section><section class="cell" id="cell-cell-004"><h2 id="section-4">2a. Why class weights shift the posterior</h2>
 <p>At fixed features $x$, let the natural positive probability be $p$. The conditional weighted Bernoulli risk for a proposed probability $q$ is $R(q|x)=-w_1p\log q-w_0(1-p)\log(1-q)$. Its derivative is $-w_1p/q+w_0(1-p)/(1-q)$. Setting this to zero gives $q/(1-q)=(w_1/w_0)p/(1-p)$. Thus weighting shifts odds even with an ideal learner; fitted weighted probabilities should not automatically be read as natural risk.</p></section><section class="cell" id="cell-cell-005"><div class="cell-label">Python · run in the notebook</div><div class="highlight"><pre><span></span><span class="n">negative</span><span class="p">,</span> <span class="n">positive</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">bincount</span><span class="p">(</span><span class="n">y_train</span><span class="p">,</span> <span class="n">minlength</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
@@ -112,7 +111,7 @@ sizes: 3000 1000 1000
 <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">rows</span><span class="p">)</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s2">"model"</span><span class="p">)</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span>
 </pre></div>
 <details class="result-text"><summary>2a. Why class weights shift the posterior · computed output</summary><pre>                         AP  trapezoid_PR_area  ROC_AUC   Brier
-model                                                          
+model
 Logistic unweighted  0.0924             0.0838   0.6410  0.0406
 Logistic balanced    0.0910             0.0838   0.6503  0.2199
 XGBoost weighted     0.0618             0.0590   0.6164  0.1349</pre></details></section><section class="cell" id="cell-cell-006"><h2 id="section-5">3. PR and ROC metrics</h2>
@@ -225,16 +224,16 @@ always negative     0.957     0.0       0                43</pre></details></sec
 <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">rows</span><span class="p">)</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s2">"model"</span><span class="p">)</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span>
 </pre></div>
 <details class="result-text"><summary>4. Validation cost and final test · computed output</summary><pre>                     threshold  TP   FP  FN   TN  precision  recall      AP  \
-model                                                                         
-Logistic unweighted      0.030  29  558  14  399     0.0494  0.6744  0.0813   
-Logistic balanced        0.410  28  518  15  439     0.0513  0.6512  0.0822   
-XGBoost weighted         0.335  19  344  24  613     0.0523  0.4419  0.0703   
-Always negative            NaN   0    0  43  957     0.0000  0.0000     NaN   
+model
+Logistic unweighted      0.030  29  558  14  399     0.0494  0.6744  0.0813
+Logistic balanced        0.410  28  518  15  439     0.0513  0.6512  0.0822
+XGBoost weighted         0.335  19  344  24  613     0.0523  0.4419  0.0703
+Always negative            NaN   0    0  43  957     0.0000  0.0000     NaN
 
-                     ROC_AUC   cost  test_alert_rate  
-model                                                 
-Logistic unweighted   0.5944  838.0            0.587  
-Logistic balanced     0.5973  818.0            0.546  
-XGBoost weighted      0.5371  824.0            0.363  
-Always negative          NaN  860.0            0.000  </pre></details></section><section class="cell" id="cell-cell-014"><h2 id="section-10">Limits</h2>
+                     ROC_AUC   cost  test_alert_rate
+model
+Logistic unweighted   0.5944  838.0            0.587
+Logistic balanced     0.5973  818.0            0.546
+XGBoost weighted      0.5371  824.0            0.363
+Always negative          NaN  860.0            0.000</pre></details></section><section class="cell" id="cell-cell-014"><h2 id="section-10">Limits</h2>
 <p>Threshold search can overfit validation. Weighted outputs need not be calibrated to natural prevalence. No resampling is performed, and splitting precedes all fitting. This controlled synthetic data cannot support operational claims.</p></section></article><p><a href="04_imbalanced_learning-results.html">Explore this lecture’s executed result gallery →</a></p><p><a class="button" href="04_imbalanced_learning-exercises.html">Next: attempt the exercises →</a></p><nav class="actions" aria-label="Study sequence"><a href="03_xgboost.html">← 03: XGBoost</a><a href="index.html#lectures">All lectures</a><a href="05_text_classification.html">05: Text classification →</a></nav></main></div><footer>Mathematical ML · Eight practical lectures for mathematicians<br>Readable Python · Reproducible experiments · Synthetic teaching data</footer></body></html>

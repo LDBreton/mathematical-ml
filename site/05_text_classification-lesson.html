@@ -25,16 +25,15 @@
 <span class="p">)</span>
 <span class="n">tickets</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
 </pre></div>
-<details class="result-text"><summary>1. Load the fixture and keep template families together · computed output</summary><pre>Loaded 480 tickets from 60 template groups.
-</pre></details><details class="result-text"><summary>1. Load the fixture and keep template families together · computed output</summary><pre>  ticket_id category       template_group  \
-0    T-0001  billing  billing-template-01   
-1    T-0002  billing  billing-template-01   
-2    T-0003  billing  billing-template-01   
+<details class="result-text"><summary>1. Load the fixture and keep template families together · computed output</summary><pre>Loaded 480 tickets from 60 template groups.</pre></details><details class="result-text"><summary>1. Load the fixture and keep template families together · computed output</summary><pre>  ticket_id category       template_group  \
+0    T-0001  billing  billing-template-01
+1    T-0002  billing  billing-template-01
+2    T-0003  billing  billing-template-01
 
-                                                text  
-0  My cloud backup statement lists $18.40 for sea...  
-1  My team plan statement lists $42.00 for storag...  
-2  My monthly storage statement lists $7.95 for t...  </pre></details></section><section class="cell" id="cell-cell-003"><div class="cell-label">Python · run in the notebook</div><div class="highlight"><pre><span></span><span class="n">required</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"ticket_id"</span><span class="p">,</span> <span class="s2">"category"</span><span class="p">,</span> <span class="s2">"template_group"</span><span class="p">,</span> <span class="s2">"text"</span><span class="p">}</span>
+                                                text
+0  My cloud backup statement lists $18.40 for sea...
+1  My team plan statement lists $42.00 for storag...
+2  My monthly storage statement lists $7.95 for t...</pre></details></section><section class="cell" id="cell-cell-003"><div class="cell-label">Python · run in the notebook</div><div class="highlight"><pre><span></span><span class="n">required</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"ticket_id"</span><span class="p">,</span> <span class="s2">"category"</span><span class="p">,</span> <span class="s2">"template_group"</span><span class="p">,</span> <span class="s2">"text"</span><span class="p">}</span>
 <span class="k">assert</span> <span class="n">required</span> <span class="o">&lt;=</span> <span class="nb">set</span><span class="p">(</span><span class="n">tickets</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
 <span class="k">assert</span> <span class="n">tickets</span><span class="p">[</span><span class="nb">list</span><span class="p">(</span><span class="n">required</span><span class="p">)]</span><span class="o">.</span><span class="n">notna</span><span class="p">()</span><span class="o">.</span><span class="n">all</span><span class="p">()</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
 <span class="k">assert</span> <span class="n">tickets</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">"template_group"</span><span class="p">)[</span><span class="s2">"category"</span><span class="p">]</span><span class="o">.</span><span class="n">nunique</span><span class="p">()</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">==</span> <span class="mi">1</span>
@@ -69,23 +68,22 @@
 </pre></div>
 <details class="result-text"><summary>1. Load the fixture and keep template families together · computed output</summary><pre>train     : 320 rows; account_access=64, billing=64, order_status=64, refund_return=64, technical_issue=64
 validation:  80 rows; account_access=16, billing=16, order_status=16, refund_return=16, technical_issue=16
-test      :  80 rows; account_access=16, billing=16, order_status=16, refund_return=16, technical_issue=16
-</pre></details></section><section class="cell" id="cell-template-siblings"><h3 id="section-3">Why group siblings together?</h3>
+test      :  80 rows; account_access=16, billing=16, order_status=16, refund_return=16, technical_issue=16</pre></details></section><section class="cell" id="cell-template-siblings"><h3 id="section-3">Why group siblings together?</h3>
 <p>These messages share one generator template family. A random row split could expose nearly the same wording in both fitting and evaluation. The group split assigns every member of a family to the same partition.</p></section><section class="cell" id="cell-template-siblings-code"><div class="cell-label">Python · run in the notebook</div><div class="highlight"><pre><span></span><span class="n">example_group</span> <span class="o">=</span> <span class="n">tickets</span><span class="o">.</span><span class="n">template_group</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 <span class="n">display</span><span class="p">(</span><span class="n">tickets</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">tickets</span><span class="o">.</span><span class="n">template_group</span> <span class="o">==</span> <span class="n">example_group</span><span class="p">,</span>
                     <span class="p">[</span><span class="s2">"template_group"</span><span class="p">,</span> <span class="s2">"category"</span><span class="p">,</span> <span class="s2">"text"</span><span class="p">]]</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">4</span><span class="p">))</span>
 </pre></div>
 <details class="result-text"><summary>1. Load the fixture and keep template families together · computed output</summary><pre>        template_group category  \
-0  billing-template-01  billing   
-1  billing-template-01  billing   
-2  billing-template-01  billing   
-3  billing-template-01  billing   
+0  billing-template-01  billing
+1  billing-template-01  billing
+2  billing-template-01  billing
+3  billing-template-01  billing
 
-                                                text  
-0  My cloud backup statement lists $18.40 for sea...  
-1  My team plan statement lists $42.00 for storag...  
-2  My monthly storage statement lists $7.95 for t...  
-3  My pro account statement lists $63.20 for the ...  </pre></details></section><section class="cell" id="cell-cell-004"><h2 id="section-4">2. TF-IDF as a weighted sparse vector</h2>
+                                                text
+0  My cloud backup statement lists $18.40 for sea...
+1  My team plan statement lists $42.00 for storag...
+2  My monthly storage statement lists $7.95 for t...
+3  My pro account statement lists $63.20 for the ...</pre></details></section><section class="cell" id="cell-cell-004"><h2 id="section-4">2. TF-IDF as a weighted sparse vector</h2>
 <p>Fix a vocabulary of $p$ terms and let $x_i\in\mathbb{R}^p$ contain the raw count of each term in document $i$. For term $j$, document frequency is $df_j=\#\{i:x_{ij}&gt;0\}$. With scikit-learn's default <code>smooth_idf=True</code>, the inverse document frequency is</p>
 <p>$$\operatorname{idf}_j=\log\!\left(\frac{1+n}{1+df_j}\right)+1.$$</p>
 <p>The added one in numerator and denominator smooths document frequency. A term in every fitted document has weight one. The learned vocabulary contains only terms observed in the fitting corpus, so a genuinely unseen term is not assigned a column. The default word analyzer lowercases text, uses unigrams, and keeps tokens matching <code>(?u)\b\w\w+\b</code> (Unicode word characters, at least two characters). It uses no stop-word list or accent stripping. The default <code>sublinear_tf=False</code> leaves term frequency as the raw count. <code>TfidfVectorizer</code> multiplies count by IDF and, by default, applies L2 normalization to each row. A nonempty document vector $v$ becomes $v/\|v\|_2$; its coordinates therefore have sum of squares one.</p>
@@ -126,8 +124,7 @@ test      :  80 rows; account_access=16, billing=16, order_status=16, refund_ret
 sparse type: csr_matrix
 density: 0.03517454013377926
 norms of first three rows: [1. 1. 1.]
-{&#x27;lowercase&#x27;: True, &#x27;strip_accents&#x27;: None, &#x27;ngram_range&#x27;: (1, 1), &#x27;stop_words&#x27;: None, &#x27;token_pattern&#x27;: &#x27;(?u)\\b\\w\\w+\\b&#x27;, &#x27;use_idf&#x27;: True, &#x27;smooth_idf&#x27;: True, &#x27;sublinear_tf&#x27;: False, &#x27;norm&#x27;: &#x27;l2&#x27;}
-</pre></details></section><section class="cell" id="cell-cell-006"><h3 id="section-5">One worked IDF calculation</h3>
+{&#x27;lowercase&#x27;: True, &#x27;strip_accents&#x27;: None, &#x27;ngram_range&#x27;: (1, 1), &#x27;stop_words&#x27;: None, &#x27;token_pattern&#x27;: &#x27;(?u)\\b\\w\\w+\\b&#x27;, &#x27;use_idf&#x27;: True, &#x27;smooth_idf&#x27;: True, &#x27;sublinear_tf&#x27;: False, &#x27;norm&#x27;: &#x27;l2&#x27;}</pre></details></section><section class="cell" id="cell-cell-006"><h3 id="section-5">One worked IDF calculation</h3>
 <p>Suppose a vocabulary term occurs in 2 of 8 fitted documents. The smoothed IDF is $\log(9/3)+1=\log 3+1$. A ubiquitous term has $df=8$ and receives $\log(9/9)+1=1$. Run the cell to check scikit-learn's stored value for the first case.</p></section><section class="cell" id="cell-cell-007"><div class="cell-label">Python · run in the notebook</div><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.feature_extraction.text</span><span class="w"> </span><span class="kn">import</span> <span class="n">TfidfVectorizer</span>
 
@@ -146,8 +143,7 @@ norms of first three rows: [1. 1. 1.]
 </pre></div>
 <details class="result-text"><summary>2. TF-IDF as a weighted sparse vector · computed output</summary><pre>manual smoothed IDF: 2.09861228866811
 scikit-learn stored IDF: 2.09861228866811
-ubiquitous term IDF: 1.0
-</pre></details></section><section class="cell" id="cell-sparse-geometry"><h3 id="section-6">Inspect counts, IDF weights, normalized rows, and one angle</h3>
+ubiquitous term IDF: 1.0</pre></details></section><section class="cell" id="cell-sparse-geometry"><h3 id="section-6">Inspect counts, IDF weights, normalized rows, and one angle</h3>
 <p>This tiny corpus is separate from the ticket experiment. We densify only eight short rows for inspection, not the full sparse ticket matrix. The dot product of two unit-length rows is cosine similarity; document 0 and document 2 share <code>common</code> but differ in <code>rare</code>.</p></section><section class="cell" id="cell-sparse-geometry-code"><div class="cell-label">Python · run in the notebook</div><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.feature_extraction.text</span><span class="w"> </span><span class="kn">import</span> <span class="n">CountVectorizer</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.metrics.pairwise</span><span class="w"> </span><span class="kn">import</span> <span class="n">cosine_similarity</span>
 
@@ -185,8 +181,7 @@ Name: IDF, dtype: float64</pre></details><details class="result-text"><summary>2
 4  1.0000  0.0000
 5  1.0000  0.0000
 6  1.0000  0.0000
-7  1.0000  0.0000</pre></details><details class="result-text"><summary>2. TF-IDF as a weighted sparse vector · computed output</summary><pre>Cosine(document 0, document 2): 0.430165282498796
-</pre></details><figure class="result-figure"><img loading="lazy" src="results/05_text_classification-sparse-geometry-code-4.png" alt="Executed result: 2. TF-IDF as a weighted sparse vector"><figcaption>2. TF-IDF as a weighted sparse vector · captured notebook output</figcaption></figure></section><section class="cell" id="cell-cell-008"><h2 id="section-7">3. Multinomial logistic regression</h2>
+7  1.0000  0.0000</pre></details><details class="result-text"><summary>2. TF-IDF as a weighted sparse vector · computed output</summary><pre>Cosine(document 0, document 2): 0.430165282498796</pre></details><figure class="result-figure"><img loading="lazy" src="results/05_text_classification-sparse-geometry-code-4.png" alt="Executed result: 2. TF-IDF as a weighted sparse vector"><figcaption>2. TF-IDF as a weighted sparse vector · captured notebook output</figcaption></figure></section><section class="cell" id="cell-cell-008"><h2 id="section-7">3. Multinomial logistic regression</h2>
 <p>For a document vector $x_i$ and $K$ categories, assign a coefficient vector $w_k$ and intercept $b_k$ to each category. Its score is $z_{ik}=w_k^Tx_i+b_k$. Softmax converts scores to probabilities:</p>
 <p>$$p_{ik}=\frac{e^{z_{ik}}}{\sum_{r=1}^{K}e^{z_{ir}}}.$$</p>
 <p>For one-hot labels $y_{ik}$, average cross-entropy is</p>
@@ -230,8 +225,7 @@ Name: IDF, dtype: float64</pre></details><details class="result-text"><summary>2
 1   0.20  0.540300
 2   1.00  0.549523
 3   5.00  0.523175
-4  20.00  0.512367</pre></details><details class="result-text"><summary>4. Select regularization on validation, then test once · computed output</summary><pre>Selected C using validation macro-F1: 1.0
-</pre></details></section><section class="cell" id="cell-cell-011"><div class="cell-label">Python · run in the notebook</div><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.dummy</span><span class="w"> </span><span class="kn">import</span> <span class="n">DummyClassifier</span>
+4  20.00  0.512367</pre></details><details class="result-text"><summary>4. Select regularization on validation, then test once · computed output</summary><pre>Selected C using validation macro-F1: 1.0</pre></details></section><section class="cell" id="cell-cell-011"><div class="cell-label">Python · run in the notebook</div><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.dummy</span><span class="w"> </span><span class="kn">import</span> <span class="n">DummyClassifier</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">accuracy_score</span><span class="p">,</span> <span class="n">classification_report</span><span class="p">,</span> <span class="n">confusion_matrix</span>
 
 <span class="n">train_validation</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">splits</span><span class="p">[</span><span class="s2">"train"</span><span class="p">],</span> <span class="n">splits</span><span class="p">[</span><span class="s2">"validation"</span><span class="p">]],</span> <span class="n">ignore_index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -287,27 +281,26 @@ technical_issue       0.53      0.50      0.52        16
        accuracy                           0.68        80
       macro avg       0.68      0.68      0.67        80
    weighted avg       0.68      0.68      0.67        80
-
 </pre></details><details class="result-text"><summary>4. Select regularization on validation, then test once · computed output</summary><pre>                         predicted: account_access  predicted: billing  \
-actual: account_access                           8                   0   
-actual: billing                                  0                  15   
-actual: order_status                             7                   0   
-actual: refund_return                            0                   0   
-actual: technical_issue                          0                   0   
+actual: account_access                           8                   0
+actual: billing                                  0                  15
+actual: order_status                             7                   0
+actual: refund_return                            0                   0
+actual: technical_issue                          0                   0
 
                          predicted: order_status  predicted: refund_return  \
-actual: account_access                         1                         0   
-actual: billing                                1                         0   
-actual: order_status                           9                         0   
-actual: refund_return                          2                        14   
-actual: technical_issue                        0                         8   
+actual: account_access                         1                         0
+actual: billing                                1                         0
+actual: order_status                           9                         0
+actual: refund_return                          2                        14
+actual: technical_issue                        0                         8
 
-                         predicted: technical_issue  
-actual: account_access                            7  
-actual: billing                                   0  
-actual: order_status                              0  
-actual: refund_return                             0  
-actual: technical_issue                           8  </pre></details></section><section class="cell" id="cell-cell-012"><h2 id="section-9">5. Read mistakes and coefficients</h2>
+                         predicted: technical_issue
+actual: account_access                            7
+actual: billing                                   0
+actual: order_status                              0
+actual: refund_return                             0
+actual: technical_issue                           8</pre></details></section><section class="cell" id="cell-cell-012"><h2 id="section-9">5. Read mistakes and coefficients</h2>
 <p>A confusion matrix counts actual rows in its rows and predictions in its columns. Off-diagonal cells identify category pairs worth inspecting. Error review asks whether a ticket really fits one queue, whether a phrase is ambiguous, and whether the model relies on a shared template cue. The synthetic test examples remain related to the same small set of authored situations, even though their groups were withheld.</p></section><section class="cell" id="cell-cell-013"><div class="cell-label">Python · run in the notebook</div><div class="highlight"><pre><span></span><span class="n">test_review</span> <span class="o">=</span> <span class="n">splits</span><span class="p">[</span><span class="s2">"test"</span><span class="p">][[</span><span class="s2">"ticket_id"</span><span class="p">,</span> <span class="s2">"template_group"</span><span class="p">,</span> <span class="s2">"category"</span><span class="p">,</span> <span class="s2">"text"</span><span class="p">]]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
 <span class="n">test_review</span><span class="p">[</span><span class="s2">"predicted"</span><span class="p">]</span> <span class="o">=</span> <span class="n">test_prediction</span>
 <span class="n">errors</span> <span class="o">=</span> <span class="n">test_review</span><span class="p">[</span><span class="n">test_review</span><span class="o">.</span><span class="n">category</span> <span class="o">!=</span> <span class="n">test_review</span><span class="o">.</span><span class="n">predicted</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
@@ -320,34 +313,33 @@ actual: technical_issue                           8  </pre></details></section><
         <span class="n">errors</span><span class="p">[[</span><span class="s2">"ticket_id"</span><span class="p">,</span> <span class="s2">"template_group"</span><span class="p">,</span> <span class="s2">"actual/predicted"</span><span class="p">,</span> <span class="s2">"text"</span><span class="p">]]</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">12</span><span class="p">)</span>
     <span class="p">)</span>
 </pre></div>
-<details class="result-text"><summary>5. Read mistakes and coefficients · computed output</summary><pre>26 errors among 80 held-out rows.
-</pre></details><details class="result-text"><summary>5. Read mistakes and coefficients · computed output</summary><pre>   ticket_id               template_group                   actual/predicted  \
-3     T-0060          billing-template-08            billing -&gt; order_status   
-24    T-0137   account_access-template-06  account_access -&gt; technical_issue   
-25    T-0138   account_access-template-06  account_access -&gt; technical_issue   
-26    T-0139   account_access-template-06  account_access -&gt; technical_issue   
-27    T-0140   account_access-template-06     account_access -&gt; order_status   
-28    T-0141   account_access-template-06  account_access -&gt; technical_issue   
-29    T-0142   account_access-template-06  account_access -&gt; technical_issue   
-30    T-0143   account_access-template-06  account_access -&gt; technical_issue   
-31    T-0144   account_access-template-06  account_access -&gt; technical_issue   
-40    T-0249  technical_issue-template-08   technical_issue -&gt; refund_return   
-41    T-0250  technical_issue-template-08   technical_issue -&gt; refund_return   
-42    T-0251  technical_issue-template-08   technical_issue -&gt; refund_return   
+<details class="result-text"><summary>5. Read mistakes and coefficients · computed output</summary><pre>26 errors among 80 held-out rows.</pre></details><details class="result-text"><summary>5. Read mistakes and coefficients · computed output</summary><pre>   ticket_id               template_group                   actual/predicted  \
+3     T-0060          billing-template-08            billing -&gt; order_status
+24    T-0137   account_access-template-06  account_access -&gt; technical_issue
+25    T-0138   account_access-template-06  account_access -&gt; technical_issue
+26    T-0139   account_access-template-06  account_access -&gt; technical_issue
+27    T-0140   account_access-template-06     account_access -&gt; order_status
+28    T-0141   account_access-template-06  account_access -&gt; technical_issue
+29    T-0142   account_access-template-06  account_access -&gt; technical_issue
+30    T-0143   account_access-template-06  account_access -&gt; technical_issue
+31    T-0144   account_access-template-06  account_access -&gt; technical_issue
+40    T-0249  technical_issue-template-08   technical_issue -&gt; refund_return
+41    T-0250  technical_issue-template-08   technical_issue -&gt; refund_return
+42    T-0251  technical_issue-template-08   technical_issue -&gt; refund_return
 
-                                                 text  
-3   I was billed a second workspace after removing...  
-24  The one-time code arrives after it has already...  
-25  The one-time code arrives after it has already...  
-26  The one-time code arrives after it has already...  
-27  The one-time code arrives after it has already...  
-28  The one-time code arrives after it has already...  
-29  The one-time code arrives after it has already...  
-30  The one-time code arrives after it has already...  
-31  The one-time code arrives after it has already...  
-40  Keyboard shortcut Ctrl+K used to open search, ...  
-41  Keyboard shortcut Alt+Enter used to open calen...  
-42  Keyboard shortcut Ctrl+Shift+P used to open up...  </pre></details></section><section class="cell" id="cell-cell-014"><div class="cell-label">Python · run in the notebook</div><div class="highlight"><pre><span></span><span class="n">fitted_tfidf</span> <span class="o">=</span> <span class="n">final_model</span><span class="o">.</span><span class="n">named_steps</span><span class="p">[</span><span class="s2">"tfidf"</span><span class="p">]</span>
+                                                 text
+3   I was billed a second workspace after removing...
+24  The one-time code arrives after it has already...
+25  The one-time code arrives after it has already...
+26  The one-time code arrives after it has already...
+27  The one-time code arrives after it has already...
+28  The one-time code arrives after it has already...
+29  The one-time code arrives after it has already...
+30  The one-time code arrives after it has already...
+31  The one-time code arrives after it has already...
+40  Keyboard shortcut Ctrl+K used to open search, ...
+41  Keyboard shortcut Alt+Enter used to open calen...
+42  Keyboard shortcut Ctrl+Shift+P used to open up...</pre></details></section><section class="cell" id="cell-cell-014"><div class="cell-label">Python · run in the notebook</div><div class="highlight"><pre><span></span><span class="n">fitted_tfidf</span> <span class="o">=</span> <span class="n">final_model</span><span class="o">.</span><span class="n">named_steps</span><span class="p">[</span><span class="s2">"tfidf"</span><span class="p">]</span>
 <span class="n">fitted_logistic</span> <span class="o">=</span> <span class="n">final_model</span><span class="o">.</span><span class="n">named_steps</span><span class="p">[</span><span class="s2">"logistic"</span><span class="p">]</span>
 <span class="n">feature_names</span> <span class="o">=</span> <span class="n">fitted_tfidf</span><span class="o">.</span><span class="n">get_feature_names_out</span><span class="p">()</span>
 
@@ -381,8 +373,7 @@ terms lowering its logit: [(&#x27;in&#x27;, np.float64(-0.88)), (&#x27;says&#x27
 
 technical_issue: terms most associated with its logit
 [(&#x27;whenever&#x27;, np.float64(1.208)), (&#x27;text&#x27;, np.float64(1.123)), (&#x27;with&#x27;, np.float64(1.046)), (&#x27;since&#x27;, np.float64(0.972)), (&#x27;app&#x27;, np.float64(0.928)), (&#x27;exported&#x27;, np.float64(0.801)), (&#x27;opens&#x27;, np.float64(0.801)), (&#x27;file&#x27;, np.float64(0.801))]
-terms lowering its logit: [(&#x27;is&#x27;, np.float64(-1.086)), (&#x27;my&#x27;, np.float64(-0.866)), (&#x27;but&#x27;, np.float64(-0.778)), (&#x27;says&#x27;, np.float64(-0.724)), (&#x27;can&#x27;, np.float64(-0.677))]
-</pre></details></section><section class="cell" id="cell-fresh-text"><h3 id="section-10">Predict a fresh message and inspect an empty representation</h3>
+terms lowering its logit: [(&#x27;is&#x27;, np.float64(-1.086)), (&#x27;my&#x27;, np.float64(-0.866)), (&#x27;but&#x27;, np.float64(-0.778)), (&#x27;says&#x27;, np.float64(-0.724)), (&#x27;can&#x27;, np.float64(-0.677))]</pre></details></section><section class="cell" id="cell-fresh-text"><h3 id="section-10">Predict a fresh message and inspect an empty representation</h3>
 <p>The deliberately unseen token below transforms to an all-zero row. Its probabilities reflect the fitted intercepts; do not interpret them as understanding the message. These examples are diagnostic probes, not further model-selection data.</p></section><section class="cell" id="cell-fresh-text-code"><div class="cell-label">Python · run in the notebook</div><div class="highlight"><pre><span></span><span class="n">new_messages</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"Please help me reset my password"</span><span class="p">,</span> <span class="s2">"zzzzunseenword987654321"</span><span class="p">]</span>
 <span class="n">new_vectors</span> <span class="o">=</span> <span class="n">final_model</span><span class="o">.</span><span class="n">named_steps</span><span class="p">[</span><span class="s2">"tfidf"</span><span class="p">]</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">new_messages</span><span class="p">)</span>
 <span class="k">assert</span> <span class="n">new_vectors</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">nnz</span> <span class="o">==</span> <span class="mi">0</span>
@@ -390,13 +381,12 @@ terms lowering its logit: [(&#x27;is&#x27;, np.float64(-1.086)), (&#x27;my&#x27;
 <span class="n">display</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">final_model</span><span class="o">.</span><span class="n">predict_proba</span><span class="p">(</span><span class="n">new_messages</span><span class="p">),</span>
                      <span class="n">columns</span><span class="o">=</span><span class="n">final_model</span><span class="o">.</span><span class="n">classes_</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">new_messages</span><span class="p">)</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span>
 </pre></div>
-<details class="result-text"><summary>5. Read mistakes and coefficients · computed output</summary><pre>Stored nonzeros: [4 0]
-</pre></details><details class="result-text"><summary>5. Read mistakes and coefficients · computed output</summary><pre>                                  account_access  billing  order_status  \
-Please help me reset my password           0.422    0.189         0.142   
-zzzzunseenword987654321                    0.164    0.221         0.154   
+<details class="result-text"><summary>5. Read mistakes and coefficients · computed output</summary><pre>Stored nonzeros: [4 0]</pre></details><details class="result-text"><summary>5. Read mistakes and coefficients · computed output</summary><pre>                                  account_access  billing  order_status  \
+Please help me reset my password           0.422    0.189         0.142
+zzzzunseenword987654321                    0.164    0.221         0.154
 
-                                  refund_return  technical_issue  
-Please help me reset my password          0.123            0.124  
-zzzzunseenword987654321                   0.178            0.283  </pre></details></section><section class="cell" id="cell-cell-015"><h2 id="section-11">6. What this lesson does and does not establish</h2>
+                                  refund_return  technical_issue
+Please help me reset my password          0.123            0.124
+zzzzunseenword987654321                   0.178            0.283</pre></details></section><section class="cell" id="cell-cell-015"><h2 id="section-11">6. What this lesson does and does not establish</h2>
 <p>TF-IDF plus a linear classifier is a clear supervised baseline: it is fast, sparse, inspectable, and often a useful first comparison. A pretrained embedding model uses dense vectors designed to encode semantic relationships, which may help match paraphrases with few shared words; performance depends on the model, domain, and evaluation. Embeddings do not remove the need for labels, group-aware evaluation, or error review when the task is supervised routing; adapting or scoring a model still needs a defensible evaluation. This course uses no external model and downloads no pretrained weights.</p>
 <p>Our split tests new authored template families from the same generator. It prevents sibling leakage but cannot reveal performance on naturally written, evolving, multilingual, imbalanced, or sensitive customer messages. A real deployment study would require appropriately governed representative data, a time-aware or source-aware evaluation, operational costs, and human review.</p></section></article><p><a href="05_text_classification-results.html">Explore this lecture’s executed result gallery →</a></p><p><a class="button" href="05_text_classification-exercises.html">Next: attempt the exercises →</a></p><nav class="actions" aria-label="Study sequence"><a href="04_imbalanced_learning.html">← 04: Imbalanced learning</a><a href="index.html#lectures">All lectures</a><a href="06_clustering.html">06: Clustering →</a></nav></main></div><footer>Mathematical ML · Eight practical lectures for mathematicians<br>Readable Python · Reproducible experiments · Synthetic teaching data</footer></body></html>

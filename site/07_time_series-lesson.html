@@ -86,8 +86,7 @@
 <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">feature_data</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">sales_data</span><span class="p">)</span> <span class="o">-</span> <span class="mi">28</span>
 <span class="nb">print</span><span class="p">(</span><span class="s2">"Feature boundary checks passed:"</span><span class="p">,</span> <span class="n">first_row</span><span class="p">[</span><span class="s2">"date"</span><span class="p">]</span><span class="o">.</span><span class="n">date</span><span class="p">())</span>
 </pre></div>
-<details class="result-text"><summary>4. Generate features without looking forward · computed output</summary><pre>Feature boundary checks passed: 2023-01-29
-</pre></details></section><section class="cell" id="cell-cell-009"><p>A useful leakage test is to perturb outcomes strictly after one origin and verify that the earlier origin's features do not change.</p></section><section class="cell" id="cell-cell-010"><div class="cell-label">Python · run in the notebook</div><div class="highlight"><pre><span></span><span class="n">origin_raw_index</span> <span class="o">=</span> <span class="mi">200</span>
+<details class="result-text"><summary>4. Generate features without looking forward · computed output</summary><pre>Feature boundary checks passed: 2023-01-29</pre></details></section><section class="cell" id="cell-cell-009"><p>A useful leakage test is to perturb outcomes strictly after one origin and verify that the earlier origin's features do not change.</p></section><section class="cell" id="cell-cell-010"><div class="cell-label">Python · run in the notebook</div><div class="highlight"><pre><span></span><span class="n">origin_raw_index</span> <span class="o">=</span> <span class="mi">200</span>
 <span class="n">origin_feature_index</span> <span class="o">=</span> <span class="n">origin_raw_index</span> <span class="o">-</span> <span class="mi">28</span>
 <span class="n">future_perturbation</span> <span class="o">=</span> <span class="n">sales_data</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
 <span class="n">future_perturbation</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">origin_raw_index</span> <span class="p">:,</span> <span class="s2">"sales"</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">10000</span>
@@ -103,8 +102,7 @@
 <span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="s2">"Changing the target at the forecast date and all future targets leaves its predictors unchanged."</span><span class="p">)</span>
 </pre></div>
-<details class="result-text"><summary>4. Generate features without looking forward · computed output</summary><pre>Changing the target at the forecast date and all future targets leaves its predictors unchanged.
-</pre></details></section><section class="cell" id="cell-cell-011"><h2 id="section-7">5. Chronological train, validation, and test boundaries</h2>
+<details class="result-text"><summary>4. Generate features without looking forward · computed output</summary><pre>Changing the target at the forecast date and all future targets leaves its predictors unchanged.</pre></details></section><section class="cell" id="cell-cell-011"><h2 id="section-7">5. Chronological train, validation, and test boundaries</h2>
 <p>We use the earliest 70% of usable feature rows for training, the next 15% for validation, and the final 15% for test. Validation chooses XGBoost's boosting-round count through early stopping. The test block is untouched until the model and baseline are scored. Since this is rolling one-step evaluation, test-row lags may contain sales observed earlier in the test block: those observations are available at those later origins. The trained model is not refit on test outcomes.</p></section><section class="cell" id="cell-cell-012"><div class="cell-label">Python · run in the notebook</div><div class="highlight"><pre><span></span><span class="n">n_rows</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">feature_data</span><span class="p">)</span>
 <span class="n">train_end</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="mf">0.70</span> <span class="o">*</span> <span class="n">n_rows</span><span class="p">)</span>
 <span class="n">validation_end</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="mf">0.85</span> <span class="o">*</span> <span class="n">n_rows</span><span class="p">)</span>
@@ -166,25 +164,25 @@
 <span class="n">development_folds</span>
 </pre></div>
 <details class="result-text"><summary>6. Expanding-window development backtest · computed output</summary><pre>   fold fit_through validation_through evaluation_start evaluation_end  \
-0     1  2024-01-13         2024-03-23       2024-03-24     2024-06-01   
-1     2  2024-03-23         2024-06-01       2024-06-02     2024-08-10   
-2     3  2024-06-01         2024-08-10       2024-08-11     2024-10-19   
-3     4  2024-08-10         2024-10-19       2024-10-20     2024-12-28   
-4     5  2024-10-19         2024-12-28       2024-12-29     2025-03-08   
+0     1  2024-01-13         2024-03-23       2024-03-24     2024-06-01
+1     2  2024-03-23         2024-06-01       2024-06-02     2024-08-10
+2     3  2024-06-01         2024-08-10       2024-08-11     2024-10-19
+3     4  2024-08-10         2024-10-19       2024-10-20     2024-12-28
+4     5  2024-10-19         2024-12-28       2024-12-29     2025-03-08
 
    selected_rounds        MAE       RMSE  seasonal_naive_MAE  \
-0               85  78.340047  93.297652           71.788429   
-1               68  77.203933  92.319095           75.685429   
-2              163  59.924720  73.510938           71.940286   
-3               61  61.097561  77.437779           85.038000   
-4              129  44.793420  57.371597           58.131143   
+0               85  78.340047  93.297652           71.788429
+1               68  77.203933  92.319095           75.685429
+2              163  59.924720  73.510938           71.940286
+3               61  61.097561  77.437779           85.038000
+4              129  44.793420  57.371597           58.131143
 
-   seasonal_naive_RMSE  
-0            86.434215  
-1            88.781853  
-2            90.732181  
-3           110.121673  
-4            73.936372  </pre></details></section><section class="cell" id="cell-cell-016"><p>The expanding backtest is a development diagnostic. Its fold-specific validation blocks choose iteration counts; its evaluation blocks compare chronological origins within development data. The final test remains a separate last block. Neither backtest changes the primary forecast scenario: all scores above are rolling one-step-ahead, with observed lag updates.</p></section><section class="cell" id="cell-cell-017"><h2 id="section-9">7. Choose model complexity on validation only</h2>
+   seasonal_naive_RMSE
+0            86.434215
+1            88.781853
+2            90.732181
+3           110.121673
+4            73.936372</pre></details></section><section class="cell" id="cell-cell-016"><p>The expanding backtest is a development diagnostic. Its fold-specific validation blocks choose iteration counts; its evaluation blocks compare chronological origins within development data. The final test remains a separate last block. Neither backtest changes the primary forecast scenario: all scores above are rolling one-step-ahead, with observed lag updates.</p></section><section class="cell" id="cell-cell-017"><h2 id="section-9">7. Choose model complexity on validation only</h2>
 <p>Use a modest tree model with fixed depth and learning rate. Early stopping monitors the contiguous validation block; the test set does not participate. XGBoost's scikit-learn interface expects <code>early_stopping_rounds</code> on <code>XGBRegressor</code> construction. We keep the selected estimator fitted on training data for a clean train/validation/test story.</p></section><section class="cell" id="cell-cell-018"><div class="cell-label">Python · run in the notebook</div><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">xgboost</span><span class="w"> </span><span class="kn">import</span> <span class="n">XGBRegressor</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">mean_absolute_error</span><span class="p">,</span> <span class="n">mean_squared_error</span>
 
@@ -239,12 +237,12 @@
 <span class="n">score_table</span>
 </pre></div>
 <details class="result-text"><summary>8. Rolling one-step test evaluation · computed output</summary><pre>                      MAE      RMSE  MAE improvement vs naive  \
-seasonal naive  61.941575  78.95166                  0.000000   
-XGBoost         65.324087  79.41873                 -3.382512   
+seasonal naive  61.941575  78.95166                  0.000000
+XGBoost         65.324087  79.41873                 -3.382512
 
-                RMSE improvement vs naive  
-seasonal naive                    0.00000  
-XGBoost                          -0.46707  </pre></details></section><section class="cell" id="cell-cell-021"><div class="cell-label">Python · run in the notebook</div><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">11</span><span class="p">,</span> <span class="mi">6</span><span class="p">),</span> <span class="n">sharex</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">layout</span><span class="o">=</span><span class="s2">"constrained"</span><span class="p">)</span>
+                RMSE improvement vs naive
+seasonal naive                    0.00000
+XGBoost                          -0.46707</pre></details></section><section class="cell" id="cell-cell-021"><div class="cell-label">Python · run in the notebook</div><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">11</span><span class="p">,</span> <span class="mi">6</span><span class="p">),</span> <span class="n">sharex</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">layout</span><span class="o">=</span><span class="s2">"constrained"</span><span class="p">)</span>
 <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">test_data</span><span class="p">[</span><span class="s2">"date"</span><span class="p">],</span> <span class="n">y_test</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"actual"</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">"black"</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mf">1.4</span><span class="p">)</span>
 <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">test_data</span><span class="p">[</span><span class="s2">"date"</span><span class="p">],</span> <span class="n">seasonal_prediction</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"seasonal naive"</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.8</span><span class="p">)</span>
 <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">test_data</span><span class="p">[</span><span class="s2">"date"</span><span class="p">],</span> <span class="n">test_prediction</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"XGBoost"</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.8</span><span class="p">)</span>

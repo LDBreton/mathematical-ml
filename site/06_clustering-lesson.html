@@ -41,25 +41,24 @@
 <span class="nb">print</span><span class="p">(</span><span class="s2">"means:"</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">Z</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span> <span class="mi">3</span><span class="p">),</span> <span class="s2">"stds:"</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">Z</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span> <span class="mi">3</span><span class="p">))</span>
 </pre></div>
 <details class="result-text"><summary>1. Alternating minimization · computed output</summary><pre>       recency_days  orders_12m  average_order_value  annual_spend  web_share  \
-count       1200.00     1200.00              1200.00       1200.00    1200.00   
-mean          61.45        7.22               297.64        787.99       0.48   
-std           39.65        6.53               188.86        508.35       0.26   
-min            1.00        0.00                47.62        140.35       0.01   
-25%           23.00        2.00               136.00        341.10       0.25   
-50%           60.00        4.00               248.44        620.08       0.49   
-75%           97.00       12.00               428.26       1169.94       0.72   
-max          144.00       29.00              1029.06       2883.71       0.99   
+count       1200.00     1200.00              1200.00       1200.00    1200.00
+mean          61.45        7.22               297.64        787.99       0.48
+std           39.65        6.53               188.86        508.35       0.26
+min            1.00        0.00                47.62        140.35       0.01
+25%           23.00        2.00               136.00        341.10       0.25
+50%           60.00        4.00               248.44        620.08       0.49
+75%           97.00       12.00               428.26       1169.94       0.72
+max          144.00       29.00              1029.06       2883.71       0.99
 
-       tenure_months  support_contacts_12m  
-count        1200.00               1200.00  
-mean           27.74                  1.49  
-std            15.54                  1.40  
-min             1.00                  0.00  
-25%            15.00                  0.00  
-50%            27.00                  1.00  
-75%            39.00                  2.00  
-max            70.00                  8.00  </pre></details><details class="result-text"><summary>1. Alternating minimization · computed output</summary><pre>means: [ 0.  0.  0. -0. -0.  0. -0.] stds: [1. 1. 1. 1. 1. 1. 1.]
-</pre></details></section><section class="cell" id="cell-pair-distances"><h3 id="section-3">Scaling changes which differences count</h3>
+       tenure_months  support_contacts_12m
+count        1200.00               1200.00
+mean           27.74                  1.49
+std            15.54                  1.40
+min             1.00                  0.00
+25%            15.00                  0.00
+50%            27.00                  1.00
+75%            39.00                  2.00
+max            70.00                  8.00</pre></details><details class="result-text"><summary>1. Alternating minimization · computed output</summary><pre>means: [ 0.  0.  0. -0. -0.  0. -0.] stds: [1. 1. 1. 1. 1. 1. 1.]</pre></details></section><section class="cell" id="cell-pair-distances"><h3 id="section-3">Scaling changes which differences count</h3>
 <p>Compare two observed pairs below. In raw units, a large currency-valued difference can dominate the sum of squared differences. Standardization divides by observed feature scales. Neither distance is intrinsically correct: each expresses a choice about comparable customer differences.</p></section><section class="cell" id="cell-pair-distances-code"><div class="cell-label">Python · run in the notebook</div><div class="highlight"><pre><span></span><span class="n">distance_rows</span> <span class="o">=</span> <span class="p">[]</span>
 <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">j</span> <span class="ow">in</span> <span class="p">[(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">10</span><span class="p">)]:</span>
     <span class="n">distance_rows</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">"pair"</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">j</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
@@ -85,18 +84,17 @@ max            70.00                  8.00  </pre></details><details class="resu
 <span class="n">display</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">centers</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="n">features</span><span class="p">)</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>
 </pre></div>
 <details class="result-text"><summary>2. Scaling defines distance · computed output</summary><pre>inertia: 2194.7051247400486
-sizes: [314 277 303 306]
-</pre></details><details class="result-text"><summary>2. Scaling defines distance · computed output</summary><pre>   recency_days  orders_12m  average_order_value  annual_spend  web_share  \
-0         78.09        2.12               188.37        473.98       0.20   
-1         19.68       15.73               536.44       1471.53       0.78   
-2         29.29       10.69               386.66       1003.75       0.63   
-3        114.05        1.32               105.47        277.82       0.36   
+sizes: [314 277 303 306]</pre></details><details class="result-text"><summary>2. Scaling defines distance · computed output</summary><pre>   recency_days  orders_12m  average_order_value  annual_spend  web_share  \
+0         78.09        2.12               188.37        473.98       0.20
+1         19.68       15.73               536.44       1471.53       0.78
+2         29.29       10.69               386.66       1003.75       0.63
+3        114.05        1.32               105.47        277.82       0.36
 
-   tenure_months  support_contacts_12m  
-0          29.16                  1.00  
-1          10.48                  2.83  
-2          21.71                  1.50  
-3          47.86                  0.76  </pre></details></section><section class="cell" id="cell-cell-005"><h2 id="section-5">3. PCA from the Rayleigh quotient</h2>
+   tenure_months  support_contacts_12m
+0          29.16                  1.00
+1          10.48                  2.83
+2          21.71                  1.50
+3          47.86                  0.76</pre></details></section><section class="cell" id="cell-cell-005"><h2 id="section-5">3. PCA from the Rayleigh quotient</h2>
 <p>The first PCA direction maximizes $v^TZ^TZv$ subject to $v^Tv=1$. A Lagrange multiplier gives $Z^TZv=\lambda v$, the leading eigenvector or right singular vector. The next code projects only for display. K-means fits all seven standardized original features; two dimensions can hide structure.</p>
 <p>For centered $Z=U\Sigma V^T$, the columns of $V$ are principal directions. Scores in $r$ dimensions are $ZV_r=U_r\Sigma_r$, and the sample variance of component $j$ is $s_j^2/(n-1)$. Its explained-variance fraction is $s_j^2/\sum_l s_l^2$. The reconstruction $ZV_rV_r^T$ minimizes squared Frobenius reconstruction error among rank-$r$ matrices, with error $\sum_{j&gt;r}s_j^2$. A component's sign is arbitrary; tied singular values allow rotations within the tied subspace. Neither sign flips nor rotations inside that subspace change the represented geometry.</p></section><section class="cell" id="cell-cell-006"><div class="cell-label">Python · run in the notebook</div><div class="highlight"><pre><span></span><span class="n">pca</span> <span class="o">=</span> <span class="n">PCA</span><span class="p">(</span><span class="n">n_components</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">svd_solver</span><span class="o">=</span><span class="s2">"full"</span><span class="p">)</span>
 <span class="n">Z_2d</span> <span class="o">=</span> <span class="n">pca</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">Z</span><span class="p">)</span>
@@ -109,8 +107,7 @@ sizes: [314 277 303 306]
 <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">handles</span><span class="p">,</span> <span class="p">[</span><span class="sa">f</span><span class="s2">"Cluster </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">4</span><span class="p">)],</span> <span class="n">title</span><span class="o">=</span><span class="s2">"Nominal IDs"</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
 </pre></div>
-<details class="result-text"><summary>3. PCA from the Rayleigh quotient · computed output</summary><pre>explained variance fractions: [0.72  0.106]
-</pre></details><figure class="result-figure"><img loading="lazy" src="results/06_clustering-cell-006-1.png" alt="Executed result: 3. PCA from the Rayleigh quotient"><figcaption>3. PCA from the Rayleigh quotient · captured notebook output</figcaption></figure></section><section class="cell" id="cell-cell-007"><h2 id="section-6">4. Internal diagnostics and label invariance</h2>
+<details class="result-text"><summary>3. PCA from the Rayleigh quotient · computed output</summary><pre>explained variance fractions: [0.72  0.106]</pre></details><figure class="result-figure"><img loading="lazy" src="results/06_clustering-cell-006-1.png" alt="Executed result: 3. PCA from the Rayleigh quotient"><figcaption>3. PCA from the Rayleigh quotient · captured notebook output</figcaption></figure></section><section class="cell" id="cell-cell-007"><h2 id="section-6">4. Internal diagnostics and label invariance</h2>
 <p>The globally minimal inertia cannot increase with $k$, because an added center can reproduce the previous solution. A finite randomized run can still wiggle across k when it reaches different local optima, so inspect the observed curve. An elbow remains heuristic. Silhouette compares within distance $a(i)$ to nearest other-cluster distance $b(i)$: $(b-a)/\max(a,b)$. It favors compact separated groups in this metric and can mislead for nonconvex or uneven-density patterns. Cluster IDs are arbitrary; adjusted Rand index (ARI) compares co-membership invariantly under label permutation. Use truth only after choices are fixed.</p>
 <p>For a non-singleton cluster, $a(i)$ is the mean distance from point $i$ to the other points in its own cluster. For each other cluster, compute the mean distance from $i$ to its members; $b(i)$ is the smallest of those means. The silhouette is $(b(i)-a(i))/\max\{a(i),b(i)\}$ when the denominator is positive. Implementations assign silhouette zero to singleton clusters. This is a diagnostic of the chosen distance geometry, not external evidence that the partition is economically meaningful.</p></section><section class="cell" id="cell-cell-008"><div class="cell-label">Python · run in the notebook</div><div class="highlight"><pre><span></span><span class="n">rows</span><span class="p">,</span> <span class="n">fitted</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">{}</span>
 <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">9</span><span class="p">):</span>
@@ -141,7 +138,7 @@ sizes: [314 277 303 306]
 <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
 </pre></div>
 <details class="result-text"><summary>4. Internal diagnostics and label invariance · computed output</summary><pre>    inertia  silhouette
-k                      
+k
 2  3226.651       0.520
 3  2665.105       0.385
 4  2194.705       0.299
@@ -164,8 +161,7 @@ k
 </pre></div>
 <details class="result-text"><summary>4. Internal diagnostics and label invariance · computed output</summary><pre>post-hoc synthetic ARI: 0.4996525558167226
 ARI across starts: 1.0
-inertias: 3226.650570919961 3226.650570919961
-</pre></details></section><section class="cell" id="cell-selected-clusters"><h2 id="section-7">5. Interpret the selected solution, not the initial illustration</h2>
+inertias: 3226.650570919961 3226.650570919961</pre></details></section><section class="cell" id="cell-selected-clusters"><h2 id="section-7">5. Interpret the selected solution, not the initial illustration</h2>
 <p><code>chosen_k</code> maximizes silhouette among the candidate fits on the standardized seven-dimensional observations. Now show that exact model's sizes, profiles, and colors. The two-dimensional projection can overlap groups separated in other dimensions. Cluster IDs have no ordering and can permute between fits. The synthetic truth is used only for a post-hoc comparison, never for fitting or selecting k.</p></section><section class="cell" id="cell-selected-clusters-code"><div class="cell-label">Python · run in the notebook</div><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="s2">"Silhouette-selected k:"</span><span class="p">,</span> <span class="n">chosen_k</span><span class="p">)</span>
 <span class="n">selected_sizes</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">bincount</span><span class="p">(</span><span class="n">chosen</span><span class="o">.</span><span class="n">labels_</span><span class="p">,</span> <span class="n">minlength</span><span class="o">=</span><span class="n">chosen_k</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s2">"customers"</span><span class="p">)</span>
 <span class="n">selected_profiles</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
@@ -196,19 +192,18 @@ inertias: 3226.650570919961 3226.650570919961
 <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 </pre></div>
-<details class="result-text"><summary>5. Interpret the selected solution, not the initial illustration · computed output</summary><pre>Silhouette-selected k: 2
-</pre></details><details class="result-text"><summary>5. Interpret the selected solution, not the initial illustration · computed output</summary><pre>         customers
-cluster           
+<details class="result-text"><summary>5. Interpret the selected solution, not the initial illustration · computed output</summary><pre>Silhouette-selected k: 2</pre></details><details class="result-text"><summary>5. Interpret the selected solution, not the initial illustration · computed output</summary><pre>         customers
+cluster
 0              620
 1              580</pre></details><details class="result-text"><summary>5. Interpret the selected solution, not the initial illustration · computed output</summary><pre>         recency_days  orders_12m  average_order_value  annual_spend  \
-cluster                                                                
-0               95.83        1.73               147.45        377.16   
-1               24.70       13.09               458.20       1227.16   
+cluster
+0               95.83        1.73               147.45        377.16
+1               24.70       13.09               458.20       1227.16
 
-         web_share  tenure_months  support_contacts_12m  
-cluster                                                  
-0             0.28          38.39                  0.88  
-1             0.70          16.35                  2.13  </pre></details><figure class="result-figure"><img loading="lazy" src="results/06_clustering-selected-clusters-code-3.png" alt="Executed result: 5. Interpret the selected solution, not the initial illustration"><figcaption>5. Interpret the selected solution, not the initial illustration · captured notebook output</figcaption></figure><figure class="result-figure"><img loading="lazy" src="results/06_clustering-selected-clusters-code-4.png" alt="Executed result: 5. Interpret the selected solution, not the initial illustration"><figcaption>5. Interpret the selected solution, not the initial illustration · captured notebook output</figcaption></figure></section><section class="cell" id="cell-multi-start"><h3 id="section-8">Sensitivity across several random starts</h3>
+         web_share  tenure_months  support_contacts_12m
+cluster
+0             0.28          38.39                  0.88
+1             0.70          16.35                  2.13</pre></details><figure class="result-figure"><img loading="lazy" src="results/06_clustering-selected-clusters-code-3.png" alt="Executed result: 5. Interpret the selected solution, not the initial illustration"><figcaption>5. Interpret the selected solution, not the initial illustration · captured notebook output</figcaption></figure><figure class="result-figure"><img loading="lazy" src="results/06_clustering-selected-clusters-code-4.png" alt="Executed result: 5. Interpret the selected solution, not the initial illustration"><figcaption>5. Interpret the selected solution, not the initial illustration · captured notebook output</figcaption></figure></section><section class="cell" id="cell-multi-start"><h3 id="section-8">Sensitivity across several random starts</h3>
 <p>Hold k, the dataset, and preprocessing fixed. Ten single-start fits measure initialization sensitivity on these observations. This does not measure stability under new customers or resampling, and agreement with the selected multi-start fit is not a ground-truth accuracy score.</p></section><section class="cell" id="cell-multi-start-code"><div class="cell-label">Python · run in the notebook</div><div class="highlight"><pre><span></span><span class="n">stability_rows</span> <span class="o">=</span> <span class="p">[]</span>
 <span class="k">for</span> <span class="n">seed</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">10</span><span class="p">):</span>
     <span class="n">trial</span> <span class="o">=</span> <span class="n">KMeans</span><span class="p">(</span><span class="n">n_clusters</span><span class="o">=</span><span class="n">chosen_k</span><span class="p">,</span> <span class="n">n_init</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">init</span><span class="o">=</span><span class="s2">"random"</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="n">seed</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">Z</span><span class="p">)</span>

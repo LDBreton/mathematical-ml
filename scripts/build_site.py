@@ -54,7 +54,9 @@ def render_output(item: dict) -> str:
                 + html.escape(item["image"]) + '" alt="Executed result: '
                 + html.escape(item["heading"], quote=True) + '"><figcaption>'
                 + html.escape(item["heading"]) + ' · captured notebook output</figcaption></figure>')
-    return '<details class="result-text"><summary>' + html.escape(item["heading"]) + ' · computed output</summary><pre>' + html.escape(item["text"]) + '</pre></details>'
+    # Pandas pads some display rows with spaces; retain columns, omit line-end padding.
+    text_output = "\n".join(line.rstrip() for line in item["text"].splitlines())
+    return '<details class="result-text"><summary>' + html.escape(item["heading"]) + ' · computed output</summary><pre>' + html.escape(text_output) + '</pre></details>'
 
 
 
