@@ -21,3 +21,12 @@ For $p_i=\sigma(x_i^T\beta)$, logistic negative log likelihood is $-\sum_i[y_i\l
 2. Run `lesson.ipynb` top to bottom. Inspect prevalence before fitting and keep the test partition aside.
 3. In `exercises.ipynb`, derive the weighted-posterior shift and compare metrics before reading solutions.
 4. Use `solutions.ipynb` to compare calculations. Thresholds minimize the stated validation cost; test is evaluated once.
+
+
+## Visual guide and study route
+
+![Teaching figure for imbalanced learning](../../docs/figures/04_imbalanced_learning.svg)
+
+*Counts computed from the complete supplied fraud dataset, before splitting. The minority count explains why accuracy alone is insufficient.*
+
+New to the libraries? Start with [the first-experiment walkthrough](../../docs/first-steps.md). Read the guided lesson, attempt the exercises, then consult solutions. Allow about 2–3 hours for a first reading; running experiments and completing exercises may require another session.

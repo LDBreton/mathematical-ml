@@ -30,3 +30,12 @@ Accuracy is the fraction of correct decisions. Precision is the share of predict
 4. Compare with `solutions.ipynb`. Model regularization is selected within training cross-validation, threshold is selected on validation under stated toy costs, and the final test set evaluates the frozen choices once.
 
 The generated patterns are for mathematics practice; they do not support real customer interventions.
+
+
+## Visual guide and study route
+
+![Teaching figure for classification](../../docs/figures/02_classification.svg)
+
+*Illustrative sigmoid and decision threshold. A continuous probability and a discrete action are different outputs.*
+
+New to the libraries? Start with [the first-experiment walkthrough](../../docs/first-steps.md). Read the guided lesson, attempt the exercises, then consult solutions. Allow about 2–3 hours for a first reading; running experiments and completing exercises may require another session.

@@ -34,3 +34,12 @@ For category logits $z_{ik}=w_k^Tx_i+b_k$, softmax produces $p_{ik}=e^{z_{ik}}/\
 ## Scope and limitations
 
 The 480 messages are authored synthetic examples with 60 template groups. This exercise can teach sparse text features, supervised classification, model selection, group leakage, and error analysis. Even a high score does not estimate accuracy on real, changing, imbalanced, multilingual, or sensitive support traffic. Coefficients describe this fitted model's logits and are not causal explanations. The lesson discusses pretrained embeddings conceptually as an alternative representation; it installs no embedding package and downloads no weights.
+
+
+## Visual guide and study route
+
+![Teaching figure for text classification](../../docs/figures/05_text_classification.svg)
+
+*Actual normalized TF-IDF weights for four illustrative messages. Rows are documents; columns are vocabulary items.*
+
+New to the libraries? Start with [the first-experiment walkthrough](../../docs/first-steps.md). Read the guided lesson, attempt the exercises, then consult solutions. Allow about 2–3 hours for a first reading; running experiments and completing exercises may require another session.

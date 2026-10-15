@@ -14,3 +14,8 @@ Verified on 2026-10-14 using Windows and Python 3.12.10 in the repository's `.ve
 Limitations: the Docker engine was stopped, so the image was not built or run. GitHub Actions and Pages workflows are prepared but have not run remotely. No GitHub remote or public hosting was created. MathJax on the website requires an internet connection; notebooks contain the same mathematical exposition for offline study.
 
 Successful notebook execution verifies the supplied scaffolding and solutions, not whether a student has answered the exercise prompts. Synthetic-data results are teaching examples, not a real-world performance validation.
+
+## Beginner guidance and visual revision
+
+Added nine reproducible SVG teaching figures and first-experiment and review pages. All 43 HTML pages pass local-link checks. The new first-experiment Python snippet and all three lecture 01 notebooks execute successfully, including the added transformed-row inspection. Other lesson changes in this revision are Markdown only. Figures are authored teaching illustrations or labeled calculations on supplied data, rather than captured held-out model results.
+

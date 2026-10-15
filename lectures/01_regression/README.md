@@ -30,3 +30,12 @@ Ridge minimizes $\|y-A\beta\|_2^2+\alpha\|\beta\|_2^2$. For $\alpha>0$, the pena
 4. Compare your derivations, metrics, and diagnostics with `solutions.ipynb`.
 
 The test partition is held out before fitting and model selection. Cross-validation selects the Ridge penalty from training rows only. Imputation, scaling, and category encoding are fit within the pipeline. MAE and RMSE are in the synthetic target units; $R^2$ is a relative squared-error comparison, not a causal or explanatory fraction.
+
+
+## Visual guide and study route
+
+![Teaching figure for regression](../../docs/figures/01_regression.svg)
+
+*Illustrative noisy response and two function families. Inspect what a straight line cannot capture; this is not the housing model evaluation.*
+
+New to the libraries? Start with [the first-experiment walkthrough](../../docs/first-steps.md). Read the guided lesson, attempt the exercises, then consult solutions. Allow about 2–3 hours for a first reading; running experiments and completing exercises may require another session.

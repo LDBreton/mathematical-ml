@@ -39,7 +39,7 @@ def render_markdown(source: str) -> str:
 
 def page(title: str, body: str) -> str:
     navigation = '<a href="index.html">Course overview</a><h3>Start here</h3><a href="setup.html">Installation &amp; first steps</a>'
-    navigation += '<h3>The lectures</h3>'
+    navigation += '<a href="first-steps.html">New to ML? Start here</a><h3>The lectures</h3>'
     for folder, number, name, _ in LECTURES:
         navigation += f'<details><summary><a href="{folder}.html">{number} · {name}</a></summary>'
         for kind in ["lesson", "exercises", "solutions"]:
@@ -51,11 +51,17 @@ def page(title: str, body: str) -> str:
 
 def rewrite_links(body: str, folder: str | None = None) -> str:
     body = body.replace('href="../../README.md"', 'href="setup.html"')
+    body = body.replace('href="../README.md"', 'href="setup.html"')
+    body = body.replace('../lectures/', 'lectures/')
     for directory, _, _, _ in LECTURES:
         body = body.replace(f'lectures/{directory}/README.md', f'{directory}.html')
     body = body.replace('data/README.md', 'datasets.html').replace('docs/instructor-guide.md', 'instructor.html')
     body = body.replace('docs/verification.md', 'verification.html')
     body = body.replace('docs/course-project.md', 'course-project.html')
+    body = body.replace('course-review.md', 'course-review.html')
+    body = body.replace('../../docs/first-steps.md', 'first-steps.html')
+    body = body.replace('docs/first-steps.md', 'first-steps.html')
+    body = body.replace('../../docs/figures/', 'figures/')
     for source, rendered in [
         ("tabular_extensions.md", "tabular-data.html"),
         ("text_dataset.md", "text-data.html"),
@@ -86,6 +92,7 @@ def build() -> None:
     SITE.mkdir(exist_ok=True)
     (SITE / "style.css").write_text(CSS, encoding="utf-8")
     (SITE / "site.js").write_text(SCRIPT, encoding="utf-8")
+    shutil.copytree(ROOT / "docs/figures", SITE / "figures", dirs_exist_ok=True)
     cards = []
     for folder, number, title, description in LECTURES:
         source = ROOT / "lectures" / folder
@@ -104,8 +111,20 @@ def build() -> None:
                     continue
                 cells.append(f'<section class="cell">{content}</section>')
             filename = f"{folder}-{kind}.html"
+            section_links = []
+            def add_section(match):
+                anchor = f"section-{len(section_links) + 1}"
+                label = re.sub(r"<[^>]+>", "", match.group(2))
+                section_links.append(f'<a href="#{anchor}">{label}</a>')
+                return f'<h{match.group(1)} id="{anchor}">{match.group(2)}</h{match.group(1)}>'
+            contents = re.sub(r"<h([23])>(.*?)</h\1>", add_section, "".join(cells))
+            toc = '<details class="contents"><summary>On this page</summary><nav aria-label="Page contents">' + "".join(section_links) + '</nav></details>'
             download = f"downloads/{folder}/{kind}.ipynb"
-            body = f'<div class="eyebrow">Lecture {number} / {kind}</div><div class="actions"><a href="{folder}.html">← Lecture guide</a><a href="{download}" download>Download notebook</a></div><article class="reading">' + "".join(cells) + '</article>'
+            body = f'<div class="eyebrow">Lecture {number} / {kind}</div><div class="actions"><a href="{folder}.html">← Lecture guide</a><a href="{download}" download>Download notebook</a></div><p class="note">This page is a reading view. To execute Python, download the complete course and open this notebook in Jupyter. <a href="first-steps.html">First notebook walkthrough →</a></p>' + toc + '<article class="reading">' + rewrite_links(contents, folder) + '</article>'
+            if kind == "lesson":
+                body += f'<p><a class="button" href="{folder}-exercises.html">Next: attempt the exercises →</a></p>'
+            elif kind == "exercises":
+                body += f'<p>After writing your own answers, <a href="{folder}-solutions.html">compare with the worked solutions →</a></p>'
             body += lecture_navigation(folder)
             (SITE / filename).write_text(page(f"{title}: {kind}", body), encoding="utf-8")
             shutil.copy2(source / f"{kind}.ipynb", target)
@@ -114,7 +133,7 @@ def build() -> None:
         body = f'<div class="eyebrow">Lecture {number}</div><h1>{title}</h1><p class="intro">{description}</p><div class="actions">' + "".join(links) + f'</div><article class="reading">{guide}</article>'
         body += lecture_navigation(folder)
         (SITE / f"{folder}.html").write_text(page(title, body), encoding="utf-8")
-        cards.append(f'<article class="card" data-search="{html.escape((title+description).lower())}"><div class="number">{number}</div><h2>{title}</h2><p>{description}</p><a href="{folder}.html">Open lecture →</a></article>')
+        cards.append(f'<article class="card" data-search="{html.escape((title+description).lower())}"><img class="card-image" src="figures/{folder}.svg" alt="{html.escape(title)} teaching illustration" loading="lazy" width="1000" height="430"><div class="number">{number}</div><h2>{title}</h2><p>{description}</p><a href="{folder}.html">Open lecture →</a></article>')
     route = " → ".join(number for _, number, _, _ in LECTURES)
     body = """
 <section class="hero">
@@ -122,9 +141,10 @@ def build() -> None:
 <h1>Machine learning.<br><span>From equations to decisions.</span></h1>
 <p class="intro">Turn linear algebra, probability, and optimization into working models.
 Follow each mathematical idea into readable Python, test it on data, and understand what the result actually means.</p>
-<div class="actions"><a class="button" href="01_regression.html">Start learning →</a><a class="button secondary" href="setup.html">Set up Python</a><a class="button secondary" href="downloads/course.zip" download>Download the course</a></div>
+<div class="actions"><a class="button" href="first-steps.html">Start learning →</a><a class="button secondary" href="setup.html">Set up Python</a><a class="button secondary" href="downloads/course.zip" download>Download the course</a></div>
 <p class="meta">8 lectures &nbsp; · &nbsp; 24 notebooks &nbsp; · &nbsp; 7 datasets &nbsp; · &nbsp; CPU-friendly</p>
 </section>
+<figure class="course-figure"><img src="figures/course-atlas.svg" alt="Three learning tasks: a fitted response curve, a logistic probability curve with a threshold, and a two-dimensional view of clusters." width="1200" height="370"><figcaption>Three questions, three mathematical objects. Curves are illustrative; the cluster projection uses the supplied synthetic customer data.</figcaption></figure>
 <section class="roadmap" aria-label="Learning roadmap">
 <div class="eyebrow">An idea becomes an experiment</div><h2>Follow the mathematics into code.</h2>
 <div class="stages"><div><span>01 / FORMULATE</span><strong>Choose an objective</strong><code>minimize empirical risk</code><p>Projection, likelihood,<br>regularization.</p></div><b aria-hidden="true">→</b><div><span>02 / LEARN</span><strong>Fit a model</strong><code>pipeline.fit(X, y)</code><p>Linear models, trees,<br>text, and clusters.</p></div><b aria-hidden="true">→</b><div><span>03 / QUESTION</span><strong>Test the assumptions</strong><code>evaluate on held-out data</code><p>Leakage, uncertainty,<br>costs, and drift.</p></div></div>
@@ -154,6 +174,8 @@ document.querySelector('#search').addEventListener('input', event => {
     (SITE / "index.html").write_text(page("Machine learning for mathematicians", body), encoding="utf-8")
     information_pages = [
         ("setup.html", ROOT / "README.md"),
+        ("first-steps.html", ROOT / "docs/first-steps.md"),
+        ("course-review.html", ROOT / "docs/course-review.md"),
         ("datasets.html", ROOT / "data/README.md"),
         ("instructor.html", ROOT / "docs/instructor-guide.md"),
         ("verification.html", ROOT / "docs/verification.md"),

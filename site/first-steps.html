@@ -1,0 +1,209 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Eight guided machine learning lectures for mathematicians: theory, readable Python, exercises and worked solutions."><title>first-steps · Mathematical ML</title><link rel="stylesheet" href="style.css"><script defer src="site.js"></script><script>window.MathJax={tex:{inlineMath:[['$','$'],['\\(','\\)']]}};</script><script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script></head><body><a class="skip" href="#main">Skip to content</a><header><button class="menu" aria-controls="sidebar" aria-expanded="false" aria-label="Toggle course navigation">☰</button><a class="brand" href="index.html">∑ <span>Mathematical ML</span></a><nav aria-label="Quick links"><a href="setup.html">Get started</a><a href="index.html#lectures">Lectures</a><button id="theme" aria-label="Switch color theme">◐</button></nav></header><div class="layout"><aside id="sidebar" aria-label="Course navigation"><a href="index.html">Course overview</a><h3>Start here</h3><a href="setup.html">Installation &amp; first steps</a><a href="first-steps.html">New to ML? Start here</a><h3>The lectures</h3><details><summary><a href="01_regression.html">01 · Regression</a></summary><a class="sub" href="01_regression-lesson.html">Lesson</a><a class="sub" href="01_regression-exercises.html">Exercises</a><a class="sub" href="01_regression-solutions.html">Solutions</a></details><details><summary><a href="02_classification.html">02 · Classification</a></summary><a class="sub" href="02_classification-lesson.html">Lesson</a><a class="sub" href="02_classification-exercises.html">Exercises</a><a class="sub" href="02_classification-solutions.html">Solutions</a></details><details><summary><a href="03_xgboost.html">03 · XGBoost</a></summary><a class="sub" href="03_xgboost-lesson.html">Lesson</a><a class="sub" href="03_xgboost-exercises.html">Exercises</a><a class="sub" href="03_xgboost-solutions.html">Solutions</a></details><details><summary><a href="04_imbalanced_learning.html">04 · Imbalanced learning</a></summary><a class="sub" href="04_imbalanced_learning-lesson.html">Lesson</a><a class="sub" href="04_imbalanced_learning-exercises.html">Exercises</a><a class="sub" href="04_imbalanced_learning-solutions.html">Solutions</a></details><details><summary><a href="05_text_classification.html">05 · Text classification</a></summary><a class="sub" href="05_text_classification-lesson.html">Lesson</a><a class="sub" href="05_text_classification-exercises.html">Exercises</a><a class="sub" href="05_text_classification-solutions.html">Solutions</a></details><details><summary><a href="06_clustering.html">06 · Clustering</a></summary><a class="sub" href="06_clustering-lesson.html">Lesson</a><a class="sub" href="06_clustering-exercises.html">Exercises</a><a class="sub" href="06_clustering-solutions.html">Solutions</a></details><details><summary><a href="07_time_series.html">07 · Time-series forecasting</a></summary><a class="sub" href="07_time_series-lesson.html">Lesson</a><a class="sub" href="07_time_series-exercises.html">Exercises</a><a class="sub" href="07_time_series-solutions.html">Solutions</a></details><details><summary><a href="08_deployment.html">08 · From model to service</a></summary><a class="sub" href="08_deployment-lesson.html">Lesson</a><a class="sub" href="08_deployment-exercises.html">Exercises</a><a class="sub" href="08_deployment-solutions.html">Solutions</a></details><h3>Resources</h3><a href="datasets.html">Datasets</a><a href="course-project.html">Course project</a><a href="instructor.html">Teaching guide</a><a href="verification.html">Verification</a></aside><main id="main"><article class="reading"><h1>Your first machine-learning experiment</h1>
+<p>You know Python and mathematics. You do not need to know pandas, scikit-learn, or machine-learning terminology before starting here.</p>
+<h2>What are we trying to compute?</h2>
+<p>In supervised learning, one row is an observation. Its measured inputs are <strong>features</strong>, collected in a vector $x_i$. The quantity to predict is the <strong>target</strong> $y_i$. We choose a family of functions $f_\theta$, estimate its parameters from some observations, then measure prediction errors on observations kept out of fitting.</p>
+<p>For housing, a row describes one synthetic house. Area and age are features; price is the target. Write $X\in\mathbb{R}^{n\times p}$ with observations in rows and features in columns, and $y\in\mathbb{R}^n$. A <strong>sample</strong> here means a row; a <strong>dataset</strong> contains many rows. Text and categorical inputs need numerical encoding before they become this matrix.</p>
+<p>In numerical analysis, you may know the governing equation and study discretization error. Here the relation between input and output is partly unknown, and observations may be noisy. Minimizing training error alone does not establish accurate predictions on new observations. The sampling mechanism matters as much as the optimizer.</p>
+<h2>The vocabulary you need first</h2>
+<table>
+<thead>
+<tr>
+<th>Term</th>
+<th>Meaning in this course</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Model / estimator</td>
+<td>A rule with parameters that can be fitted to observations</td>
+</tr>
+<tr>
+<td>Training set</td>
+<td>Rows used to estimate parameters and learned preprocessing</td>
+</tr>
+<tr>
+<td>Validation set</td>
+<td>Separate rows used to choose settings or a decision threshold</td>
+</tr>
+<tr>
+<td>Test set</td>
+<td>Final assessment after choices are fixed</td>
+</tr>
+<tr>
+<td>Hyperparameter</td>
+<td>A setting chosen outside parameter fitting, such as tree depth or ridge strength</td>
+</tr>
+<tr>
+<td>Generalization</td>
+<td>Prediction performance on new observations from the relevant population</td>
+</tr>
+<tr>
+<td>Overfitting</td>
+<td>Adapting to training-specific variation that does not help new predictions</td>
+</tr>
+<tr>
+<td>Baseline</td>
+<td>A simple reference, such as always predicting the training mean</td>
+</tr>
+<tr>
+<td>Leakage</td>
+<td>Letting information unavailable at prediction time influence fitting or selection</td>
+</tr>
+<tr>
+<td>Metric</td>
+<td>A numerical summary of errors, such as RMSE; smaller is better for RMSE</td>
+</tr>
+</tbody>
+</table>
+<p>Cross-validation repeatedly partitions development data to estimate performance for model choices. It does not replace a final test assessment. Temporal and grouped observations need splits that respect their dependence; random row splitting is not universal.</p>
+<h2>Know which tool does what</h2>
+<table>
+<thead>
+<tr>
+<th>Library</th>
+<th>Role</th>
+<th>First objects to recognize</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>NumPy</td>
+<td>Numerical arrays and vectorized arithmetic</td>
+<td><code>ndarray</code>, <code>.shape</code>, <code>axis</code></td>
+</tr>
+<tr>
+<td>pandas</td>
+<td>Labeled tables loaded from CSV files</td>
+<td><code>DataFrame</code>, column selection, missing values</td>
+</tr>
+<tr>
+<td>Matplotlib</td>
+<td>Figures for inspecting data and errors</td>
+<td><code>plt.subplots</code>, <code>ax.scatter</code>, <code>ax.plot</code></td>
+</tr>
+<tr>
+<td>scikit-learn</td>
+<td>Splits, transformations, estimators, metrics</td>
+<td><code>train_test_split</code>, <code>Pipeline</code>, <code>.fit</code>, <code>.predict</code></td>
+</tr>
+<tr>
+<td>XGBoost</td>
+<td>An implementation of gradient-boosted trees</td>
+<td><code>XGBRegressor</code>, validation history</td>
+</tr>
+</tbody>
+</table>
+<p><code>df["price"]</code> selects a one-dimensional labeled Series. <code>df[["area_m2"]]</code> selects a two-dimensional table with one feature column. Scikit-learn generally expects <code>X.shape == (n_rows, n_features)</code> and <code>y.shape == (n_rows,)</code>. After encoding categories, the feature count can grow.</p>
+<h2>A minimal complete experiment</h2>
+<p>Read the <a href="setup.html">installation instructions</a>, then run this from the repository root in the course Python environment:</p>
+<pre><code class="language-python">import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+from sklearn.dummy import DummyRegressor
+from sklearn.metrics import mean_squared_error
+
+houses = pd.read_csv(&quot;data/housing.csv&quot;)
+X = houses[[&quot;area_m2&quot;]]  # Keep the feature matrix two-dimensional.
+y = houses[&quot;price&quot;]
+print(X.shape, y.shape)
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42
+)
+baseline = DummyRegressor(strategy=&quot;mean&quot;)
+model = LinearRegression()
+for name, estimator in [(&quot;Training mean&quot;, baseline), (&quot;Area-only line&quot;, model)]:
+    estimator.fit(X_train, y_train)
+    predictions = estimator.predict(X_test)
+    rmse = mean_squared_error(y_test, predictions) ** 0.5
+    print(f&quot;{name}: test RMSE = {rmse:,.2f} price units&quot;)
+</code></pre>
+<p><code>fit</code> changes the estimator: it learns parameters from training data. <code>predict</code> uses those learned parameters on another feature matrix; it does not refit. <code>random_state=42</code> makes the split repeatable; it does not make that split representative of every population.</p>
+<p>This is a deliberately fixed, two-model demonstration with no hyperparameter selection. If you start selecting features or settings based on its test results, those rows have become validation data and you need fresh final test data.</p>
+<p><strong>Pause and explain:</strong> Why does the constant predictor use the training mean? What does RMSE measure, and what are its units? What information about houses does the area-only line ignore? A low error on synthetic houses cannot establish accuracy in a real housing market.</p>
+<h2>Your first notebook, step by step</h2>
+<ol>
+<li>Download and unzip the <strong>complete course</strong>, or clone the repository. A notebook download alone does not include its CSV files.</li>
+<li>Complete setup and launch <code>python -m jupyterlab</code> from the repository root.</li>
+<li>Open <code>lectures/01_regression/lesson.ipynb</code>. Select the <strong>Mathematical ML</strong> kernel: the Python process that executes cells and holds their variables.</li>
+<li>Run cells from top to bottom with <strong>Shift+Enter</strong>. Markdown cells explain the reasoning; code cells compute results. A running cell shows <code>[*]</code>.</li>
+<li>When you change an early cell, rerun the dependent cells. Before trusting a result, choose <strong>Kernel → Restart Kernel and Run All Cells</strong> to check that it does not depend on stale variables.</li>
+<li>Attempt <code>exercises.ipynb</code>, writing explanations as well as code. Then consult <code>solutions.ipynb</code>.</li>
+</ol>
+<p>The website is a static reading view. Its code blocks do not execute Python. Your notebook runs locally, including its plots and printed results. The website's teaching figures are labeled illustrations, not automatically refreshed notebook outputs.</p>
+<h2>Read the estimator API as mathematics</h2>
+<table>
+<thead>
+<tr>
+<th>Operation</th>
+<th>What it means</th>
+<th>What it learns</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>estimator.fit(X_train, y_train)</code></td>
+<td>Estimate model parameters</td>
+<td>Coefficients, splits, or other fitted state</td>
+</tr>
+<tr>
+<td><code>transformer.fit(X_train)</code></td>
+<td>Estimate a representation</td>
+<td>Means, scales, categories, vocabulary</td>
+</tr>
+<tr>
+<td><code>transformer.transform(X_new)</code></td>
+<td>Apply a fixed representation</td>
+<td>Nothing new</td>
+</tr>
+<tr>
+<td><code>transformer.fit_transform(X_train)</code></td>
+<td>Fit and apply on training data</td>
+<td>Representation state</td>
+</tr>
+<tr>
+<td><code>estimator.predict(X_new)</code></td>
+<td>Apply the fitted predictor</td>
+<td>Nothing new</td>
+</tr>
+<tr>
+<td><code>classifier.predict_proba(X_new)</code></td>
+<td>Return one probability per class</td>
+<td>Nothing new; inspect <code>.classes_</code> for column order</td>
+</tr>
+</tbody>
+</table>
+<p>A <code>Pipeline</code> composes transformations and an estimator. Its <code>.fit</code> learns each preprocessing stage using the supplied training rows, then fits the final model. A <code>ColumnTransformer</code> applies different transformations to named column groups and joins the resulting numerical features. Neither protects you from a badly chosen split or from preprocessing already fitted outside the pipeline.</p>
+<p>An <strong>epoch</strong> is a full pass through data in some training algorithms; a <strong>boosting round</strong> adds a tree or stage. They are different ideas. A GPU changes how some computations run; it does not change which data are legitimate to use for fitting or evaluation.</p>
+<h2>When something goes wrong</h2>
+<table>
+<thead>
+<tr>
+<th>Symptom</th>
+<th>First check</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ModuleNotFoundError</code></td>
+<td>The notebook kernel should use the course environment, not another Python installation</td>
+</tr>
+<tr>
+<td>CSV not found</td>
+<td>Keep the complete course directory together; launch Jupyter from its root</td>
+</tr>
+<tr>
+<td><code>NameError</code></td>
+<td>Run earlier cells, then restart and run all if state is unclear</td>
+</tr>
+<tr>
+<td>Wrong input shape</td>
+<td>Inspect <code>X.shape</code>; select a list of columns to preserve two dimensions</td>
+</tr>
+<tr>
+<td>A metric looks unexpectedly excellent</td>
+<td>Check whether targets or future information leaked into the inputs or preprocessing</td>
+</tr>
+</tbody>
+</table>
+<p>Continue with <a href="01_regression.html">lecture 01: regression</a>. Keep this page open as a reference; you do not need to memorize the APIs.</p></article></main></div><footer>Mathematical ML · Eight practical lectures for mathematicians<br>Readable Python · Reproducible experiments · Synthetic teaching data</footer></body></html>

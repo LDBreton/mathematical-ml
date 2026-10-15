@@ -27,3 +27,12 @@ The three models receive the same training and held-out test rows. XGBoost uses 
 By the end, you should be able to explain stagewise function-space boosting, derive the optimal regularized leaf value and split gain from a second-order Taylor approximation, interpret the regularization controls, and design an evaluation split that keeps model selection separate from final assessment.
 
 The gain formula is a local approximation to the chosen objective. Its interpretation depends on the loss, Hessian weights, regularization convention, and tree constraints. A positive training split gain is not evidence of improved generalization; use held-out validation and test results for that question.
+
+
+## Visual guide and study route
+
+![Teaching figure for xgboost](../../docs/figures/03_xgboost.svg)
+
+*An actual shallow tree fitted to an illustrative one-dimensional sample. Notice constant predictions inside each leaf.*
+
+New to the libraries? Start with [the first-experiment walkthrough](../../docs/first-steps.md). Read the guided lesson, attempt the exercises, then consult solutions. Allow about 2–3 hours for a first reading; running experiments and completing exercises may require another session.

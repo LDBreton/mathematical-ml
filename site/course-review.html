@@ -1,0 +1,65 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Eight guided machine learning lectures for mathematicians: theory, readable Python, exercises and worked solutions."><title>course-review · Mathematical ML</title><link rel="stylesheet" href="style.css"><script defer src="site.js"></script><script>window.MathJax={tex:{inlineMath:[['$','$'],['\\(','\\)']]}};</script><script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script></head><body><a class="skip" href="#main">Skip to content</a><header><button class="menu" aria-controls="sidebar" aria-expanded="false" aria-label="Toggle course navigation">☰</button><a class="brand" href="index.html">∑ <span>Mathematical ML</span></a><nav aria-label="Quick links"><a href="setup.html">Get started</a><a href="index.html#lectures">Lectures</a><button id="theme" aria-label="Switch color theme">◐</button></nav></header><div class="layout"><aside id="sidebar" aria-label="Course navigation"><a href="index.html">Course overview</a><h3>Start here</h3><a href="setup.html">Installation &amp; first steps</a><a href="first-steps.html">New to ML? Start here</a><h3>The lectures</h3><details><summary><a href="01_regression.html">01 · Regression</a></summary><a class="sub" href="01_regression-lesson.html">Lesson</a><a class="sub" href="01_regression-exercises.html">Exercises</a><a class="sub" href="01_regression-solutions.html">Solutions</a></details><details><summary><a href="02_classification.html">02 · Classification</a></summary><a class="sub" href="02_classification-lesson.html">Lesson</a><a class="sub" href="02_classification-exercises.html">Exercises</a><a class="sub" href="02_classification-solutions.html">Solutions</a></details><details><summary><a href="03_xgboost.html">03 · XGBoost</a></summary><a class="sub" href="03_xgboost-lesson.html">Lesson</a><a class="sub" href="03_xgboost-exercises.html">Exercises</a><a class="sub" href="03_xgboost-solutions.html">Solutions</a></details><details><summary><a href="04_imbalanced_learning.html">04 · Imbalanced learning</a></summary><a class="sub" href="04_imbalanced_learning-lesson.html">Lesson</a><a class="sub" href="04_imbalanced_learning-exercises.html">Exercises</a><a class="sub" href="04_imbalanced_learning-solutions.html">Solutions</a></details><details><summary><a href="05_text_classification.html">05 · Text classification</a></summary><a class="sub" href="05_text_classification-lesson.html">Lesson</a><a class="sub" href="05_text_classification-exercises.html">Exercises</a><a class="sub" href="05_text_classification-solutions.html">Solutions</a></details><details><summary><a href="06_clustering.html">06 · Clustering</a></summary><a class="sub" href="06_clustering-lesson.html">Lesson</a><a class="sub" href="06_clustering-exercises.html">Exercises</a><a class="sub" href="06_clustering-solutions.html">Solutions</a></details><details><summary><a href="07_time_series.html">07 · Time-series forecasting</a></summary><a class="sub" href="07_time_series-lesson.html">Lesson</a><a class="sub" href="07_time_series-exercises.html">Exercises</a><a class="sub" href="07_time_series-solutions.html">Solutions</a></details><details><summary><a href="08_deployment.html">08 · From model to service</a></summary><a class="sub" href="08_deployment-lesson.html">Lesson</a><a class="sub" href="08_deployment-exercises.html">Exercises</a><a class="sub" href="08_deployment-solutions.html">Solutions</a></details><h3>Resources</h3><a href="datasets.html">Datasets</a><a href="course-project.html">Course project</a><a href="instructor.html">Teaching guide</a><a href="verification.html">Verification</a></aside><main id="main"><article class="reading"><h1>Beginner-perspective course review</h1>
+<p>Requested reviewer: Astra at low reasoning effort, adopting the perspective of a mathematician with numerical-analysis experience who knows Python but has no machine-learning background. The review inspected all eight lesson notebooks, lecture READMEs, setup instructions, and website source. It did not execute notebooks or visually inspect the browser. This is a pedagogical critique, not an independent runtime certification.</p>
+<h2>Main finding</h2>
+<p>The course is stronger on mathematical qualifications and evaluation discipline than on introducing the software abstractions needed to reproduce its arguments. Preserve the mathematical depth, but make software objects, transformed arrays, and observable results as explicit as the equations.</p>
+<h2>Changes made following the review</h2>
+<ul>
+<li>Added a first-experiment guide: observations/features/targets, shapes, terminology, library roles, estimator methods, notebook execution, and troubleshooting.</li>
+<li>Added nine reproducible SVG figures, with captions identifying illustrations versus supplied-data calculations. Figures appear in the landing page, lecture guides, and guided notebooks.</li>
+<li>Added introductory bridges in all eight lessons, including a tiny Ridge calculation, logistic loss calculation, tree/forest distinction, rare-event alert arithmetic, sparse-matrix vocabulary, a Lloyd update, a concrete lag-date example, and serving vocabulary.</li>
+<li>Added an executed transformed-row inspection in lecture 01: raw rows, scaled and encoded columns, and fitted training means.</li>
+<li>Explained the provisional k=4 clustering figure and why descriptive segmentation fits the observed population.</li>
+<li>Labeled the deployment threshold of 0.4 as an illustrative software-contract policy, rather than implying it carries forward validation selection.</li>
+<li>Added anchored contents on notebook reading pages, an explicit static-reading notice, and lesson → exercises → solutions navigation.</li>
+</ul>
+<h2>Strong recommendations for the next teaching iteration</h2>
+<table>
+<thead>
+<tr>
+<th>Priority</th>
+<th>Recommendation</th>
+<th>Why it matters</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>High</td>
+<td>Display final silhouette-selected cluster sizes, profiles, and a matching PCA plot</td>
+<td>The initial k=4 picture must not stand in for a different selected fit</td>
+</tr>
+<tr>
+<td>High</td>
+<td>Build selected result galleries from verified notebook executions</td>
+<td>These authored concept figures complement, but do not replace, actual residual, PR, and forecast diagnostics</td>
+</tr>
+<tr>
+<td>High</td>
+<td>Present one artifact lifecycle through training, threshold selection, saving, loading, and API parity</td>
+<td>Several independent deployment demonstrations currently require extra explanation</td>
+</tr>
+<tr>
+<td>Medium</td>
+<td>Add a validation-cost/alert-count threshold plot and place always-negative cost in the same comparison</td>
+<td>Makes rare-event decisions operational rather than just metric-driven</td>
+</tr>
+<tr>
+<td>Medium</td>
+<td>Add a calibration reliability example and labeled confusion-matrix counts</td>
+<td>Ranking, probability quality, and policy quality are separate questions</td>
+</tr>
+<tr>
+<td>Medium</td>
+<td>Show a count matrix, IDF vector, normalized rows, and one cosine calculation</td>
+<td>Extend the existing strong manual-IDF example into sparse geometry</td>
+</tr>
+<tr>
+<td>Medium</td>
+<td>Add a compact five-date forecast-feature table and more than two clustering starts</td>
+<td>Make information availability and stability more observable</td>
+</tr>
+</tbody>
+</table>
+<h2>What to shorten or remove</h2>
+<p>Keep the present eight-topic scope before adding deep learning or further libraries. Use lecture READMEs primarily for orientation and deliverables rather than repeating notebook theory. Consolidate repeated qualifications into concise limits sections while preserving substantive assumptions. Move environment restoration and cleanup machinery in deployment into clearly labeled setup helpers or an appendix in a future refactor. Treat MLflow and Docker as extensions for first-time learners.</p>
+<h2>Strengths to preserve</h2>
+<p>Training-only preprocessing; explicit validation/test separation; manual residual boosting; the worked TF-IDF/IDF check; fitting clusters in full feature space while using PCA only for display; and forecasting information-set and future-perturbation checks. These connect mathematical reasoning to trustworthy experiments.</p></article></main></div><footer>Mathematical ML · Eight practical lectures for mathematicians<br>Readable Python · Reproducible experiments · Synthetic teaching data</footer></body></html>

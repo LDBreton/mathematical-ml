@@ -52,3 +52,6 @@ Use 30% mathematical reasoning and stated assumptions, 25% sound validation desi
 - [TF-IDF transformation](https://scikit-learn.org/stable/modules/generated/sklearn.feature_extraction.text.TfidfTransformer.html): the precise smoothing and normalization conventions.
 - [Silhouette analysis](https://scikit-learn.org/stable/auto_examples/cluster/plot_kmeans_silhouette_analysis.html): internal cluster diagnostics.
 - [Lagged forecasting features](https://scikit-learn.org/stable/auto_examples/applications/plot_time_series_lagged_features.html): chronological evaluation.
+
+
+See the [beginner-perspective course review](course-review.md) for the Astra critique, changes made, and prioritized next improvements.

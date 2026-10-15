@@ -4,6 +4,8 @@ Eight hands-on lectures connecting probability, optimization, linear algebra, an
 
 Prerequisites: basic Python functions and arrays, linear algebra, derivatives, conditional probability, and elementary statistics. No prior machine-learning experience is assumed. All datasets are small, synthetic, included locally, and documented in [data/README.md](data/README.md). No accounts, paid APIs, GPU, or downloads of external data are needed.
 
+New to machine-learning libraries? Read [Your first experiment](docs/first-steps.md) for vocabulary, array shapes, the estimator API, and a step-by-step notebook walkthrough.
+
 ## Setup once
 
 Use Python 3.11 or 3.12. In a terminal opened at the repository root:

@@ -91,3 +91,14 @@ docker run --rm -p 127.0.0.1:8001:8000 churn-course-api
 ```
 
 The root Dockerfile installs the course package, trains on the bundled synthetic `data/churn.csv`, and starts Uvicorn. Check `http://127.0.0.1:8001/health` and send prediction requests to `http://127.0.0.1:8001/predict`. The container listens on all interfaces internally; the host port mapping above exposes it only through loopback.
+
+
+## Visual guide and study route
+
+![Teaching figure for deployment](../../docs/figures/08_deployment.svg)
+
+*Conceptual serving workflow. The same saved preprocessing is applied to each validated incoming record.*
+
+New to the libraries? Start with [the first-experiment walkthrough](../../docs/first-steps.md). Read the guided lesson, attempt the exercises, then consult solutions. Allow about 2–3 hours for a first reading; running experiments and completing exercises may require another session.
+
+Core route: saved model → validated request → prediction response. Treat MLflow and Docker as optional extensions on a first pass.

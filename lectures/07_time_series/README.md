@@ -47,3 +47,12 @@ Or start Jupyter from the repository root or this lecture directory and run the 
 The CSV is synthetic and is not evidence about a real business. Weekly and smooth annual patterns are built into the generator, so the weekly seasonal-naive forecast is a natural benchmark. The final scores represent one-day-ahead forecasts issued sequentially with actual lag updates and fixed model parameters; they do not represent a multi-day forecast issued once at a fixed origin. MAE and RMSE are measured in sales units. No percentage metric is needed for this positive-valued example.
 
 The more complex model need not beat seasonal persistence. Tree ensembles make piecewise-constant predictions and can struggle with a drifting level beyond their training range. If the baseline wins, report that result and investigate the validation evidence rather than tuning against the final test.
+
+
+## Visual guide and study route
+
+![Teaching figure for time series](../../docs/figures/07_time_series.svg)
+
+*The supplied synthetic series with illustrative 70/15/15 boundaries on raw rows. The notebook splits usable lagged rows, so its exact boundaries differ.*
+
+New to the libraries? Start with [the first-experiment walkthrough](../../docs/first-steps.md). Read the guided lesson, attempt the exercises, then consult solutions. Allow about 2–3 hours for a first reading; running experiments and completing exercises may require another session.
