@@ -1,0 +1,108 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Ocho lecciones de aprendizaje automático para matemáticos: fundamentos, opciones de software y ejemplos guiados en Python."><title>Guía de inicio · Mathematical ML</title><link rel="stylesheet" href="../style.css"><script defer src="../site.js"></script><script>window.MathJax={tex:{inlineMath:[['$','$'],['\\(','\\)']]}};</script><script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script><link rel="alternate" hreflang="en" href="../setup.html"><link rel="alternate" hreflang="es" href="setup.html"><link rel="alternate" hreflang="x-default" href="../setup.html"></head><body><a class="skip" href="#main">Saltar al contenido</a><header><button class="menu" aria-controls="sidebar" aria-expanded="false" aria-label="Mostrar u ocultar la navegación del curso">☰</button><a class="brand" href="index.html">∑ <span>Mathematical ML</span></a><nav aria-label="Enlaces rápidos"><a href="setup.html">Comenzar</a><a href="index.html#lectures">Lecciones</a><button id="theme" aria-label="Cambiar tema de color">◐</button></nav><nav class="languages" aria-label="Idioma"><a href="../setup.html" lang="en" hreflang="en">English</a><a href="setup.html" lang="es" hreflang="es" aria-current="true">Español</a></nav></header><div class="layout"><aside id="sidebar" aria-label="Navegación del curso"><a href="index.html">Presentación del curso</a><h3>Comienza aquí</h3><a href="setup.html">Instalación &amp; primeros pasos</a><a href="first-steps.html">¿Nuevo en aprendizaje automático? Comienza aquí</a><h3>Las lecciones</h3><details><summary><a href="01_regression.html">01 · Regresión</a></summary><a class="sub" href="01_regression-lesson.html">Fundamentos &amp; ejemplos</a></details><details><summary><a href="02_classification.html">02 · Clasificación</a></summary><a class="sub" href="02_classification-lesson.html">Fundamentos &amp; ejemplos</a></details><details><summary><a href="03_xgboost.html">03 · XGBoost</a></summary><a class="sub" href="03_xgboost-lesson.html">Fundamentos &amp; ejemplos</a></details><details><summary><a href="04_imbalanced_learning.html">04 · Aprendizaje con clases desbalanceadas</a></summary><a class="sub" href="04_imbalanced_learning-lesson.html">Fundamentos &amp; ejemplos</a></details><details><summary><a href="05_text_classification.html">05 · Clasificación de texto</a></summary><a class="sub" href="05_text_classification-lesson.html">Fundamentos &amp; ejemplos</a></details><details><summary><a href="06_clustering.html">06 · Agrupamiento</a></summary><a class="sub" href="06_clustering-lesson.html">Fundamentos &amp; ejemplos</a></details><details><summary><a href="07_time_series.html">07 · Pronóstico de series temporales</a></summary><a class="sub" href="07_time_series-lesson.html">Fundamentos &amp; ejemplos</a></details><details><summary><a href="08_deployment.html">08 · Del modelo al servicio</a></summary><a class="sub" href="08_deployment-lesson.html">Fundamentos &amp; ejemplos</a></details><h3>Recursos</h3><a href="results.html">Galerías de resultados ejecutados</a><a href="datasets.html">Conjuntos de datos</a><a href="course-project.html">Proyecto del curso</a><a href="instructor.html">Guía docente</a><a href="verification.html">Verificación</a></aside><main id="main"><p class="translation-note">Versión en español. El código, los datos, las salidas calculadas y las etiquetas dentro de las figuras se conservan en su idioma original. Los cuadernos descargables están en inglés.</p><article class="reading"><p><a class="button" href="../downloads/course.zip" download>Descargar el curso completo</a></p><h1>Aprendizaje automático para matemáticos</h1>
+<p>Ocho lecciones prácticas que conectan probabilidad, optimización, álgebra lineal y razonamiento temporal con Python legible y un servicio de predicción funcional. Sigue <strong>01 → 02 → 03 → 04 → 05 → 06 → 07 → 08</strong>.</p>
+<p>Requisitos: funciones y arreglos básicos de Python, álgebra lineal, derivadas, probabilidad condicional y estadística elemental. No se supone experiencia previa en aprendizaje automático. Todos los datos son pequeños, sintéticos, incluidos localmente y documentados en <a href="datasets.html">datasets.html</a>. No se necesitan cuentas, API de pago, GPU ni descargas de datos externos.</p>
+<p>¿Nuevo en bibliotecas de aprendizaje automático? Lee <a href="first-steps.html">Tu primer experimento</a> para conocer el vocabulario, las dimensiones de arreglos, la API de estimadores y una guía paso a paso del cuaderno.</p>
+<h2>Instalación inicial</h2>
+<p>Usa Python 3.11 o 3.12. En una terminal abierta en la raíz del repositorio:</p>
+<div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">-m</span> <span class="n">venv</span> <span class="p">.</span><span class="n">venv</span>
+<span class="p">.</span><span class="n">venv</span><span class="p">\</span><span class="n">Scripts</span><span class="p">\</span><span class="n">Activate</span><span class="p">.</span><span class="n">ps1</span>
+<span class="n">python</span> <span class="n">-m</span> <span class="n">pip</span> <span class="n">install</span> <span class="n">-e</span> <span class="p">.</span>
+<span class="n">python</span> <span class="n">-m</span> <span class="n">ipykernel</span> <span class="n">install</span> <span class="p">-</span><span class="n">-user</span> <span class="p">-</span><span class="n">-name</span> <span class="n">mathematical-ml</span> <span class="p">-</span><span class="n">-display-name</span> <span class="s2">"Mathematical ML"</span>
+<span class="n">python</span> <span class="n">-m</span> <span class="n">jupyterlab</span>
+</pre></div>
+
+<p>Si PowerShell bloquea la activación, usa <code>.venv\Scripts\python.exe</code> en lugar de <code>python</code> para cada comando; activar el entorno es opcional. En macOS/Linux actívalo con <code>source .venv/bin/activate</code>. En Jupyter selecciona el núcleo <strong>Mathematical ML</strong> . Los comandos posteriores suponen este entorno.</p>
+<h2>Ruta de estudio</h2>
+<table>
+<thead>
+<tr>
+<th>Lección</th>
+<th>Pregunta</th>
+<th>Fundamento matemático</th>
+<th>Resultado práctico</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="01_regression.html">01: Regresión</a></td>
+<td>¿Cómo estimamos precios de viviendas?</td>
+<td>Riesgo empírico, mínimos cuadrados, regularización</td>
+<td>Un pipeline de preprocesamiento y regresión</td>
+</tr>
+<tr>
+<td><a href="02_classification.html">02: Clasificación</a></td>
+<td>¿Quién podría abandonar un servicio?</td>
+<td>Verosimilitud Bernoulli, regresión logística, costos de decisión</td>
+<td>Probabilidades y un umbral defendible</td>
+</tr>
+<tr>
+<td><a href="03_xgboost.html">03: XGBoost</a></td>
+<td>¿Pueden los árboles captar demanda no lineal?</td>
+<td>Modelos aditivos, gradientes funcionales, objetivos de árboles de segundo orden</td>
+<td>Experimento de boosting comparado con modelos de referencia</td>
+</tr>
+<tr>
+<td><a href="04_imbalanced_learning.html">04: Aprendizaje con clases desbalanceadas</a></td>
+<td>¿Cómo detectamos fraude poco frecuente?</td>
+<td>Prevalencia, precisión–exhaustividad, riesgo ponderado, costos de decisión</td>
+<td>Política de alertas seleccionada por validación</td>
+</tr>
+<tr>
+<td><a href="05_text_classification.html">05: Clasificación de texto</a></td>
+<td>¿Cómo dirigimos mensajes de soporte?</td>
+<td>Vectores TF-IDF dispersos, geometría coseno, verosimilitud multinomial</td>
+<td>Pipeline de clasificación de texto evaluado por familia de plantillas</td>
+</tr>
+<tr>
+<td><a href="06_clustering.html">06: Agrupamiento</a></td>
+<td>¿Cómo segmentamos clientes sin etiquetas?</td>
+<td>Minimización de K-means, PCA, validación interna</td>
+<td>Grupos interpretables y diagnósticos de estabilidad</td>
+</tr>
+<tr>
+<td><a href="07_time_series.html">07: Pronóstico de series temporales</a></td>
+<td>¿Cómo pronosticamos las ventas de mañana?</td>
+<td>Conjuntos de información, variables retardadas, evaluación con origen móvil</td>
+<td>Referencia estacional y pronósticos XGBoost a un paso</td>
+</tr>
+<tr>
+<td><a href="08_deployment.html">08: Despliegue</a></td>
+<td>¿Cómo se convierte un modelo ajustado en servicio?</td>
+<td>Contratos estadísticos y de software, reproducibilidad</td>
+<td>Entrenamiento registrado y API de predicción validada</td>
+</tr>
+</tbody>
+</table>
+<p>En cada lección, lee su README y ejecuta <code>lesson.ipynb</code> en orden. Cada lección conecta fundamentos matemáticos, opciones del software y ejemplos guiados. Lee la explicación, anticipa qué cambia un parámetro y examina el resultado calculado. Prevé unas 2–3 horas por lección, más tiempo para los ejemplos ampliados.</p>
+<h2>Sitio del curso</h2>
+<div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">scripts</span><span class="p">/</span><span class="n">build_site</span><span class="p">.</span><span class="n">py</span>
+<span class="n">python</span> <span class="n">-m</span> <span class="n">http</span><span class="p">.</span><span class="n">server</span> <span class="n">8000</span> <span class="p">-</span><span class="n">-bind</span> <span class="n">127</span><span class="p">.</span><span class="n">0</span><span class="p">.</span><span class="n">0</span><span class="p">.</span><span class="n">1</span>
+</pre></div>
+
+<p>Abre <strong>http://127.0.0.1:8000/site/</strong>. El sitio incluye teoría y código con resaltado de sintaxis, resultados capturados, ocho galerías, instrucciones y descargas de cuadernos. MathJax representa las matemáticas desde una CDN cuando hay conexión; los cuadernos locales son la referencia sin conexión. Pulsa Ctrl+C para detener el servidor. El sitio puede alojarse en GitHub Pages con el flujo de GitHub Actions incluido.</p>
+<h2>Verificar el curso</h2>
+<div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">-m</span> <span class="n">pytest</span>
+<span class="n">python</span> <span class="n">scripts</span><span class="p">/</span><span class="n">check_notebooks</span><span class="p">.</span><span class="n">py</span>
+<span class="n">python</span> <span class="n">scripts</span><span class="p">/</span><span class="n">export_lesson_results</span><span class="p">.</span><span class="n">py</span>
+<span class="n">python</span> <span class="n">scripts</span><span class="p">/</span><span class="n">build_site</span><span class="p">.</span><span class="n">py</span>
+<span class="n">python</span> <span class="n">scripts</span><span class="p">/</span><span class="n">check_site</span><span class="p">.</span><span class="n">py</span>
+</pre></div>
+
+<p>El ejecutor procesa las ocho lecciones guiadas con núcleos separados y escribe resultados en el directorio ignorado <code>.verification/</code>. Los cuadernos versionados mantienen las salidas vacías para que los estudiantes generen sus propias figuras. <code>export_lesson_results.py</code> copia las salidas verificadas a <code>docs/results/</code> con hashes de código y datos y versiones de dependencias. Registra esas capturas después de modificar intencionalmente las lecciones; la construcción rechaza capturas desactualizadas. GitHub Pages usa resultados versionados y no ejecuta cuadernos Python. El flujo de verificación ejecuta cada cuaderno independientemente. Consulta <a href="https://ldbreton.github.io/mathematical-ml/results.html">las galerías</a>.</p>
+<p>Las últimas comprobaciones locales y sus limitaciones se registran en <a href="verification.html">verification.md</a>. Para validar el sitio después de reconstruirlo, ejecuta <code>python scripts/check_site.py</code>.</p>
+<p>Ejecuta <code>python scripts/check_data.py</code> para comprobar que los generadores reproducen los bytes CSV versionados en el entorno actual sin sobrescribirlos. La reproducción exacta de bytes es más exigente que la equivalencia estadística y puede depender de las versiones de bibliotecas numéricas.</p>
+<h2>Reproducibilidad y docencia</h2>
+<p>Los CSV están versionados. Regenera todos los conjuntos con <code>python scripts/generate_all_data.py</code> solo cuando quieras actualizar las entradas de clase. <code>generate_data.py</code> regenera los datos originales de vivienda, abandono y bicicletas; los generadores adicionales pueden ejecutarse por separado. Cada conjunto tiene un modelo de muestreo documentado. Los intervalos de dependencias describen instalaciones compatibles; <code>requirements-lock.txt</code> registra el entorno de verificación. Para reproducir exactamente el entorno de clase instala ese archivo antes de <code>python -m pip install --no-deps -e .</code>. Las versiones fijadas corresponden al Python y la plataforma verificados; CI también comprueba una instalación nueva desde los intervalos declarados.</p>
+<p>Las lecciones 04–07 no añaden dependencias. Texto usa variables TF-IDF dispersas locales; los embeddings preentrenados se discuten sin descargar modelos. Pronóstico usa datos realmente cronológicos y evalúa explícitamente predicciones móviles a un paso, a diferencia de los escenarios horarios independientes de la lección 03.</p>
+<p>Consulta <a href="instructor.html">la guía docente</a> para objetivos de aprendizaje, tiempos sugeridos y evaluación. Los modelos de datos están simplificados deliberadamente. Su desempeño no establece precisión real, causalidad, equidad ni preparación para producción. La API es un servicio didáctico local.</p>
+<p>Termina con el <a href="course-project.html">proyecto del curso</a>, que pide justificar un experimento completo y una entrega opcional de software. La API de despliegue sirve específicamente abandono de clientes; otras tareas necesitan su propio contrato de entrada.</p>
+<h2>Sitio y repositorio</h2>
+<ul>
+<li><a href="https://ldbreton.github.io/mathematical-ml/">Explorar el curso</a></li>
+<li><a href="https://github.com/LDBreton/mathematical-ml">Repositorio del código</a></li>
+</ul>
+<p>GitHub Pages usa <strong>GitHub Actions</strong> como fuente de publicación. Los envíos a <code>main</code>
+construyen y publican automáticamente el sitio. También puedes ejecutar <strong>Publish course
+navigator</strong> manualmente en Actions. El flujo independiente <strong>Verify course</strong> ejecuta pruebas y todos los cuadernos en cada envío y solicitud de cambios.</p>
+<p>Para publicar una bifurcación, habilita Pages en <strong>Settings → Pages → Build and deployment</strong>, elige <strong>GitHub Actions</strong>y ejecuta <strong>Publish course navigator</strong>. Los enlaces relativos funcionan bajo la subruta de tu repositorio sin cambios. Actualiza los enlaces públicos para tu bifurcación.</p>
+<p>GitHub Pages sirve documentación y descargas. Ejecuta localmente los cuadernos y la API Python de la lección 08; Pages no ejecuta servidores Python.</p></article></main></div><footer>Mathematical ML · Ocho lecciones prácticas para matemáticos<br>Python legible · Experimentos reproducibles · Datos sintéticos didácticos</footer></body></html>

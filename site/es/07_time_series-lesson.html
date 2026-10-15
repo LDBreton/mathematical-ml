@@ -1,0 +1,422 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Ocho lecciones de aprendizaje automático para matemáticos: fundamentos, opciones de software y ejemplos guiados en Python."><title>Pronóstico de series temporales: lección · ML matemático</title><link rel="stylesheet" href="../style.css"><script defer src="../site.js"></script><script>window.MathJax={tex:{inlineMath:[['$','$'],['\\(','\\)']]}};</script><script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script><link rel="alternate" hreflang="en" href="../07_time_series-lesson.html"><link rel="alternate" hreflang="es" href="07_time_series-lesson.html"><link rel="alternate" hreflang="x-default" href="../07_time_series-lesson.html"></head><body><a class="skip" href="#main">Saltar al contenido</a><header><button class="menu" aria-controls="sidebar" aria-expanded="false" aria-label="Mostrar u ocultar la navegación del curso">☰</button><a class="brand" href="index.html">∑ <span>Mathematical ML</span></a><nav aria-label="Enlaces rápidos"><a href="setup.html">Comenzar</a><a href="index.html#lectures">Lecciones</a><button id="theme" aria-label="Cambiar tema de color">◐</button></nav><nav class="languages" aria-label="Idioma"><a href="../07_time_series-lesson.html" lang="en" hreflang="en">English</a><a href="07_time_series-lesson.html" lang="es" hreflang="es" aria-current="true">Español</a></nav></header><div class="layout"><aside id="sidebar" aria-label="Navegación del curso"><a href="index.html">Presentación del curso</a><h3>Comienza aquí</h3><a href="setup.html">Instalación &amp; primeros pasos</a><a href="first-steps.html">¿Nuevo en aprendizaje automático? Comienza aquí</a><h3>Las lecciones</h3><details><summary><a href="01_regression.html">01 · Regresión</a></summary><a class="sub" href="01_regression-lesson.html">Fundamentos &amp; ejemplos</a></details><details><summary><a href="02_classification.html">02 · Clasificación</a></summary><a class="sub" href="02_classification-lesson.html">Fundamentos &amp; ejemplos</a></details><details><summary><a href="03_xgboost.html">03 · XGBoost</a></summary><a class="sub" href="03_xgboost-lesson.html">Fundamentos &amp; ejemplos</a></details><details><summary><a href="04_imbalanced_learning.html">04 · Aprendizaje con clases desbalanceadas</a></summary><a class="sub" href="04_imbalanced_learning-lesson.html">Fundamentos &amp; ejemplos</a></details><details><summary><a href="05_text_classification.html">05 · Clasificación de texto</a></summary><a class="sub" href="05_text_classification-lesson.html">Fundamentos &amp; ejemplos</a></details><details><summary><a href="06_clustering.html">06 · Agrupamiento</a></summary><a class="sub" href="06_clustering-lesson.html">Fundamentos &amp; ejemplos</a></details><details><summary><a href="07_time_series.html">07 · Pronóstico de series temporales</a></summary><a class="sub" href="07_time_series-lesson.html">Fundamentos &amp; ejemplos</a></details><details><summary><a href="08_deployment.html">08 · Del modelo al servicio</a></summary><a class="sub" href="08_deployment-lesson.html">Fundamentos &amp; ejemplos</a></details><h3>Recursos</h3><a href="results.html">Galerías de resultados ejecutados</a><a href="datasets.html">Conjuntos de datos</a><a href="course-project.html">Proyecto del curso</a><a href="instructor.html">Guía docente</a><a href="verification.html">Verificación</a></aside><main id="main"><p class="translation-note">Versión en español. El código, los datos, las salidas calculadas y las etiquetas dentro de las figuras se conservan en su idioma original. Los cuadernos descargables están en inglés.</p><div class="eyebrow">Lección 07 / lección</div><div class="actions"><a href="07_time_series.html">← Guía de la lección</a><a href="../downloads/07_time_series/lesson.ipynb" download>Descargar el cuaderno</a></div><p class="note">Esta página es una vista de lectura. Para ejecutar Python, descarga el curso completo y abre este cuaderno en Jupyter. <a href="first-steps.html">Recorrido inicial del cuaderno →</a></p><details class="contents"><summary>En esta página</summary><nav aria-label="Contenido de la página"><a href="#section-1">Traducir el conjunto de información a una fila de pronóstico</a><a href="#section-2">1. La esperanza condicional es el pronóstico óptimo bajo error cuadrático</a><a href="#section-3">2. En una serie temporal, la información tiene un orden</a><a href="#section-4">El horizonte y la brecha responden a preguntas distintas</a><a href="#section-5">3. Por qué una partición aleatoria iid responde a la pregunta equivocada</a><a href="#section-6">4. Generar variables predictoras sin mirar hacia adelante</a><a href="#section-7">Cargar y comprobar el eje temporal</a><a href="#section-8">Ver cómo el desplazamiento y min_periods cambian las filas</a><a href="#section-9">Construir la matriz de variables predictoras</a><a href="#section-10">Cinco filas concretas de pronóstico</a><a href="#section-11">5. Límites cronológicos para entrenamiento, validación y prueba</a><a href="#section-12">6. Backtest de desarrollo con ventana expansiva</a><a href="#section-13">7. Elegir la complejidad del modelo solo con validación</a><a href="#section-14">8. Evaluación de prueba con pronósticos sucesivos a un paso</a><a href="#section-15">Límites e interpretación</a></nav></details><article class="reading"><section class="cell" id="cell-cell-000"><h1>Lección 07 — Pronóstico de series temporales: información, orígenes y evaluación honesta</h1>
+<p>Pronosticamos las ventas diarias sintéticas a partir de sus valores pasados y de datos del calendario conocidos de antemano. El objeto matemático central es la esperanza condicional dada la información disponible en el origen del pronóstico. Compararemos una regla estacional ingenua con un modelo XGBoost y evaluaremos ambos mediante pronósticos sucesivos a un paso.</p></section><section class="cell" id="cell-beginner-bridge"><p><img alt="Figura didáctica sobre series temporales" src="../figures/07_time_series.svg"></img></p>
+<p><em>La serie sintética proporcionada, con límites ilustrativos 70/15/15 sobre las filas originales. El cuaderno divide las filas con rezagos utilizables, por lo que sus límites exactos son distintos.</em></p>
+<h2 id="section-1">Traducir el conjunto de información a una fila de pronóstico</h2>
+<p>Pronosticamos <code>predict</code> las ventas de la fecha $t$ después de observar la fecha $t-1$. Por ejemplo, para <code>predict</code> pronosticar el 9 de enero, una vez cerrado el día 8 de enero, <code>lag_1</code> es la venta del 8 de enero y <code>lag_7</code> es la venta del 2 de enero. El promedio de siete días abarca del 2 al 8 de enero. Las ventas del 9 de enero deben aparecer solo como objetivo, nunca entre las variables predictoras.</p>
+<p><code>shift(1)</code> desplaza cada valor observado a la fila siguiente y alinea la observación de ayer con el objetivo de hoy. Una <code>rolling</code> media móvil que no aplique este desplazamiento <code>shift</code> incluiría el objetivo de hoy y filtraría información futura en las entradas. Los valores del calendario, como el día de la semana del 9 de enero, se conocen de antemano.</p>
+<p>Durante la <code>rolling</code> evaluación de prueba a un paso, las ventas reales de un día de prueba, una vez observadas, quedan disponibles para construir los rezagos del día siguiente. Los parámetros del modelo permanecen fijos. Pronosticar un mes futuro entero antes de observar cualquiera de sus días es un problema distinto. Además, la sección de ventana expansiva vuelve a ajustar los modelos en varios orígenes de desarrollo; conviene seguir con cuidado sus particiones de entrada y salida.</p></section><section class="cell" id="cell-cell-001"><h2 id="section-2">1. La esperanza condicional es el pronóstico óptimo bajo error cuadrático</h2>
+<p>Sea $(\Omega,\mathcal A,\mathbb P)$ un espacio de probabilidad. Supongamos que $Y_{t+h}\in L^2(\Omega,\mathcal A,\mathbb P)$ y que $Y_{t+h}$ es el valor que se desea pronosticar en el origen $t$ y horizonte $h$. La información disponible en ese origen es una σ-álgebra $\mathcal F_t\subseteq\mathcal A$. Para cualquier $g\in L^2(\Omega,\mathcal A,\mathbb P)$ que sea medible respecto de $\mathcal F_t$, condicionamos en la información disponible:</p>
+<p>$$\mathbb E[(Y_{t+h}-g)^2\mid\mathcal F_t]
+=\operatorname{Var}(Y_{t+h}\mid\mathcal F_t)
++\left(g-\mathbb E[Y_{t+h}\mid\mathcal F_t]\right)^2.$$</p>
+<p>Por tanto, el pronóstico de riesgo mínimo es la media condicional $\hat Y_{t+h\mid t}=\mathbb E[Y_{t+h}\mid\mathcal F_t]$ (salvo igualdad casi segura). Un pronóstico es una función de lo que se conoce en su origen. Si una variable predictora usa un valor observado después de $t$, no es medible respecto de $\mathcal F_t$ y no describe un pronóstico que se pudiera haber emitido entonces.</p>
+<p>Con pérdida de error absoluto, la mediana condicional es óptima. Informaremos MAE y RMSE: ambas métricas se interpretan en las unidades de ventas, y RMSE asigna más peso a los errores grandes. No usamos MAPE porque sus errores porcentuales se comportan mal cuando la respuesta se acerca a cero.</p></section><section class="cell" id="cell-cell-002"><h2 id="section-3">2. En una serie temporal, la información tiene un orden</h2>
+<p>La filtración $\mathcal F_0\subseteq\mathcal F_1\subseteq\cdots$ representa la información que se acumula con el tiempo. Aquí incluye las ventas pasadas observadas $Y_s$ para $s\leq t$ y los valores del calendario conocidos para fechas futuras. No incluye ventas futuras.</p>
+<p>Una autorregresión de orden $p$ puede usar una ventana de rezagos:</p>
+<p>$$\hat Y_{t+1\mid t}=f(Y_t,Y_{t-1},\ldots,Y_{t-p+1},\text{calendar}_{t+1}).$$</p>
+<p>Un rezago es un valor seleccionado según su distancia temporal respecto del objetivo. Una ventana reúne valores pasados para resumirlos; por ejemplo, un resumen calculado con <code>rolling</code> que calcula el promedio. La regla estacional ingenua de siete días es $\hat Y_{t+1\mid t}=Y_{t-6}$, el valor observado más reciente del mismo día de la semana. Es una referencia transparente, no un modelo ajustado.</p>
+<h3 id="section-4">El horizonte y la brecha responden a preguntas distintas</h3>
+<p>El <strong>horizonte</strong> $h$ indica cuán lejos en el futuro está el objetivo respecto del origen del pronóstico. Una <strong>brecha</strong> es un bloque de observaciones que se omite entre el último objetivo de entrenamiento y el primer objetivo de validación o prueba. Son conceptos distintos. Esta lección usa horizonte $h=1$ y bloques cronológicos contiguos, así que la brecha entre particiones es cero. Para un objetivo a horizonte $h$, las variables disponibles en el origen $t$ <code>predict</code> se usan para pronosticar $Y_{t+h}$; el conjunto de información sigue terminando en $t$. Si la aplicación no recibe etiquetas recientes a tiempo o las ventanas objetivo se solapan, elija una brecha o una regla de purga que refleje ese retraso y la definición del objetivo.</p>
+<table>
+<thead>
+<tr>
+<th>Diseño de validación</th>
+<th>Qué representa</th>
+<th>Decisión principal</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Una única partición cronológica</td>
+<td>Un periodo futuro de despliegue</td>
+<td>Un único corte temporal; evaluación final sencilla</td>
+</tr>
+<tr>
+<td>Ventana expansiva</td>
+<td>Reajuste a medida que crece el historial</td>
+<td>Conservar todas las observaciones anteriores; aumenta el coste de entrenamiento</td>
+</tr>
+<tr>
+<td>Ventana móvil</td>
+<td>Reajuste con el historial reciente solamente</td>
+<td>Fijar la amplitud del historial para adaptarse al cambio; se descartan los datos más antiguos</td>
+</tr>
+<tr>
+<td>Brecha o purga</td>
+<td>Etiquetas retrasadas u objetivos con ventanas solapadas</td>
+<td>Excluir las filas limítrofes cuyas etiquetas todavía no se conocerían</td>
+</tr>
+</tbody>
+</table>
+<p>La partición aleatoria por filas rompe el orden de la información. La evaluación cronológica estima el desempeño ante datos futuros, pero las fechas y la frecuencia de actualización deben corresponder al uso previsto.</p></section><section class="cell" id="cell-cell-003"><h2 id="section-5">3. Por qué una partición aleatoria iid responde a la pregunta equivocada</h2>
+<p>Una partición aleatoria suele intercalar filas de entrenamiento y prueba. Fechas consecutivas pueden tener historiales casi duplicados, y el modelo puede entrenarse con fechas posteriores a una fecha de prueba. Así se estima el desempeño en filas ocultas al azar bajo un supuesto de intercambiabilidad. El pronóstico, en cambio, se refiere a fechas futuras a partir de información anterior; por eso reservamos bloques futuros contiguos y mantenemos su orden.</p>
+<p>Nuestro escenario principal es explícito: en cada fecha de prueba $t$, emitimos un pronóstico a un día y luego observamos $Y_t$ antes de emitir el siguiente. Los parámetros del modelo quedan fijos tras el entrenamiento, pero los rezagos se actualizan con cada valor real que llega. Esta es una evaluación con origen móvil y horizonte de un paso. Un pronóstico a 30 días desde un origen fijo tendría que alimentar recursivamente sus propios valores pronosticados en los rezagos futuros (o usar un modelo directo específico para cada horizonte); no puede usar ventas reales de esos 30 días.</p></section><section class="cell" id="cell-cell-004"><h2 id="section-6">4. Generar variables predictoras sin mirar hacia adelante</h2>
+<p>Para las siete observaciones completas anteriores, la media móvil de la fila cuyo objetivo corresponde a $t$ es
+$$\overline Y_{t,7}=\frac{1}{7}\sum_{j=1}^{7}Y_{t-j}.$$
+Este resumen representa el nivel local; <code>lag_7</code> el rezago de siete días conserva por separado la observación del mismo día de la semana.</p>
+<p>Para la fecha objetivo $t$, <code>shift(k)</code> alinea la observación $Y_{t-k}$ con la fila $t$. Una ventana móvil resume filas anteriores; por sí sola, la operación no sabe qué valores estaban disponibles en el origen del pronóstico. Primero desplace la serie objetivo y después calcule la ventana. Por ejemplo, <code>sales.shift(1).rolling(window=7, min_periods=7).mean()</code> usa las siete filas que terminan en $t-1$ y exige que estén presentes las siete observaciones. Sin <code>shift(1)</code>, el objetivo actual podría formar parte de su propia variable predictora.</p>
+<p>Una ventana entera como <code>window=7</code> significa siete observaciones. Una ventana de duración temporal, como <code>7D</code> sobre un índice de fechas, representa un intervalo de siete días; si faltan fechas, ambas definiciones incluyen conjuntos distintos de observaciones. <code>min_periods</code> controla cuántos valores no faltantes se necesitan para obtener un resultado. Exigir una ventana completa evita que el tamaño muestral del resumen cambie silenciosamente entre fechas. Un mínimo menor conserva las filas iniciales, pero hace que sus promedios no sean tan comparables. Centrar la ventana no es adecuado para pronosticar, pues puede incluir fechas posteriores al origen.</p>
+<table>
+<thead>
+<tr>
+<th>Opción de pandas</th>
+<th>Significado en esta lección</th>
+<th>Cuándo cambiarla</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>shift(k)</code></td>
+<td>Colocar en la fila del objetivo de hoy el valor de hace $k$ filas</td>
+<td>Cambiar <code>k</code> para elegir otro rezago; primero confirme la separación entre filas</td>
+</tr>
+<tr>
+<td><code>rolling(window=7)</code></td>
+<td>Resumir las siete observaciones anteriores</td>
+<td>Usar una ventana de duración para medir tiempo transcurrido en el calendario</td>
+</tr>
+<tr>
+<td><code>min_periods=7</code></td>
+<td>Devolver un valor solo cuando haya siete observaciones</td>
+<td>Reducirlo únicamente si la definición de la variable admite ventanas parciales</td>
+</tr>
+<tr>
+<td><code>mean()</code></td>
+<td>Promediar los valores disponibles dentro de la ventana</td>
+<td>Usar <code>sum()</code>, <code>std()</code>, <code>min()</code>, u otra operación de resumen justificada</td>
+</tr>
+</tbody>
+</table>
+<p>Las variables del calendario son funciones deterministas de la fecha objetivo y se conocen de antemano. Este conjunto es una simulación didáctica diaria con semilla fija; el generador está documentado en <code>sales_dataset.md</code>. El localizador de datos busca en esta carpeta y en sus directorios superiores, tanto desde la raíz del repositorio como desde el directorio de la lección.</p>
+<p>Referencias de pandas: <a href="https://pandas.pydata.org/docs/reference/api/pandas.Series.shift.html">Series.shift</a> y <a href="https://pandas.pydata.org/docs/reference/api/pandas.Series.rolling.html">Series.rolling</a> documentan la alineación y las opciones de ventana.</p></section><section class="cell" id="cell-2170bab4"><h3 id="section-7">Cargar y comprobar el eje temporal</h3>
+<p>La siguiente celda localiza el archivo CSV incluido, interpreta date como marca temporal, ordena las filas y comprueba que las fechas sean únicas y crecientes. Estas comprobaciones protegen la alineación: si la serie no está ordenada, el desplazamiento asociaría observaciones incorrectas con cada objetivo.</p></section><section class="cell" id="cell-cell-005"><div class="cell-label">Python · ejecutar en el cuaderno</div><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">find_data_file</span><span class="p">(</span><span class="n">filename</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Search this directory and its parents for a file under data/."""</span>
+    <span class="k">for</span> <span class="n">directory</span> <span class="ow">in</span> <span class="p">(</span><span class="n">Path</span><span class="o">.</span><span class="n">cwd</span><span class="p">(),</span> <span class="o">*</span><span class="n">Path</span><span class="o">.</span><span class="n">cwd</span><span class="p">()</span><span class="o">.</span><span class="n">parents</span><span class="p">):</span>
+        <span class="n">candidate</span> <span class="o">=</span> <span class="n">directory</span> <span class="o">/</span> <span class="s2">"data"</span> <span class="o">/</span> <span class="n">filename</span>
+        <span class="k">if</span> <span class="n">candidate</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="k">return</span> <span class="n">candidate</span>
+    <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Could not find data/</span><span class="si">{</span><span class="n">filename</span><span class="si">}</span><span class="s2"> from </span><span class="si">{</span><span class="n">Path</span><span class="o">.</span><span class="n">cwd</span><span class="p">()</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+
+<span class="n">sales_data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">find_data_file</span><span class="p">(</span><span class="s2">"daily_sales.csv"</span><span class="p">),</span> <span class="n">parse_dates</span><span class="o">=</span><span class="p">[</span><span class="s2">"date"</span><span class="p">])</span>
+<span class="n">sales_data</span> <span class="o">=</span> <span class="n">sales_data</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="s2">"date"</span><span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">sales_data</span><span class="p">[</span><span class="s2">"date"</span><span class="p">]</span><span class="o">.</span><span class="n">is_monotonic_increasing</span> <span class="ow">and</span> <span class="n">sales_data</span><span class="p">[</span><span class="s2">"date"</span><span class="p">]</span><span class="o">.</span><span class="n">is_unique</span>
+<span class="n">sales_data</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+</pre></div>
+<details class="result-text"><summary>4. Generar variables predictoras sin mirar hacia adelante · resultado calculado</summary><pre>        date    sales
+0 2023-01-01  1084.81
+1 2023-01-02   857.27
+2 2023-01-03   837.36
+3 2023-01-04   824.92
+4 2023-01-05   893.70</pre></details></section><section class="cell" id="cell-2364506e"><h3 id="section-8">Ver cómo el desplazamiento y <code>min_periods</code> cambian las filas</h3>
+<p>Este ejemplo pequeño permite ver la alineación antes de aplicarla al conjunto completo. Cada resumen desplazado usa solo observaciones anteriores. Con <code>min_periods=1</code>, los primeros promedios se calculan con historiales más cortos; con <code>min_periods=3</code>, solo aparecen después de reunir tres observaciones.</p></section><section class="cell" id="cell-0afbc4d6"><div class="cell-label">Python · ejecutar en el cuaderno</div><div class="highlight"><pre><span></span><span class="n">toy</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">([</span><span class="mf">10.0</span><span class="p">,</span> <span class="mf">12.0</span><span class="p">,</span> <span class="mf">11.0</span><span class="p">,</span> <span class="mf">15.0</span><span class="p">,</span> <span class="mf">14.0</span><span class="p">],</span>
+                  <span class="n">index</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">date_range</span><span class="p">(</span><span class="s2">"2025-01-01"</span><span class="p">,</span> <span class="n">periods</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">freq</span><span class="o">=</span><span class="s2">"D"</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s2">"sales"</span><span class="p">)</span>
+<span class="n">toy_features</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span>
+    <span class="s2">"target_sales"</span><span class="p">:</span> <span class="n">toy</span><span class="p">,</span>
+    <span class="s2">"lag_1"</span><span class="p">:</span> <span class="n">toy</span><span class="o">.</span><span class="n">shift</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span>
+    <span class="s2">"mean_3_full"</span><span class="p">:</span> <span class="n">toy</span><span class="o">.</span><span class="n">shift</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">rolling</span><span class="p">(</span><span class="n">window</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">min_periods</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">(),</span>
+    <span class="s2">"mean_3_partial"</span><span class="p">:</span> <span class="n">toy</span><span class="o">.</span><span class="n">shift</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">rolling</span><span class="p">(</span><span class="n">window</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">min_periods</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">(),</span>
+<span class="p">})</span>
+<span class="n">toy_features</span>
+</pre></div>
+<details class="result-text"><summary>4. Generar variables predictoras sin mirar hacia adelante · resultado calculado</summary><pre>            target_sales  lag_1  mean_3_full  mean_3_partial
+2025-01-01          10.0    NaN          NaN             NaN
+2025-01-02          12.0   10.0          NaN       10.000000
+2025-01-03          11.0   12.0          NaN       11.000000
+2025-01-04          15.0   11.0    11.000000       11.000000
+2025-01-05          14.0   15.0    12.666667       12.666667</pre></details></section><section class="cell" id="cell-cell-006"><div class="cell-label">Python · ejecutar en el cuaderno</div><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">make_forecasting_features</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Build rolling one-step predictors using only observations before each date."""</span>
+    <span class="n">frame</span> <span class="o">=</span> <span class="n">data</span><span class="p">[[</span><span class="s2">"date"</span><span class="p">,</span> <span class="s2">"sales"</span><span class="p">]]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="s2">"date"</span><span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">day</span> <span class="o">=</span> <span class="n">frame</span><span class="p">[</span><span class="s2">"date"</span><span class="p">]</span><span class="o">.</span><span class="n">dt</span><span class="o">.</span><span class="n">dayofweek</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span>
+    <span class="n">frame</span><span class="p">[</span><span class="s2">"weekday_sin"</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">day</span> <span class="o">/</span> <span class="mi">7</span><span class="p">)</span>
+    <span class="n">frame</span><span class="p">[</span><span class="s2">"weekday_cos"</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">day</span> <span class="o">/</span> <span class="mi">7</span><span class="p">)</span>
+    <span class="n">frame</span><span class="p">[</span><span class="s2">"year_day_sin"</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">frame</span><span class="p">[</span><span class="s2">"date"</span><span class="p">]</span><span class="o">.</span><span class="n">dt</span><span class="o">.</span><span class="n">dayofyear</span> <span class="o">/</span> <span class="mf">365.25</span><span class="p">)</span>
+    <span class="n">frame</span><span class="p">[</span><span class="s2">"year_day_cos"</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">frame</span><span class="p">[</span><span class="s2">"date"</span><span class="p">]</span><span class="o">.</span><span class="n">dt</span><span class="o">.</span><span class="n">dayofyear</span> <span class="o">/</span> <span class="mf">365.25</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">lag</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">14</span><span class="p">,</span> <span class="mi">28</span><span class="p">):</span>
+        <span class="n">frame</span><span class="p">[</span><span class="sa">f</span><span class="s2">"lag_</span><span class="si">{</span><span class="n">lag</span><span class="si">}</span><span class="s2">"</span><span class="p">]</span> <span class="o">=</span> <span class="n">frame</span><span class="p">[</span><span class="s2">"sales"</span><span class="p">]</span><span class="o">.</span><span class="n">shift</span><span class="p">(</span><span class="n">lag</span><span class="p">)</span>
+    <span class="n">frame</span><span class="p">[</span><span class="s2">"mean_7_before"</span><span class="p">]</span> <span class="o">=</span> <span class="n">frame</span><span class="p">[</span><span class="s2">"sales"</span><span class="p">]</span><span class="o">.</span><span class="n">shift</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">rolling</span><span class="p">(</span><span class="mi">7</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+    <span class="n">frame</span><span class="p">[</span><span class="s2">"mean_28_before"</span><span class="p">]</span> <span class="o">=</span> <span class="n">frame</span><span class="p">[</span><span class="s2">"sales"</span><span class="p">]</span><span class="o">.</span><span class="n">shift</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">rolling</span><span class="p">(</span><span class="mi">28</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">frame</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+
+<span class="n">feature_data</span> <span class="o">=</span> <span class="n">make_forecasting_features</span><span class="p">(</span><span class="n">sales_data</span><span class="p">)</span>
+<span class="n">feature_columns</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">column</span> <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="n">feature_data</span><span class="o">.</span><span class="n">columns</span> <span class="k">if</span> <span class="n">column</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"date"</span><span class="p">,</span> <span class="s2">"sales"</span><span class="p">)</span>
+<span class="p">]</span>
+<span class="n">feature_data</span><span class="p">[[</span><span class="s2">"date"</span><span class="p">,</span> <span class="s2">"sales"</span><span class="p">,</span> <span class="s2">"lag_1"</span><span class="p">,</span> <span class="s2">"lag_7"</span><span class="p">,</span> <span class="s2">"mean_7_before"</span><span class="p">,</span> <span class="s2">"weekday_sin"</span><span class="p">]]</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+</pre></div>
+<details class="result-text"><summary>4. Generar variables predictoras sin mirar hacia adelante · resultado calculado</summary><pre>        date    sales    lag_1    lag_7  mean_7_before  weekday_sin
+0 2023-01-29  1128.91  1090.04  1068.30    1010.350000    -0.781831
+1 2023-01-30   962.44  1128.91   929.07    1019.008571     0.000000
+2 2023-01-31   997.18   962.44   832.95    1023.775714     0.781831
+3 2023-02-01   857.27   997.18  1031.74    1047.237143     0.974928
+4 2023-02-02   927.99   857.27  1062.29    1022.312857     0.433884</pre></details></section><section class="cell" id="cell-07dd5929"><h3 id="section-9">Construir la matriz de variables predictoras</h3>
+<p>La función primero ordena y reinicia el índice de filas; luego calcula codificaciones sinusoidales y cosenoidales del calendario, de modo que los valores cíclicos se conectan suavemente en los límites del año y de la semana. Cada <code>shift(k)</code> aporta un rezago. Las medias móviles comienzan con <code>shift(1)</code>, así que excluyen la fecha objetivo. dropna() elimina las filas sin el historial completo de 28 observaciones que exige el mayor rezago y la ventana móvil de mayor amplitud. <code>rolling</code> ventana. <code>feature_columns</code> define después la matriz de entrada X; sales sigue siendo la variable objetivo y date se conserva para el análisis de resultados.</p></section><section class="cell" id="cell-forecast-five-rows"><h3 id="section-10">Cinco filas concretas de pronóstico</h3>
+<p>El origen es la última fecha observada, un día antes de la fecha objetivo. Cada fila de abajo indica la observación más reciente disponible y el rezago de siete días. Se muestran las ventas objetivo para comprobar la alineación una vez transcurrido el día, pero no forman parte de las variables predictoras.</p></section><section class="cell" id="cell-forecast-five-rows-code"><div class="cell-label">Python · ejecutar en el cuaderno</div><div class="highlight"><pre><span></span><span class="n">worked_dates</span> <span class="o">=</span> <span class="n">feature_data</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+<span class="n">worked_dates</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s2">"origin_date"</span><span class="p">,</span> <span class="n">worked_dates</span><span class="o">.</span><span class="n">date</span> <span class="o">-</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
+<span class="n">worked_dates</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="s2">"lag_7_date"</span><span class="p">,</span> <span class="n">worked_dates</span><span class="o">.</span><span class="n">date</span> <span class="o">-</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="mi">7</span><span class="p">))</span>
+<span class="n">display</span><span class="p">(</span><span class="n">worked_dates</span><span class="p">[[</span><span class="s2">"origin_date"</span><span class="p">,</span> <span class="s2">"date"</span><span class="p">,</span> <span class="s2">"lag_7_date"</span><span class="p">,</span> <span class="s2">"lag_1"</span><span class="p">,</span> <span class="s2">"lag_7"</span><span class="p">,</span> <span class="s2">"mean_7_before"</span><span class="p">,</span> <span class="s2">"sales"</span><span class="p">]])</span>
+</pre></div>
+<details class="result-text"><summary>4. Generar variables predictoras sin mirar hacia adelante · resultado calculado</summary><pre>  origin_date       date lag_7_date    lag_1    lag_7  mean_7_before    sales
+0  2023-01-28 2023-01-29 2023-01-22  1090.04  1068.30    1010.350000  1128.91
+1  2023-01-29 2023-01-30 2023-01-23  1128.91   929.07    1019.008571   962.44
+2  2023-01-30 2023-01-31 2023-01-24   962.44   832.95    1023.775714   997.18
+3  2023-01-31 2023-02-01 2023-01-25   997.18  1031.74    1047.237143   857.27
+4  2023-02-01 2023-02-02 2023-01-26   857.27  1062.29    1022.312857   927.99</pre></details></section><section class="cell" id="cell-cell-007"><p>Compruebe el límite: la primera fila completa dispone de 28 observaciones anteriores. <code>lag_1</code> es la venta observada el día anterior, mientras que <code>mean_7_before</code> excluye el objetivo de su propia fila. Los valores del calendario se conocen para la fecha del pronóstico.</p></section><section class="cell" id="cell-cell-008"><div class="cell-label">Python · ejecutar en el cuaderno</div><div class="highlight"><pre><span></span><span class="n">first_row</span> <span class="o">=</span> <span class="n">feature_data</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">first_row</span><span class="p">[</span><span class="s2">"lag_1"</span><span class="p">],</span> <span class="n">sales_data</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="mi">27</span><span class="p">,</span> <span class="s2">"sales"</span><span class="p">])</span>
+<span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">first_row</span><span class="p">[</span><span class="s2">"mean_7_before"</span><span class="p">],</span> <span class="n">sales_data</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="mi">21</span><span class="p">:</span><span class="mi">27</span><span class="p">,</span> <span class="s2">"sales"</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span>
+<span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">feature_data</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">sales_data</span><span class="p">)</span> <span class="o">-</span> <span class="mi">28</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Feature boundary checks passed:"</span><span class="p">,</span> <span class="n">first_row</span><span class="p">[</span><span class="s2">"date"</span><span class="p">]</span><span class="o">.</span><span class="n">date</span><span class="p">())</span>
+</pre></div>
+<details class="result-text"><summary>4. Generar variables predictoras sin mirar hacia adelante · resultado calculado</summary><pre>Feature boundary checks passed: 2023-01-29</pre></details></section><section class="cell" id="cell-cell-009"><p>Una prueba útil de fuga de información consiste en alterar los resultados posteriores a un origen y comprobar que las variables de un origen anterior no cambien.</p></section><section class="cell" id="cell-cell-010"><div class="cell-label">Python · ejecutar en el cuaderno</div><div class="highlight"><pre><span></span><span class="n">origin_raw_index</span> <span class="o">=</span> <span class="mi">200</span>
+<span class="n">origin_feature_index</span> <span class="o">=</span> <span class="n">origin_raw_index</span> <span class="o">-</span> <span class="mi">28</span>
+<span class="n">future_perturbation</span> <span class="o">=</span> <span class="n">sales_data</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+<span class="n">future_perturbation</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">origin_raw_index</span> <span class="p">:,</span> <span class="s2">"sales"</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">10000</span>
+<span class="n">perturbed_features</span> <span class="o">=</span> <span class="n">make_forecasting_features</span><span class="p">(</span><span class="n">future_perturbation</span><span class="p">)</span>
+<span class="n">predictor_columns</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">column</span> <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="n">feature_data</span><span class="o">.</span><span class="n">columns</span> <span class="k">if</span> <span class="n">column</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"date"</span><span class="p">,</span> <span class="s2">"sales"</span><span class="p">)</span>
+<span class="p">]</span>
+<span class="n">np</span><span class="o">.</span><span class="n">testing</span><span class="o">.</span><span class="n">assert_allclose</span><span class="p">(</span>
+    <span class="n">feature_data</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">origin_feature_index</span><span class="p">,</span> <span class="n">predictor_columns</span><span class="p">]</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">),</span>
+    <span class="n">perturbed_features</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">origin_feature_index</span><span class="p">,</span> <span class="n">predictor_columns</span><span class="p">]</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">(</span>
+        <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span>
+    <span class="p">),</span>
+<span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Changing the target at the forecast date and all future targets leaves its predictors unchanged."</span><span class="p">)</span>
+</pre></div>
+<details class="result-text"><summary>4. Generar variables predictoras sin mirar hacia adelante · resultado calculado</summary><pre>Changing the target at the forecast date and all future targets leaves its predictors unchanged.</pre></details></section><section class="cell" id="cell-1d41d181"><p>Esta comprobación modifica el objetivo de la fecha elegida para el pronóstico y los de todas las fechas posteriores. Las variables de ese origen deben mantenerse iguales, pues sus entradas terminan el día anterior. Es una comprobación puntual de la alineación temporal; no demuestra que toda transformación posible esté libre de fuga de información.</p></section><section class="cell" id="cell-cell-011"><h2 id="section-11">5. Límites cronológicos para entrenamiento, validación y prueba</h2>
+<p>Dividimos las filas útiles en orden cronológico: el 70 % inicial para entrenamiento, el 15 % siguiente para validación y el 15 % final para la prueba definitiva. Estos porcentajes son ilustrativos; las fechas y el protocolo de pronóstico importan más que usar una proporción conocida. La validación selecciona el número de iteraciones de boosting mediante parada temprana. El bloque de prueba queda intacto hasta calcular la puntuación final.</p>
+<p>En el esquema <code>rolling</code> , la evaluación a un paso permite que una fila posterior del bloque de prueba use como rezago las ventas reales de una fecha de prueba anterior: ese valor ya se habría observado en el origen posterior. Los parámetros del modelo permanecen fijos y los objetivos de prueba nunca participan en el ajuste ni en la selección del modelo. Si las etiquetas llegan con retraso o los objetivos de varios pasos se solapan con el límite de validación, añada una brecha o purga que corresponda a ese retraso operativo. Una partición cronológica impide entrenar con objetivos posteriores, pero no garantiza por sí sola que todas las variables estuvieran disponibles en un despliegue concreto.</p></section><section class="cell" id="cell-cell-012"><div class="cell-label">Python · ejecutar en el cuaderno</div><div class="highlight"><pre><span></span><span class="n">n_rows</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">feature_data</span><span class="p">)</span>
+<span class="n">train_end</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="mf">0.70</span> <span class="o">*</span> <span class="n">n_rows</span><span class="p">)</span>
+<span class="n">validation_end</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="mf">0.85</span> <span class="o">*</span> <span class="n">n_rows</span><span class="p">)</span>
+<span class="n">train_data</span> <span class="o">=</span> <span class="n">feature_data</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:</span><span class="n">train_end</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+<span class="n">validation_data</span> <span class="o">=</span> <span class="n">feature_data</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">train_end</span><span class="p">:</span><span class="n">validation_end</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+<span class="n">test_data</span> <span class="o">=</span> <span class="n">feature_data</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">validation_end</span><span class="p">:]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+<span class="n">boundary_table</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+    <span class="p">{</span>
+        <span class="s2">"partition"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"train"</span><span class="p">,</span> <span class="s2">"validation"</span><span class="p">,</span> <span class="s2">"test"</span><span class="p">],</span>
+        <span class="s2">"rows"</span><span class="p">:</span> <span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">train_data</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">validation_data</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">test_data</span><span class="p">)],</span>
+        <span class="s2">"first_date"</span><span class="p">:</span> <span class="p">[</span>
+            <span class="n">part</span><span class="p">[</span><span class="s2">"date"</span><span class="p">]</span><span class="o">.</span><span class="n">min</span><span class="p">()</span><span class="o">.</span><span class="n">date</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">part</span> <span class="ow">in</span> <span class="p">(</span><span class="n">train_data</span><span class="p">,</span> <span class="n">validation_data</span><span class="p">,</span> <span class="n">test_data</span><span class="p">)</span>
+        <span class="p">],</span>
+        <span class="s2">"last_date"</span><span class="p">:</span> <span class="p">[</span>
+            <span class="n">part</span><span class="p">[</span><span class="s2">"date"</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">.</span><span class="n">date</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">part</span> <span class="ow">in</span> <span class="p">(</span><span class="n">train_data</span><span class="p">,</span> <span class="n">validation_data</span><span class="p">,</span> <span class="n">test_data</span><span class="p">)</span>
+        <span class="p">],</span>
+    <span class="p">}</span>
+<span class="p">)</span>
+<span class="n">boundary_table</span>
+</pre></div>
+<details class="result-text"><summary>5. Límites cronológicos para entrenamiento, validación y prueba · resultado calculado</summary><pre>    partition  rows  first_date   last_date
+0       train   680  2023-01-29  2024-12-08
+1  validation   146  2024-12-09  2025-05-03
+2        test   146  2025-05-04  2025-09-26</pre></details></section><section class="cell" id="cell-0e2172a4"><p><code>iloc</code> usa posiciones de fila, por lo que las proporciones conservan el orden cronológico. La tabla de límites muestra los intervalos de fechas y el número de observaciones; revísela antes de ajustar el modelo. Como se eliminaron las filas iniciales para construir las variables, los límites son porcentajes de las filas utilizables, no del CSV original.</p></section><section class="cell" id="cell-cell-013"><div class="cell-label">Python · ejecutar en el cuaderno</div><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">11</span><span class="p">,</span> <span class="mf">2.5</span><span class="p">))</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">sales_data</span><span class="p">[</span><span class="s2">"date"</span><span class="p">],</span> <span class="n">sales_data</span><span class="p">[</span><span class="s2">"sales"</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="s2">"0.55"</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">partitions</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="p">(</span><span class="n">train_data</span><span class="p">,</span> <span class="s2">"#2563eb"</span><span class="p">,</span> <span class="s2">"train"</span><span class="p">),</span>
+    <span class="p">(</span><span class="n">validation_data</span><span class="p">,</span> <span class="s2">"#f59e0b"</span><span class="p">,</span> <span class="s2">"validation"</span><span class="p">),</span>
+    <span class="p">(</span><span class="n">test_data</span><span class="p">,</span> <span class="s2">"#dc2626"</span><span class="p">,</span> <span class="s2">"test"</span><span class="p">),</span>
+<span class="p">)</span>
+<span class="k">for</span> <span class="n">part</span><span class="p">,</span> <span class="n">color</span><span class="p">,</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">partitions</span><span class="p">:</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">axvspan</span><span class="p">(</span>
+        <span class="n">part</span><span class="p">[</span><span class="s2">"date"</span><span class="p">]</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span> <span class="n">part</span><span class="p">[</span><span class="s2">"date"</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">(),</span> <span class="n">color</span><span class="o">=</span><span class="n">color</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.13</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">label</span>
+    <span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="s2">"Chronological forecast partitions"</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s2">"daily sales"</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">ncol</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">frameon</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">autofmt_xdate</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+<figure class="result-figure"><img loading="lazy" src="../results/07_time_series-cell-013-0.png" alt="Resultado ejecutado: 5. Límites cronológicos para entrenamiento, validación y prueba"><figcaption>5. Límites cronológicos para entrenamiento, validación y prueba · salida del cuaderno capturada</figcaption></figure></section><section class="cell" id="cell-3b9e03c2"><p>El gráfico sombreado superpone esas particiones exactas de filas con variables predictoras sobre la serie original. Permite comprobar visualmente que entrenamiento precede a validación y validación precede a prueba.</p></section><section class="cell" id="cell-cell-014"><h2 id="section-12">6. Backtest de desarrollo con ventana expansiva</h2>
+<p>Un solo límite puede hacer que el resultado dependa de una temporada especialmente fácil o difícil. Podemos examinar varios orígenes de pronóstico anteriores al límite de la prueba definitiva. En cada origen, ampliamos el historial de entrenamiento, reservamos el bloque contiguo siguiente como validación interna para la parada temprana y puntuamos el bloque contiguo posterior con pronósticos sucesivos a un paso. Este backtest no incluye filas de la prueba definitiva. Como el modelo se reajusta en cada origen, responde a una pregunta de despliegue distinta de la partición principal, que mantiene fijo el modelo.</p></section><section class="cell" id="cell-cell-015"><div class="cell-label">Python · ejecutar en el cuaderno</div><div class="highlight"><pre><span></span><span class="c1"># Optional extension: implementation is in src/course_ml/forecasting.py.</span>
+<span class="c1"># Read the main chronological experiment first if you are new to forecasting.</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">find_data_file</span><span class="p">(</span><span class="s2">"daily_sales.csv"</span><span class="p">)</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">parent</span> <span class="o">/</span> <span class="s2">"src"</span><span class="p">))</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">course_ml.forecasting</span><span class="w"> </span><span class="kn">import</span> <span class="n">rolling_development_backtest</span>
+
+<span class="c1"># Development ends where the final test begins; folds never inspect the final test block.</span>
+<span class="n">development_folds</span> <span class="o">=</span> <span class="n">rolling_development_backtest</span><span class="p">(</span>
+    <span class="n">feature_data</span><span class="p">,</span>
+    <span class="n">feature_columns</span><span class="p">,</span>
+    <span class="n">development_end</span><span class="o">=</span><span class="n">validation_end</span><span class="p">,</span>
+    <span class="n">initial_train_size</span><span class="o">=</span><span class="mi">350</span><span class="p">,</span>
+    <span class="n">validation_size</span><span class="o">=</span><span class="mi">70</span><span class="p">,</span>
+    <span class="n">test_size</span><span class="o">=</span><span class="mi">70</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">development_folds</span>
+</pre></div>
+<details class="result-text"><summary>6. Backtest de desarrollo con ventana expansiva · resultado calculado</summary><pre>   fold fit_through validation_through evaluation_start evaluation_end  \
+0     1  2024-01-13         2024-03-23       2024-03-24     2024-06-01
+1     2  2024-03-23         2024-06-01       2024-06-02     2024-08-10
+2     3  2024-06-01         2024-08-10       2024-08-11     2024-10-19
+3     4  2024-08-10         2024-10-19       2024-10-20     2024-12-28
+4     5  2024-10-19         2024-12-28       2024-12-29     2025-03-08
+
+   selected_rounds        MAE       RMSE  seasonal_naive_MAE  \
+0               85  78.340047  93.297652           71.788429
+1               68  77.203933  92.319095           75.685429
+2              163  59.924720  73.510938           71.940286
+3               61  61.097561  77.437779           85.038000
+4              129  44.793420  57.371597           58.131143
+
+   seasonal_naive_RMSE
+0            86.434215
+1            88.781853
+2            90.732181
+3           110.121673
+4            73.936372</pre></details></section><section class="cell" id="cell-c4dcc077"><p>Este código opcional importa el <code>rolling</code> ayudante de desarrollo. En cada pliegue, el prefijo de entrenamiento crece; se elige el número de iteraciones en el siguiente bloque de validación y luego se mide el bloque posterior. Así se observa si el desempeño cambia entre orígenes de desarrollo; no sustituye la prueba final, que permanece intacta.</p></section><section class="cell" id="cell-cell-016"><p>El backtest expansivo es un diagnóstico durante el desarrollo. Los bloques de validación de cada pliegue eligen el número de iteraciones; los bloques de evaluación comparan orígenes cronológicos dentro de los datos de desarrollo. La prueba final sigue siendo un último bloque independiente. Ninguno de estos backtests cambia el escenario principal: todas las puntuaciones anteriores corresponden a pronósticos sucesivos a un paso, con actualización mediante valores reales observados.</p></section><section class="cell" id="cell-cell-017"><h2 id="section-13">7. Elegir la complejidad del modelo solo con validación</h2>
+<p>XGBoost añade árboles de forma secuencial para reducir la función objetivo de entrenamiento. Aquí se minimiza el error cuadrático, de modo que cada árbol nuevo intenta corregir el patrón de residuos actual. La profundidad, las restricciones de las hojas, el muestreo y la regularización limitan el nivel de detalle con el que el conjunto de árboles se ajusta a esta muestra sintética pequeña. Los valores siguientes son una configuración inicial conservadora, no valores universales.</p>
+<table>
+<thead>
+<tr>
+<th>Parámetro</th>
+<th>Qué controla</th>
+<th>Por qué se usa este valor en la lección</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>objective="reg:squarederror"</code></td>
+<td>Pérdida de entrenamiento para una respuesta continua</td>
+<td>Corresponde al ajuste por error cuadrático y al seguimiento de RMSE</td>
+</tr>
+<tr>
+<td><code>n_estimators=500</code></td>
+<td>Límite superior del número de iteraciones de boosting</td>
+<td>Da margen a la parada temprana para seleccionar un punto útil</td>
+</tr>
+<tr>
+<td><code>learning_rate=0.035</code></td>
+<td>Contracción aplicada a cada árbol añadido</td>
+<td>Los pasos pequeños suelen requerir más iteraciones y pueden regularizar el ajuste</td>
+</tr>
+<tr>
+<td><code>max_depth=3</code></td>
+<td>Profundidad máxima de los árboles</td>
+<td>Limita las interacciones y el número de hojas en un conjunto de datos pequeño</td>
+</tr>
+<tr>
+<td><code>min_child_weight=5</code></td>
+<td>Masa mínima del hessiano en un nodo hijo</td>
+<td>Desalienta hojas respaldadas por muy pocos datos</td>
+</tr>
+<tr>
+<td><code>subsample=0.9</code></td>
+<td>Fracción de filas muestreadas para cada árbol</td>
+<td>Añade una regularización moderada mediante muestreo</td>
+</tr>
+<tr>
+<td><code>colsample_bytree=0.9</code></td>
+<td>Fracción de variables predictoras muestreadas para cada árbol</td>
+<td>Añade una regularización moderada sobre las variables</td>
+</tr>
+<tr>
+<td><code>reg_lambda=5.0</code></td>
+<td>Penalización L2 sobre los pesos de las hojas</td>
+<td>Contrae las actualizaciones de las hojas hacia cero</td>
+</tr>
+<tr>
+<td><code>early_stopping_rounds=25</code></td>
+<td>Detener cuando RMSE de validación deje de mejorar</td>
+<td>Usa la validación para seleccionar el número efectivo de árboles</td>
+</tr>
+<tr>
+<td><code>eval_metric="rmse"</code></td>
+<td>Métrica observada para la parada temprana</td>
+<td>Alinea el criterio de parada con el énfasis en el error cuadrático</td>
+</tr>
+<tr>
+<td><code>random_state</code>, <code>n_jobs</code></td>
+<td>Reproducibilidad del muestreo y número de procesos paralelos</td>
+<td>Hace que esta ejecución pequeña sea reproducible y acotada</td>
+</tr>
+</tbody>
+</table>
+<p>Para una hoja $j$, sean $G_j=\sum_{i\in j}g_i$ y $H_j=\sum_{i\in j}h_i$ las sumas de las primeras y segundas derivadas de la pérdida. Con penalización L2 de hojas $\lambda$, la aproximación de segundo orden da el peso óptimo de la hoja
+$$w_j^*=-\frac{G_j}{H_j+\lambda}.$$
+La tasa de aprendizaje escala la contribución del árbol al incorporarlo al conjunto. Esto explica por qué la regularización y una tasa de aprendizaje menor reducen las actualizaciones, mientras que la profundidad y las restricciones de nodos hijos limitan las particiones que pueden recibir actualizaciones independientes. Consulte la <a href="https://xgboost.readthedocs.io/en/stable/parameter.html">Referencia de parámetros de XGBoost</a> y la <a href="03_xgboost-lesson.html">derivación del boosting de la lección</a>.</p>
+<p>La interfaz de scikit-learn admite <code>early_stopping_rounds</code> al construir el estimador en la versión instalada de XGBoost. <code>fit</code> recibe solo las filas de entrenamiento y el bloque cronológico de validación. El estimador queda ajustado con la partición de entrenamiento; la validación selecciona la iteración de parada, pero no se incorpora al ajuste. Nunca use el bloque de prueba definitivo para ajustar estas decisiones. Una referencia estacional sencilla aún puede ganar: la recurrencia semanal quizá ya explique gran parte de la estructura predecible, la muestra es pequeña o los árboles pueden no extrapolar bien una tendencia del nivel. Informe ese resultado e investigue con los datos de desarrollo.</p>
+<p>La <a href="https://xgboost.readthedocs.io/en/stable/python/python_api.html">API de XGBoost compatible con scikit-learn</a> documenta los argumentos del estimador y su comportamiento durante el ajuste.</p></section><section class="cell" id="cell-cell-018"><div class="cell-label">Python · ejecutar en el cuaderno</div><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">xgboost</span><span class="w"> </span><span class="kn">import</span> <span class="n">XGBRegressor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">mean_absolute_error</span><span class="p">,</span> <span class="n">mean_squared_error</span>
+
+<span class="n">X_train</span> <span class="o">=</span> <span class="n">train_data</span><span class="p">[</span><span class="n">feature_columns</span><span class="p">]</span>
+<span class="n">y_train</span> <span class="o">=</span> <span class="n">train_data</span><span class="p">[</span><span class="s2">"sales"</span><span class="p">]</span>
+<span class="n">X_validation</span> <span class="o">=</span> <span class="n">validation_data</span><span class="p">[</span><span class="n">feature_columns</span><span class="p">]</span>
+<span class="n">y_validation</span> <span class="o">=</span> <span class="n">validation_data</span><span class="p">[</span><span class="s2">"sales"</span><span class="p">]</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">XGBRegressor</span><span class="p">(</span>
+    <span class="n">objective</span><span class="o">=</span><span class="s2">"reg:squarederror"</span><span class="p">,</span>
+    <span class="n">n_estimators</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span>
+    <span class="n">learning_rate</span><span class="o">=</span><span class="mf">0.035</span><span class="p">,</span>
+    <span class="n">max_depth</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+    <span class="n">min_child_weight</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+    <span class="n">subsample</span><span class="o">=</span><span class="mf">0.9</span><span class="p">,</span>
+    <span class="n">colsample_bytree</span><span class="o">=</span><span class="mf">0.9</span><span class="p">,</span>
+    <span class="n">reg_lambda</span><span class="o">=</span><span class="mf">5.0</span><span class="p">,</span>
+    <span class="n">early_stopping_rounds</span><span class="o">=</span><span class="mi">25</span><span class="p">,</span>
+    <span class="n">eval_metric</span><span class="o">=</span><span class="s2">"rmse"</span><span class="p">,</span>
+    <span class="n">random_state</span><span class="o">=</span><span class="mi">17</span><span class="p">,</span>
+    <span class="n">n_jobs</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">eval_set</span><span class="o">=</span><span class="p">[(</span><span class="n">X_validation</span><span class="p">,</span> <span class="n">y_validation</span><span class="p">)],</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="n">selected_rounds</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">best_iteration</span> <span class="o">+</span> <span class="mi">1</span>
+<span class="n">selected_rounds</span>
+</pre></div>
+<details class="result-text"><summary>7. Elegir la complejidad del modelo solo con validación · resultado calculado</summary><pre>128</pre></details></section><section class="cell" id="cell-fc94e142"><p>El código pasa columnas con nombre y valores objetivo a <code>fit</code>; <code>eval_set</code> se usa únicamente para observar RMSE. <code>best_iteration</code> + 1 convierte el índice de XGBoost, que comienza en cero, en un número de árboles. El modelo ajustado <code>predict</code> que asigna luego una estimación de ventas a cada fila de variables predictoras.</p></section><section class="cell" id="cell-cell-019"><h2 id="section-14">8. Evaluación de prueba con pronósticos sucesivos a un paso</h2>
+<p>La regla estacional ingenua de siete días y XGBoost reciben los mismos orígenes y objetivos de prueba. Para cada origen, el constructor de variables usa solo ventas pasadas, incluidas las ventas reales que ya estarían disponibles en este escenario de actualización sucesiva. MAE y RMSE se informan en unidades de ventas sintéticas. Una mejora negativa frente a la referencia indica que el modelo aprendido obtuvo un error mayor en esa métrica.</p></section><section class="cell" id="cell-cell-020"><div class="cell-label">Python · ejecutar en el cuaderno</div><div class="highlight"><pre><span></span><span class="n">test_prediction</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">test_data</span><span class="p">[</span><span class="n">feature_columns</span><span class="p">])</span>
+<span class="n">seasonal_prediction</span> <span class="o">=</span> <span class="n">test_data</span><span class="p">[</span><span class="s2">"lag_7"</span><span class="p">]</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span>
+<span class="n">y_test</span> <span class="o">=</span> <span class="n">test_data</span><span class="p">[</span><span class="s2">"sales"</span><span class="p">]</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">score_predictions</span><span class="p">(</span><span class="n">actual</span><span class="p">,</span> <span class="n">predicted</span><span class="p">):</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">"MAE"</span><span class="p">:</span> <span class="n">mean_absolute_error</span><span class="p">(</span><span class="n">actual</span><span class="p">,</span> <span class="n">predicted</span><span class="p">),</span>
+        <span class="s2">"RMSE"</span><span class="p">:</span> <span class="n">mean_squared_error</span><span class="p">(</span><span class="n">actual</span><span class="p">,</span> <span class="n">predicted</span><span class="p">)</span> <span class="o">**</span> <span class="mf">0.5</span><span class="p">,</span>
+    <span class="p">}</span>
+
+
+<span class="n">score_table</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+    <span class="p">{</span>
+        <span class="s2">"seasonal naive"</span><span class="p">:</span> <span class="n">score_predictions</span><span class="p">(</span><span class="n">y_test</span><span class="p">,</span> <span class="n">seasonal_prediction</span><span class="p">),</span>
+        <span class="s2">"XGBoost"</span><span class="p">:</span> <span class="n">score_predictions</span><span class="p">(</span><span class="n">y_test</span><span class="p">,</span> <span class="n">test_prediction</span><span class="p">),</span>
+    <span class="p">}</span>
+<span class="p">)</span><span class="o">.</span><span class="n">T</span>
+<span class="n">score_table</span><span class="p">[</span><span class="s2">"MAE improvement vs naive"</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">score_table</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="s2">"seasonal naive"</span><span class="p">,</span> <span class="s2">"MAE"</span><span class="p">]</span> <span class="o">-</span> <span class="n">score_table</span><span class="p">[</span><span class="s2">"MAE"</span><span class="p">]</span>
+<span class="p">)</span>
+<span class="n">score_table</span><span class="p">[</span><span class="s2">"RMSE improvement vs naive"</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">score_table</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="s2">"seasonal naive"</span><span class="p">,</span> <span class="s2">"RMSE"</span><span class="p">]</span> <span class="o">-</span> <span class="n">score_table</span><span class="p">[</span><span class="s2">"RMSE"</span><span class="p">]</span>
+<span class="p">)</span>
+<span class="n">score_table</span>
+</pre></div>
+<details class="result-text"><summary>8. Evaluación de prueba con pronósticos sucesivos a un paso · resultado calculado</summary><pre>                      MAE      RMSE  MAE improvement vs naive  \
+seasonal naive  61.941575  78.95166                  0.000000
+XGBoost         65.324087  79.41873                 -3.382512
+
+                RMSE improvement vs naive
+seasonal naive                    0.00000
+XGBoost                          -0.46707</pre></details></section><section class="cell" id="cell-623caed4"><p>Ambas predicciones y los objetivos corresponden a las mismas filas de la prueba final. MAE es el error absoluto promedio; RMSE es la raíz del error cuadrático medio y, por tanto, asigna más peso a los errores grandes. Una mejora positiva significa menor error que con la regla estacional; una mejora negativa favorece la referencia.</p></section><section class="cell" id="cell-cell-021"><div class="cell-label">Python · ejecutar en el cuaderno</div><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">11</span><span class="p">,</span> <span class="mi">6</span><span class="p">),</span> <span class="n">sharex</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">layout</span><span class="o">=</span><span class="s2">"constrained"</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">test_data</span><span class="p">[</span><span class="s2">"date"</span><span class="p">],</span> <span class="n">y_test</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"actual"</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">"black"</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mf">1.4</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">test_data</span><span class="p">[</span><span class="s2">"date"</span><span class="p">],</span> <span class="n">seasonal_prediction</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"seasonal naive"</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.8</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">test_data</span><span class="p">[</span><span class="s2">"date"</span><span class="p">],</span> <span class="n">test_prediction</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"XGBoost"</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.8</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">"sales"</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">ncol</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">frameon</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="n">residual</span> <span class="o">=</span> <span class="n">y_test</span> <span class="o">-</span> <span class="n">test_prediction</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">test_data</span><span class="p">[</span><span class="s2">"date"</span><span class="p">],</span> <span class="n">residual</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.75</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">axhline</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">"black"</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set</span><span class="p">(</span>
+    <span class="n">ylabel</span><span class="o">=</span><span class="s2">"actual - predicted"</span><span class="p">,</span> <span class="n">xlabel</span><span class="o">=</span><span class="s2">"test date"</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">"XGBoost one-step residuals"</span>
+<span class="p">)</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">autofmt_xdate</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+<figure class="result-figure"><img loading="lazy" src="../results/07_time_series-cell-021-0.png" alt="Resultado ejecutado: 8. Evaluación de prueba con pronósticos sucesivos a un paso"><figcaption>8. Evaluación de prueba con pronósticos sucesivos a un paso · salida del cuaderno capturada</figcaption></figure></section><section class="cell" id="cell-cell-022"><h2 id="section-15">Límites e interpretación</h2>
+<p>Las series sintéticas permiten ver el orden temporal y las reglas contra la fuga de información, pero no describen el proceso de demanda de un comercio real. La referencia estacional ingenua usa un periodo semanal elegido por construcción. Las codificaciones del calendario suponen que se conoce la fecha del pronóstico. MAE y RMSE resumen errores, pero ocultan fallos en fechas concretas; examine la cronología y los residuos. Una evaluación operativa útil debe reproducir el horizonte, la frecuencia de actualización y la disponibilidad de covariables del despliegue previsto.</p>
+<p>Los conjuntos de árboles <code>predict</code> producen predicciones a partir de valores por hoja y no extrapolan automáticamente una tendencia lineal. Si el nivel deriva, la regla estacional ingenua puede ser competitiva o incluso mejor. Que gane la referencia es un resultado informativo: repórtelo e investigue con datos de desarrollo, sin ajustar el modelo contra la prueba final.</p></section></article><p><a href="07_time_series-results.html">Explora la galería de resultados ejecutados de esta lección →</a></p><nav class="actions" aria-label="Secuencia de estudio"><a href="06_clustering.html">← 06: Agrupamiento</a><a href="index.html#lectures">Todas las lecciones</a><a href="08_deployment.html">08: Del modelo al servicio →</a></nav></main></div><footer>Mathematical ML · Ocho lecciones prácticas para matemáticos<br>Python legible · Experimentos reproducibles · Datos sintéticos didácticos</footer></body></html>

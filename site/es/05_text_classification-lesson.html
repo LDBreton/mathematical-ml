@@ -1,0 +1,514 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Ocho lecciones de aprendizaje automático para matemáticos: fundamentos, opciones de software y ejemplos guiados en Python."><title>Clasificación de texto: lección · ML matemático</title><link rel="stylesheet" href="../style.css"><script defer src="../site.js"></script><script>window.MathJax={tex:{inlineMath:[['$','$'],['\\(','\\)']]}};</script><script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script><link rel="alternate" hreflang="en" href="../05_text_classification-lesson.html"><link rel="alternate" hreflang="es" href="05_text_classification-lesson.html"><link rel="alternate" hreflang="x-default" href="../05_text_classification-lesson.html"></head><body><a class="skip" href="#main">Saltar al contenido</a><header><button class="menu" aria-controls="sidebar" aria-expanded="false" aria-label="Mostrar u ocultar la navegación del curso">☰</button><a class="brand" href="index.html">∑ <span>Mathematical ML</span></a><nav aria-label="Enlaces rápidos"><a href="setup.html">Comenzar</a><a href="index.html#lectures">Lecciones</a><button id="theme" aria-label="Cambiar tema de color">◐</button></nav><nav class="languages" aria-label="Idioma"><a href="../05_text_classification-lesson.html" lang="en" hreflang="en">English</a><a href="05_text_classification-lesson.html" lang="es" hreflang="es" aria-current="true">Español</a></nav></header><div class="layout"><aside id="sidebar" aria-label="Navegación del curso"><a href="index.html">Presentación del curso</a><h3>Comienza aquí</h3><a href="setup.html">Instalación &amp; primeros pasos</a><a href="first-steps.html">¿Nuevo en aprendizaje automático? Comienza aquí</a><h3>Las lecciones</h3><details><summary><a href="01_regression.html">01 · Regresión</a></summary><a class="sub" href="01_regression-lesson.html">Fundamentos &amp; ejemplos</a></details><details><summary><a href="02_classification.html">02 · Clasificación</a></summary><a class="sub" href="02_classification-lesson.html">Fundamentos &amp; ejemplos</a></details><details><summary><a href="03_xgboost.html">03 · XGBoost</a></summary><a class="sub" href="03_xgboost-lesson.html">Fundamentos &amp; ejemplos</a></details><details><summary><a href="04_imbalanced_learning.html">04 · Aprendizaje con clases desbalanceadas</a></summary><a class="sub" href="04_imbalanced_learning-lesson.html">Fundamentos &amp; ejemplos</a></details><details><summary><a href="05_text_classification.html">05 · Clasificación de texto</a></summary><a class="sub" href="05_text_classification-lesson.html">Fundamentos &amp; ejemplos</a></details><details><summary><a href="06_clustering.html">06 · Agrupamiento</a></summary><a class="sub" href="06_clustering-lesson.html">Fundamentos &amp; ejemplos</a></details><details><summary><a href="07_time_series.html">07 · Pronóstico de series temporales</a></summary><a class="sub" href="07_time_series-lesson.html">Fundamentos &amp; ejemplos</a></details><details><summary><a href="08_deployment.html">08 · Del modelo al servicio</a></summary><a class="sub" href="08_deployment-lesson.html">Fundamentos &amp; ejemplos</a></details><h3>Recursos</h3><a href="results.html">Galerías de resultados ejecutados</a><a href="datasets.html">Conjuntos de datos</a><a href="course-project.html">Proyecto del curso</a><a href="instructor.html">Guía docente</a><a href="verification.html">Verificación</a></aside><main id="main"><p class="translation-note">Versión en español. El código, los datos, las salidas calculadas y las etiquetas dentro de las figuras se conservan en su idioma original. Los cuadernos descargables están en inglés.</p><div class="eyebrow">Lección 05 / lección</div><div class="actions"><a href="05_text_classification.html">← Guía de la lección</a><a href="../downloads/05_text_classification/lesson.ipynb" download>Descargar el cuaderno</a></div><p class="note">Esta página es una vista de lectura. Para ejecutar Python, descarga el curso completo y abre este cuaderno en Jupyter. <a href="first-steps.html">Recorrido inicial del cuaderno →</a></p><details class="contents"><summary>En esta página</summary><nav aria-label="Contenido de la página"><a href="#section-1">De cadenas de texto a objetos de biblioteca</a><a href="#section-2">1. Cargar los datos y mantener juntas las familias de plantillas</a><a href="#section-3">¿Por qué agrupar los ejemplos hermanos?</a><a href="#section-4">2. TF-IDF como vector disperso ponderado</a><a href="#section-5">Las opciones del vectorizador cambian la representación</a><a href="#section-6">Un cálculo de IDF paso a paso</a><a href="#section-7">Comparar opciones de representación con los mismos mensajes de entrenamiento</a><a href="#section-8">Inspeccionar conteos, pesos IDF, filas normalizadas y un ángulo</a><a href="#section-9">3. Regresión logística multinomial</a><a href="#section-10">Opciones de regresión logística para texto disperso</a><a href="#section-11">4. Elegir la regularización en validación y probar una sola vez</a><a href="#section-12">5. Analizar errores y coeficientes</a><a href="#section-13">Predecir un mensaje nuevo e inspeccionar una representación vacía</a><a href="#section-14">6. Qué permite y qué no permite concluir esta lección</a></nav></details><article class="reading"><section class="cell" id="cell-cell-000"><h1>05 — Clasificación de texto con TF-IDF y regresión logística</h1>
+<p>Un equipo de soporte quiere dirigir mensajes breves a una de cinco colas. Convertiremos el texto en vectores dispersos, deduciremos qué calcula el vectorizador, ajustaremos un modelo logístico multinomial regularizado y examinaremos los errores. Los datos son plantillas sintéticas redactadas para este curso; la puntuación final es un resultado didáctico, no una afirmación sobre el tráfico real de soporte.</p></section><section class="cell" id="cell-beginner-bridge"><p><img alt="Figura didáctica sobre clasificación de texto" src="../figures/05_text_classification.svg"></img></p>
+<p><em>Pesos TF-IDF normalizados reales para cuatro mensajes ilustrativos. Las filas son documentos y las columnas son términos del vocabulario.</em></p>
+<h2 id="section-1">De cadenas de texto a objetos de biblioteca</h2>
+<p>Un vocabulario asigna un índice de columna a cada término aprendido. Cada documento se convierte en una fila de conteos o pesos. La mayoría de las entradas son cero porque cada mensaje contiene solo una pequeña parte de las palabras; por eso, una matriz dispersa almacena los valores distintos de cero y sus ubicaciones. <code>.nnz</code> cuenta los valores no nulos almacenados; <code>.multiply(other)</code> multiplica elemento por elemento; <code>.A1</code> convierte el resultado matricial en un arreglo unidimensional.</p>
+<p><code>fit_transform(training_messages)</code> aprende el vocabulario y los pesos IDF y luego codifica esos mensajes. <code>transform(new_messages)</code> usa ese vocabulario fijo y esos pesos fijos. Si todos los términos son desconocidos, la fila transformada contiene solo ceros; aun así, un clasificador lineal puede devolver probabilidades determinadas por su intercepto. Esto no demuestra que haya comprendido el mensaje.</p>
+<p>Los grupos de plantillas identifican paráfrasis relacionadas. Si una variante queda en entrenamiento y otra en prueba, el modelo puede obtener crédito por memorizar la redacción. La división por grupos evalúa familias de plantillas no vistas; aun así, sigue siendo un problema de lenguaje simplificado.</p></section><section class="cell" id="cell-cell-001"><h2 id="section-2">1. Cargar los datos y mantener juntas las familias de plantillas</h2>
+<p>Las filas derivadas de una misma plantilla redactada son ejemplos relacionados. Si una variante queda en entrenamiento y otra en prueba, la evaluación puede premiar el reconocimiento de la plantilla en vez de la generalización a una nueva. Por eso asignamos grupos completos dentro de cada categoría. La regla se fija antes del ajuste: 8 grupos por categoría para entrenamiento, 2 para validación y 2 para la prueba final. Cada grupo contiene ocho filas, por lo que todas las particiones quedan balanceadas.</p></section><section class="cell" id="cell-cell-002"><div class="cell-label">Python · ejecutar en el cuaderno</div><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">random</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+
+<span class="k">for</span> <span class="n">candidate</span> <span class="ow">in</span> <span class="p">(</span><span class="n">Path</span><span class="o">.</span><span class="n">cwd</span><span class="p">(),</span> <span class="o">*</span><span class="n">Path</span><span class="o">.</span><span class="n">cwd</span><span class="p">()</span><span class="o">.</span><span class="n">parents</span><span class="p">):</span>
+    <span class="n">data_path</span> <span class="o">=</span> <span class="n">candidate</span> <span class="o">/</span> <span class="s2">"data"</span> <span class="o">/</span> <span class="s2">"support_tickets.csv"</span>
+    <span class="k">if</span> <span class="n">data_path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+        <span class="n">ROOT</span> <span class="o">=</span> <span class="n">candidate</span>
+        <span class="k">break</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span>
+        <span class="s2">"Run this notebook from the repository or one of its subfolders."</span>
+    <span class="p">)</span>
+
+<span class="n">tickets</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">data_path</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span>
+    <span class="sa">f</span><span class="s2">"Loaded </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">tickets</span><span class="p">)</span><span class="si">}</span><span class="s2"> tickets from </span><span class="si">{</span><span class="n">tickets</span><span class="p">[</span><span class="s1">'template_group'</span><span class="p">]</span><span class="o">.</span><span class="n">nunique</span><span class="p">()</span><span class="si">}</span><span class="s2"> template groups."</span>
+<span class="p">)</span>
+<span class="n">tickets</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+</pre></div>
+<details class="result-text"><summary>1. Cargar los datos y mantener juntas las familias de plantillas · salida calculada</summary><pre>Loaded 480 tickets from 60 template groups.</pre></details><details class="result-text"><summary>1. Cargar los datos y mantener juntas las familias de plantillas · salida calculada</summary><pre>  ticket_id category       template_group  \
+0    T-0001  billing  billing-template-01
+1    T-0002  billing  billing-template-01
+2    T-0003  billing  billing-template-01
+
+                                                text
+0  My cloud backup statement lists $18.40 for sea...
+1  My team plan statement lists $42.00 for storag...
+2  My monthly storage statement lists $7.95 for t...</pre></details></section><section class="cell" id="cell-cell-003"><div class="cell-label">Python · ejecutar en el cuaderno</div><div class="highlight"><pre><span></span><span class="n">required</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"ticket_id"</span><span class="p">,</span> <span class="s2">"category"</span><span class="p">,</span> <span class="s2">"template_group"</span><span class="p">,</span> <span class="s2">"text"</span><span class="p">}</span>
+<span class="k">assert</span> <span class="n">required</span> <span class="o">&lt;=</span> <span class="nb">set</span><span class="p">(</span><span class="n">tickets</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">tickets</span><span class="p">[</span><span class="nb">list</span><span class="p">(</span><span class="n">required</span><span class="p">)]</span><span class="o">.</span><span class="n">notna</span><span class="p">()</span><span class="o">.</span><span class="n">all</span><span class="p">()</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+<span class="k">assert</span> <span class="n">tickets</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">"template_group"</span><span class="p">)[</span><span class="s2">"category"</span><span class="p">]</span><span class="o">.</span><span class="n">nunique</span><span class="p">()</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">==</span> <span class="mi">1</span>
+<span class="k">assert</span> <span class="n">tickets</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">"template_group"</span><span class="p">)</span><span class="o">.</span><span class="n">size</span><span class="p">()</span><span class="o">.</span><span class="n">nunique</span><span class="p">()</span> <span class="o">==</span> <span class="mi">1</span>
+
+<span class="n">categories</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">tickets</span><span class="p">[</span><span class="s2">"category"</span><span class="p">]</span><span class="o">.</span><span class="n">unique</span><span class="p">())</span>
+<span class="n">rng</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">Random</span><span class="p">(</span><span class="mi">2026</span><span class="p">)</span>
+<span class="n">split_groups</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"train"</span><span class="p">:</span> <span class="p">[],</span> <span class="s2">"validation"</span><span class="p">:</span> <span class="p">[],</span> <span class="s2">"test"</span><span class="p">:</span> <span class="p">[]}</span>
+<span class="k">for</span> <span class="n">category</span> <span class="ow">in</span> <span class="n">categories</span><span class="p">:</span>
+    <span class="n">groups</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
+        <span class="n">tickets</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">tickets</span><span class="o">.</span><span class="n">category</span> <span class="o">==</span> <span class="n">category</span><span class="p">,</span> <span class="s2">"template_group"</span><span class="p">]</span><span class="o">.</span><span class="n">unique</span><span class="p">()</span>
+    <span class="p">)</span>
+    <span class="n">rng</span><span class="o">.</span><span class="n">shuffle</span><span class="p">(</span><span class="n">groups</span><span class="p">)</span>
+    <span class="n">split_groups</span><span class="p">[</span><span class="s2">"train"</span><span class="p">]</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">groups</span><span class="p">[:</span><span class="mi">8</span><span class="p">])</span>
+    <span class="n">split_groups</span><span class="p">[</span><span class="s2">"validation"</span><span class="p">]</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">groups</span><span class="p">[</span><span class="mi">8</span><span class="p">:</span><span class="mi">10</span><span class="p">])</span>
+    <span class="n">split_groups</span><span class="p">[</span><span class="s2">"test"</span><span class="p">]</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">groups</span><span class="p">[</span><span class="mi">10</span><span class="p">:</span><span class="mi">12</span><span class="p">])</span>
+
+<span class="n">splits</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="n">name</span><span class="p">:</span> <span class="n">tickets</span><span class="p">[</span><span class="n">tickets</span><span class="o">.</span><span class="n">template_group</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">group_ids</span><span class="p">)]</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">group_ids</span> <span class="ow">in</span> <span class="n">split_groups</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+<span class="p">}</span>
+<span class="k">assert</span> <span class="nb">set</span><span class="p">(</span><span class="n">split_groups</span><span class="p">[</span><span class="s2">"train"</span><span class="p">])</span><span class="o">.</span><span class="n">isdisjoint</span><span class="p">(</span><span class="n">split_groups</span><span class="p">[</span><span class="s2">"validation"</span><span class="p">])</span>
+<span class="k">assert</span> <span class="nb">set</span><span class="p">(</span><span class="n">split_groups</span><span class="p">[</span><span class="s2">"train"</span><span class="p">])</span><span class="o">.</span><span class="n">isdisjoint</span><span class="p">(</span><span class="n">split_groups</span><span class="p">[</span><span class="s2">"test"</span><span class="p">])</span>
+<span class="k">assert</span> <span class="nb">set</span><span class="p">(</span><span class="n">split_groups</span><span class="p">[</span><span class="s2">"validation"</span><span class="p">])</span><span class="o">.</span><span class="n">isdisjoint</span><span class="p">(</span><span class="n">split_groups</span><span class="p">[</span><span class="s2">"test"</span><span class="p">])</span>
+<span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">frame</span> <span class="ow">in</span> <span class="n">splits</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="n">counts</span> <span class="o">=</span> <span class="n">frame</span><span class="o">.</span><span class="n">category</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span><span class="o">.</span><span class="n">reindex</span><span class="p">(</span><span class="n">categories</span><span class="p">,</span> <span class="n">fill_value</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="p">(</span><span class="n">counts</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()</span> <span class="ow">and</span> <span class="n">counts</span><span class="o">.</span><span class="n">nunique</span><span class="p">()</span> <span class="o">==</span> <span class="mi">1</span>
+    <span class="nb">print</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">:</span><span class="s2">10s</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">frame</span><span class="p">)</span><span class="si">:</span><span class="s2">3d</span><span class="si">}</span><span class="s2"> rows; "</span>
+        <span class="o">+</span> <span class="s2">", "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">=</span><span class="si">{</span><span class="n">v</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">counts</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
+    <span class="p">)</span>
+</pre></div>
+<details class="result-text"><summary>1. Cargar los datos y mantener juntas las familias de plantillas · salida calculada</summary><pre>train     : 320 rows; account_access=64, billing=64, order_status=64, refund_return=64, technical_issue=64
+validation:  80 rows; account_access=16, billing=16, order_status=16, refund_return=16, technical_issue=16
+test      :  80 rows; account_access=16, billing=16, order_status=16, refund_return=16, technical_issue=16</pre></details></section><section class="cell" id="cell-template-siblings"><h3 id="section-3">¿Por qué agrupar los ejemplos hermanos?</h3>
+<p>Estos mensajes comparten una misma familia de plantillas generada. Una división aleatoria por filas podría dejar textos casi idénticos tanto en el ajuste como en la evaluación. La división por grupos asigna todos los miembros de una familia a la misma partición.</p></section><section class="cell" id="cell-template-siblings-code"><div class="cell-label">Python · ejecutar en el cuaderno</div><div class="highlight"><pre><span></span><span class="n">example_group</span> <span class="o">=</span> <span class="n">tickets</span><span class="o">.</span><span class="n">template_group</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<span class="n">display</span><span class="p">(</span><span class="n">tickets</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">tickets</span><span class="o">.</span><span class="n">template_group</span> <span class="o">==</span> <span class="n">example_group</span><span class="p">,</span>
+                    <span class="p">[</span><span class="s2">"template_group"</span><span class="p">,</span> <span class="s2">"category"</span><span class="p">,</span> <span class="s2">"text"</span><span class="p">]]</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">4</span><span class="p">))</span>
+</pre></div>
+<details class="result-text"><summary>1. Cargar los datos y mantener juntas las familias de plantillas · salida calculada</summary><pre>        template_group category  \
+0  billing-template-01  billing
+1  billing-template-01  billing
+2  billing-template-01  billing
+3  billing-template-01  billing
+
+                                                text
+0  My cloud backup statement lists $18.40 for sea...
+1  My team plan statement lists $42.00 for storag...
+2  My monthly storage statement lists $7.95 for t...
+3  My pro account statement lists $63.20 for the ...</pre></details></section><section class="cell" id="cell-cell-004"><h2 id="section-4">2. TF-IDF como vector disperso ponderado</h2>
+<p>Fijemos un vocabulario de $p$ términos y sea $x_i\in\mathbb{R}^p$ el vector de conteos brutos de cada término en el documento $i$. Para el término $j$, la frecuencia documental es $df_j=\#\{i:x_{ij}&gt;0\}$. Con el valor predeterminado de scikit-learn <code>smooth_idf=True</code>, la frecuencia inversa de documentos es</p>
+<p>$$\operatorname{idf}_j=\log\!\left(\frac{1+n}{1+df_j}\right)+1.$$</p>
+<p>El uno añadido al numerador y al denominador suaviza la frecuencia documental. Un término presente en todos los documentos de ajuste recibe peso uno. El vocabulario aprendido incluye solo términos observados en el corpus de ajuste, por lo que no se asigna una columna a los términos realmente desconocidos. El analizador predeterminado para palabras convierte el texto a minúsculas, usa unigramas y conserva los tokens que coinciden con <code>(?u)\b\w\w+\b</code> (caracteres Unicode de palabra, con al menos dos caracteres). No usa una lista de palabras vacías ni elimina acentos. De forma predeterminada, <code>sublinear_tf=False</code> deja la frecuencia del término como conteo bruto. <code>TfidfVectorizer</code> multiplica el conteo por IDF y, de forma predeterminada, normaliza cada fila con la norma L2. Un vector de documento no vacío $v$ se transforma en $v/\|v\|_2$; por tanto, la suma de los cuadrados de sus coordenadas es uno.</p>
+<p>Para filas $u$ y $v$ normalizadas con L2, la similitud coseno es</p>
+<p>$$\cos(u,v)=\frac{u^Tv}{\|u\|_2\|v\|_2}=u^Tv.$$</p>
+<p>La representación es dispersa porque cada documento usa solo una pequeña fracción del vocabulario total. Inspeccionaremos la convención exacta que se ajusta. El vocabulario y los valores IDF deben aprenderse solo del texto de entrenamiento; incluir el vectorizador en una canalización garantiza esa regla durante el ajuste.</p></section><section class="cell" id="cell-tfidf-options"><h3 id="section-5">Las opciones del vectorizador cambian la representación</h3>
+<p>Los valores siguientes son los <code>TfidfVectorizer</code> valores predeterminados de la API de scikit-learn instalada; el primer vectorizador de la lección los usa al escribir <code>TfidfVectorizer()</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Opción</th>
+<th style="text-align: right;">Valor predeterminado en el primer ajuste</th>
+<th>Qué modifica</th>
+<th>Efecto matemático o práctico</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>min_df</code></td>
+<td style="text-align: right;"><code>1</code></td>
+<td>Cantidad mínima de documentos para incluir un término en el vocabulario</td>
+<td>Al aumentarlo, se eliminan columnas muy poco frecuentes; el vocabulario se aprende solo con los documentos de ajuste</td>
+</tr>
+<tr>
+<td><code>ngram_range</code></td>
+<td style="text-align: right;"><code>(1, 1)</code></td>
+<td>Qué secuencias contiguas de tokens se convierten en características</td>
+<td><code>(1, 2)</code> añade pares de palabras adyacentes, que pueden distinguir frases como «tarjeta de crédito»</td>
+</tr>
+<tr>
+<td><code>max_features</code></td>
+<td style="text-align: right;"><code>None</code></td>
+<td>Límite opcional para el tamaño del vocabulario</td>
+<td>Un entero conserva los términos más frecuentes del corpus de ajuste; reduce el uso de memoria, pero puede eliminar distinciones menos frecuentes</td>
+</tr>
+<tr>
+<td><code>sublinear_tf</code></td>
+<td style="text-align: right;"><code>False</code></td>
+<td>Si el conteo bruto $tf$ se transforma en $1+\log(tf)$</td>
+<td>Atenúa las repeticiones dentro de un documento; no cambia la frecuencia documental</td>
+</tr>
+<tr>
+<td><code>norm</code></td>
+<td style="text-align: right;"><code>'l2'</code></td>
+<td>Normalización por fila después de TF-IDF</td>
+<td><code>'l2'</code> da norma euclidiana unitaria a cada fila no vacía, de modo que los productos punto equivalen a la similitud coseno; <code>None</code> conserva la información sobre la longitud de cada fila</td>
+</tr>
+<tr>
+<td><code>smooth_idf</code></td>
+<td style="text-align: right;"><code>True</code></td>
+<td>Si se añade un pseudodocumento para IDF</td>
+<td>Usa $\log((1+n)/(1+df))+1$ y evita divisiones por cero; <code>False</code> usa la convención sin suavizado</td>
+</tr>
+</tbody>
+</table>
+<p>Un vectorizador nuevo, al llamar a <code>fit_transform(training_text)</code> aprende tanto el mapa de tokens a columnas como los valores IDF y devuelve una matriz dispersa de entrenamiento. <code>transform(new_text)</code> reutiliza esos valores aprendidos e ignora los términos desconocidos. En la <code>Pipeline</code>, <code>fit(text, labels)</code> primero ajusta TF-IDF con el texto de entrenamiento y luego ajusta la regresión logística con su matriz dispersa. <code>predict</code> y <code>predict_proba</code> transforma las cadenas nuevas con ese mismo vectorizador antes de llamar al clasificador. Por eso el vectorizador debe estar dentro de la canalización: cada texto de validación y de prueba se representa con el vocabulario y el IDF aprendidos únicamente del entrenamiento.</p>
+<p>Estas opciones y sus valores predeterminados se describen en la documentación oficial de <a href="https://scikit-learn.org/stable/modules/generated/sklearn.feature_extraction.text.TfidfVectorizer.html">referencia de la API de TfidfVectorizer</a>.</p></section><section class="cell" id="cell-cell-005"><div class="cell-label">Python · ejecutar en el cuaderno</div><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.feature_extraction.text</span><span class="w"> </span><span class="kn">import</span> <span class="n">TfidfVectorizer</span>
+
+<span class="n">vectorizer</span> <span class="o">=</span> <span class="n">TfidfVectorizer</span><span class="p">()</span>
+<span class="n">X_train_preview</span> <span class="o">=</span> <span class="n">vectorizer</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">splits</span><span class="p">[</span><span class="s2">"train"</span><span class="p">]</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"shape:"</span><span class="p">,</span> <span class="n">X_train_preview</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"sparse type:"</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">X_train_preview</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span>
+    <span class="s2">"density:"</span><span class="p">,</span>
+    <span class="n">X_train_preview</span><span class="o">.</span><span class="n">nnz</span> <span class="o">/</span> <span class="p">(</span><span class="n">X_train_preview</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">X_train_preview</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span>
+<span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span>
+    <span class="s2">"norms of first three rows:"</span><span class="p">,</span>
+    <span class="p">(</span><span class="n">X_train_preview</span><span class="p">[:</span><span class="mi">3</span><span class="p">]</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span><span class="n">X_train_preview</span><span class="p">[:</span><span class="mi">3</span><span class="p">])</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">A1</span><span class="p">)</span> <span class="o">**</span> <span class="mf">0.5</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span>
+    <span class="p">{</span>
+        <span class="n">name</span><span class="p">:</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">vectorizer</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">[</span>
+            <span class="s2">"lowercase"</span><span class="p">,</span>
+            <span class="s2">"strip_accents"</span><span class="p">,</span>
+            <span class="s2">"ngram_range"</span><span class="p">,</span>
+            <span class="s2">"stop_words"</span><span class="p">,</span>
+            <span class="s2">"token_pattern"</span><span class="p">,</span>
+            <span class="s2">"use_idf"</span><span class="p">,</span>
+            <span class="s2">"smooth_idf"</span><span class="p">,</span>
+            <span class="s2">"sublinear_tf"</span><span class="p">,</span>
+            <span class="s2">"norm"</span><span class="p">,</span>
+        <span class="p">]</span>
+    <span class="p">}</span>
+<span class="p">)</span>
+</pre></div>
+<details class="result-text"><summary>2. TF-IDF como vector disperso ponderado · salida calculada</summary><pre>shape: (320, 598)
+sparse type: csr_matrix
+density: 0.03517454013377926
+norms of first three rows: [1. 1. 1.]
+{&#x27;lowercase&#x27;: True, &#x27;strip_accents&#x27;: None, &#x27;ngram_range&#x27;: (1, 1), &#x27;stop_words&#x27;: None, &#x27;token_pattern&#x27;: &#x27;(?u)\\b\\w\\w+\\b&#x27;, &#x27;use_idf&#x27;: True, &#x27;smooth_idf&#x27;: True, &#x27;sublinear_tf&#x27;: False, &#x27;norm&#x27;: &#x27;l2&#x27;}</pre></details></section><section class="cell" id="cell-cell-006"><h3 id="section-6">Un cálculo de IDF paso a paso</h3>
+<p>Suponga que un término del vocabulario aparece en 2 de 8 documentos de ajuste. Su IDF suavizada es $\log(9/3)+1=\log 3+1$. Un término ubicuo tiene $df=8$ y recibe $\log(9/9)+1=1$. Ejecute la celda para comprobar el valor almacenado por scikit-learn en el primer caso.</p></section><section class="cell" id="cell-cell-007"><div class="cell-label">Python · ejecutar en el cuaderno</div><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.feature_extraction.text</span><span class="w"> </span><span class="kn">import</span> <span class="n">TfidfVectorizer</span>
+
+<span class="n">documents</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"common rare"</span><span class="p">,</span> <span class="s2">"common rare"</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="s2">"common"</span><span class="p">]</span> <span class="o">*</span> <span class="mi">6</span>
+<span class="n">idf_vectorizer</span> <span class="o">=</span> <span class="n">TfidfVectorizer</span><span class="p">()</span>
+<span class="n">idf_vectorizer</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">documents</span><span class="p">)</span>
+<span class="n">idf_by_term</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">idf_vectorizer</span><span class="o">.</span><span class="n">get_feature_names_out</span><span class="p">(),</span> <span class="n">idf_vectorizer</span><span class="o">.</span><span class="n">idf_</span><span class="p">))</span>
+<span class="n">n_documents</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">documents</span><span class="p">)</span>
+<span class="n">document_frequency</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="s2">"rare"</span> <span class="ow">in</span> <span class="n">document</span><span class="o">.</span><span class="n">split</span><span class="p">()</span> <span class="k">for</span> <span class="n">document</span> <span class="ow">in</span> <span class="n">documents</span><span class="p">)</span>
+<span class="n">manual_idf</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">((</span><span class="mi">1</span> <span class="o">+</span> <span class="n">n_documents</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">document_frequency</span><span class="p">))</span> <span class="o">+</span> <span class="mi">1</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"manual smoothed IDF:"</span><span class="p">,</span> <span class="n">manual_idf</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"scikit-learn stored IDF:"</span><span class="p">,</span> <span class="n">idf_by_term</span><span class="p">[</span><span class="s2">"rare"</span><span class="p">])</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"ubiquitous term IDF:"</span><span class="p">,</span> <span class="n">idf_by_term</span><span class="p">[</span><span class="s2">"common"</span><span class="p">])</span>
+<span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">manual_idf</span><span class="p">,</span> <span class="n">idf_by_term</span><span class="p">[</span><span class="s2">"rare"</span><span class="p">])</span>
+<span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">idf_by_term</span><span class="p">[</span><span class="s2">"common"</span><span class="p">],</span> <span class="mf">1.0</span><span class="p">)</span>
+</pre></div>
+<details class="result-text"><summary>2. TF-IDF como vector disperso ponderado · salida calculada</summary><pre>manual smoothed IDF: 2.09861228866811
+scikit-learn stored IDF: 2.09861228866811
+ubiquitous term IDF: 1.0</pre></details></section><section class="cell" id="cell-tfidf-controlled-comparison"><h3 id="section-7">Comparar opciones de representación con los mismos mensajes de entrenamiento</h3>
+<p>Esta comparación fija cambia una opción a la vez respecto del vectorizador predeterminado. Informa el tamaño del vocabulario, la densidad de la matriz y la norma de un mensaje de entrenamiento elegido. Describe efectos computacionales y geométricos; no selecciona opciones según el desempeño en validación o prueba.</p></section><section class="cell" id="cell-tfidf-option-comparison"><div class="cell-label">Python · ejecutar en el cuaderno</div><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.feature_extraction.text</span><span class="w"> </span><span class="kn">import</span> <span class="n">TfidfVectorizer</span>
+
+<span class="n">option_cases</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"default"</span><span class="p">:</span> <span class="p">{},</span>
+    <span class="s2">"min_df=2"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"min_df"</span><span class="p">:</span> <span class="mi">2</span><span class="p">},</span>
+    <span class="s2">"unigrams+bigrams"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"ngram_range"</span><span class="p">:</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)},</span>
+    <span class="s2">"max_features=40"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"max_features"</span><span class="p">:</span> <span class="mi">40</span><span class="p">},</span>
+    <span class="s2">"sublinear_tf=True"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"sublinear_tf"</span><span class="p">:</span> <span class="kc">True</span><span class="p">},</span>
+    <span class="s2">"norm=None"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"norm"</span><span class="p">:</span> <span class="kc">None</span><span class="p">},</span>
+    <span class="s2">"smooth_idf=False"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"smooth_idf"</span><span class="p">:</span> <span class="kc">False</span><span class="p">},</span>
+<span class="p">}</span>
+<span class="n">comparison_text</span> <span class="o">=</span> <span class="n">splits</span><span class="p">[</span><span class="s2">"train"</span><span class="p">]</span><span class="o">.</span><span class="n">text</span>
+<span class="n">comparison_rows</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">label</span><span class="p">,</span> <span class="n">options</span> <span class="ow">in</span> <span class="n">option_cases</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="n">vectorizer</span> <span class="o">=</span> <span class="n">TfidfVectorizer</span><span class="p">(</span><span class="o">**</span><span class="n">options</span><span class="p">)</span>
+    <span class="n">matrix</span> <span class="o">=</span> <span class="n">vectorizer</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">comparison_text</span><span class="p">)</span>
+    <span class="n">row_norm</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">matrix</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span><span class="n">matrix</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">.</span><span class="n">sum</span><span class="p">()))</span>
+    <span class="n">comparison_rows</span><span class="o">.</span><span class="n">append</span><span class="p">({</span>
+        <span class="s2">"option"</span><span class="p">:</span> <span class="n">label</span><span class="p">,</span>
+        <span class="s2">"vocabulary columns"</span><span class="p">:</span> <span class="n">matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+        <span class="s2">"nonzero density"</span><span class="p">:</span> <span class="n">matrix</span><span class="o">.</span><span class="n">nnz</span> <span class="o">/</span> <span class="p">(</span><span class="n">matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span>
+        <span class="s2">"first-row L2 norm"</span><span class="p">:</span> <span class="n">row_norm</span><span class="p">,</span>
+    <span class="p">})</span>
+<span class="n">display</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">comparison_rows</span><span class="p">)</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s2">"option"</span><span class="p">)</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">4</span><span class="p">))</span>
+</pre></div>
+<details class="result-text"><summary>2. TF-IDF como vector disperso ponderado · salida calculada</summary><pre>                   vocabulary columns  nonzero density  first-row L2 norm
+option
+default                           598           0.0352             1.0000
+min_df=2                          431           0.0476             1.0000
+unigrams+bigrams                 1859           0.0231             1.0000
+max_features=40                    40           0.2727             1.0000
+sublinear_tf=True                 598           0.0352             1.0000
+norm=None                         598           0.0352            16.2972
+smooth_idf=False                  598           0.0352             1.0000</pre></details></section><section class="cell" id="cell-sparse-geometry"><h3 id="section-8">Inspeccionar conteos, pesos IDF, filas normalizadas y un ángulo</h3>
+<p>Este corpus pequeño es independiente del experimento de tickets. Convertimos a formato denso solo ocho filas breves para inspeccionarlas, no la matriz dispersa completa de tickets. El producto punto de dos filas unitarias es su similitud coseno; los documentos 0 y 2 comparten <code>common</code> pero difieren en <code>rare</code>.</p></section><section class="cell" id="cell-sparse-geometry-code"><div class="cell-label">Python · ejecutar en el cuaderno</div><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.feature_extraction.text</span><span class="w"> </span><span class="kn">import</span> <span class="n">CountVectorizer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.metrics.pairwise</span><span class="w"> </span><span class="kn">import</span> <span class="n">cosine_similarity</span>
+
+<span class="n">counts</span> <span class="o">=</span> <span class="n">CountVectorizer</span><span class="p">(</span><span class="n">vocabulary</span><span class="o">=</span><span class="n">idf_vectorizer</span><span class="o">.</span><span class="n">vocabulary_</span><span class="p">)</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">documents</span><span class="p">)</span>
+<span class="n">weights</span> <span class="o">=</span> <span class="n">idf_vectorizer</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">documents</span><span class="p">)</span>
+<span class="n">terms</span> <span class="o">=</span> <span class="n">idf_vectorizer</span><span class="o">.</span><span class="n">get_feature_names_out</span><span class="p">()</span>
+<span class="n">display</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">counts</span><span class="o">.</span><span class="n">toarray</span><span class="p">(),</span> <span class="n">columns</span><span class="o">=</span><span class="n">terms</span><span class="p">)</span><span class="o">.</span><span class="n">add_prefix</span><span class="p">(</span><span class="s2">"count: "</span><span class="p">))</span>
+<span class="n">display</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">idf_vectorizer</span><span class="o">.</span><span class="n">idf_</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">terms</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">"IDF"</span><span class="p">))</span>
+<span class="n">display</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">weights</span><span class="o">.</span><span class="n">toarray</span><span class="p">(),</span> <span class="n">columns</span><span class="o">=</span><span class="n">terms</span><span class="p">)</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">4</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Cosine(document 0, document 2):"</span><span class="p">,</span> <span class="n">cosine_similarity</span><span class="p">(</span><span class="n">weights</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">weights</span><span class="p">[</span><span class="mi">2</span><span class="p">])[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">7</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
+<span class="n">image</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">weights</span><span class="o">.</span><span class="n">toarray</span><span class="p">(),</span> <span class="n">aspect</span><span class="o">=</span><span class="s2">"auto"</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s2">"Blues"</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xticks</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">terms</span><span class="p">)),</span> <span class="n">terms</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">xlabel</span><span class="o">=</span><span class="s2">"Fitted vocabulary"</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s2">"Illustrative document index"</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">"Executed tiny TF-IDF example"</span><span class="p">)</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"L2-normalized weight"</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+<details class="result-text"><summary>2. TF-IDF como vector disperso ponderado · salida calculada</summary><pre>   count: common  count: rare
+0              1            1
+1              1            1
+2              1            0
+3              1            0
+4              1            0
+5              1            0
+6              1            0
+7              1            0</pre></details><details class="result-text"><summary>2. TF-IDF como vector disperso ponderado · salida calculada</summary><pre>common    1.000000
+rare      2.098612
+Name: IDF, dtype: float64</pre></details><details class="result-text"><summary>2. TF-IDF como vector disperso ponderado · salida calculada</summary><pre>   common    rare
+0  0.4302  0.9028
+1  0.4302  0.9028
+2  1.0000  0.0000
+3  1.0000  0.0000
+4  1.0000  0.0000
+5  1.0000  0.0000
+6  1.0000  0.0000
+7  1.0000  0.0000</pre></details><details class="result-text"><summary>2. TF-IDF como vector disperso ponderado · salida calculada</summary><pre>Cosine(document 0, document 2): 0.430165282498796</pre></details><figure class="result-figure"><img loading="lazy" src="../results/05_text_classification-sparse-geometry-code-4.png" alt="Resultado ejecutado: TF-IDF como vector disperso ponderado"><figcaption>2. TF-IDF como vector disperso ponderado · salida capturada del cuaderno</figcaption></figure></section><section class="cell" id="cell-cell-008"><h2 id="section-9">3. Regresión logística multinomial</h2>
+<p>Para un vector documental $x_i$ y $K$ categorías, asignamos un vector de coeficientes $w_k$ y un intercepto $b_k$ a cada categoría. Su puntuación es $z_{ik}=w_k^Tx_i+b_k$. La función softmax convierte las puntuaciones en probabilidades:</p>
+<p>$$p_{ik}=\frac{e^{z_{ik}}}{\sum_{r=1}^{K}e^{z_{ir}}}.$$</p>
+<p>Para etiquetas one-hot $y_{ik}$, la entropía cruzada promedio es</p>
+<p>$$L(W,b)=-\frac{1}{n}\sum_i\sum_k y_{ik}\log p_{ik}.$$</p>
+<p>Al derivar la composición de softmax y entropía cruzada se obtiene $\nabla_{w_k}L=\frac{1}{n}\sum_i(p_{ik}-y_{ik})x_i$. El objetivo regularizado con L2 de scikit-learn también penaliza vectores de coeficientes grandes; en <code>LogisticRegression</code>, un valor mayor de <code>C</code> implica una regularización más débil. El solucionador <code>lbfgs</code> resuelve el objetivo softmax multiclase. Fijamos <code>max_iter</code> en un valor suficientemente alto para este problema pequeño y disperso, e inspeccionamos la convergencia según sea necesario.</p>
+<p>Las probabilidades softmax no cambian si se suma el mismo vector de coeficientes y el mismo intercepto a todas las categorías, por lo que un coeficiente de una sola clase no tiene interpretación absoluta. Los logaritmos de los momios entre pares de clases son <code>log(p_k/p_l) = (w_k - w_l)^T x + (b_k - b_l)</code>. Los términos correlacionados y la regularización afectan estos contrastes, que describen el modelo ajustado, no relaciones causales.</p></section><section class="cell" id="cell-logistic-options"><h3 id="section-10">Opciones de regresión logística para texto disperso</h3>
+<p>Cada fila de la matriz dispersa TF-IDF entra en las puntuaciones lineales multiclase $z_{ik}=w_k^Tx_i+b_k$. Softmax convierte esas puntuaciones en probabilidades de clase y la entropía cruzada penaliza asignar poca probabilidad a la categoría observada. La canalización mantiene juntos el vectorizador y el clasificador para que cada fila de texto use el mismo sistema de coordenadas aprendido.</p>
+<table>
+<thead>
+<tr>
+<th>Opción de la llamada al clasificador</th>
+<th style="text-align: right;">Valor predeterminado de la biblioteca</th>
+<th style="text-align: right;">Elección de esta lección</th>
+<th>Efecto</th>
+<th>Balance</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>C</code></td>
+<td style="text-align: right;"><code>1.0</code></td>
+<td style="text-align: right;">Candidatos evaluados en validación <code>[0.05, 0.2, 1, 5, 20]</code></td>
+<td>Inverso de la intensidad de regularización L2; cuanto menor sea <code>C</code> más se contraen los vectores de coeficientes</td>
+<td>Una contracción mayor puede reducir la varianza debida a términos raros, pero también eliminar distinciones útiles</td>
+</tr>
+<tr>
+<td><code>solver</code></td>
+<td style="text-align: right;"><code>'lbfgs'</code></td>
+<td style="text-align: right;"><code>'lbfgs'</code></td>
+<td>Optimiza el objetivo multinomial regularizado y suave usado aquí</td>
+<td>Admite este objetivo multiclase y entradas dispersas; la optimización es iterativa</td>
+</tr>
+<tr>
+<td><code>max_iter</code></td>
+<td style="text-align: right;"><code>100</code></td>
+<td style="text-align: right;"><code>1500</code></td>
+<td>Máximo de iteraciones del optimizador por ajuste</td>
+<td>Un límite más alto permite alcanzar la convergencia; revise las advertencias y la evidencia de convergencia en vez de suponer que se alcanzó el límite</td>
+</tr>
+</tbody>
+</table>
+<p>El código evalúa los valores declarados de <code>C</code> con la macro-F1 de validación; después, vuelve a ajustar la canalización elegida con entrenamiento más validación y evalúa la prueba reservada una sola vez. <code>fit</code> aprende los coeficientes a partir de las etiquetas proporcionadas; <code>predict</code> devuelve la clase con la puntuación mayor, mientras que <code>predict_proba</code> devuelve las probabilidades softmax en el orden de <code>classes_</code> indicado por las clases. Un valor mayor de <code>C</code> significa una regularización más débil, no un límite mayor de iteraciones.</p>
+<p>Las definiciones del solucionador, del límite de iteraciones y de la regularización corresponden a la documentación oficial de <a href="https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html">referencia de la API LogisticRegression</a>.</p></section><section class="cell" id="cell-cell-009"><h2 id="section-11">4. Elegir la regularización en validación y probar una sola vez</h2>
+<p>La macro-F1 calcula la puntuación F1 por separado para cada categoría y luego promedia por igual las cinco puntuaciones. Es útil cuando todas las categorías merecen la misma atención, mientras que la exactitud ordinaria pondera las filas. Comparamos una lista breve y declarada de valores <code>C</code> solo en validación. Después de elegir <code>C</code>, volvemos a ajustar la misma canalización con entrenamiento más validación y evaluamos una sola vez el conjunto de prueba reservado. También comparamos un clasificador <code>DummyClassifier(strategy="most_frequent")</code> ajustado con entrenamiento más validación. Este ignora el texto y ofrece una referencia sencilla sobre las mismas filas de prueba ya fijadas.</p></section><section class="cell" id="cell-cell-010"><div class="cell-label">Python · ejecutar en el cuaderno</div><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.feature_extraction.text</span><span class="w"> </span><span class="kn">import</span> <span class="n">TfidfVectorizer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.linear_model</span><span class="w"> </span><span class="kn">import</span> <span class="n">LogisticRegression</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">f1_score</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.pipeline</span><span class="w"> </span><span class="kn">import</span> <span class="n">Pipeline</span>
+
+<span class="n">X_train</span> <span class="o">=</span> <span class="n">splits</span><span class="p">[</span><span class="s2">"train"</span><span class="p">]</span><span class="o">.</span><span class="n">text</span>
+<span class="n">y_train</span> <span class="o">=</span> <span class="n">splits</span><span class="p">[</span><span class="s2">"train"</span><span class="p">]</span><span class="o">.</span><span class="n">category</span>
+<span class="n">X_validation</span> <span class="o">=</span> <span class="n">splits</span><span class="p">[</span><span class="s2">"validation"</span><span class="p">]</span><span class="o">.</span><span class="n">text</span>
+<span class="n">y_validation</span> <span class="o">=</span> <span class="n">splits</span><span class="p">[</span><span class="s2">"validation"</span><span class="p">]</span><span class="o">.</span><span class="n">category</span>
+
+<span class="n">candidate_C</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.05</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">,</span> <span class="mf">20.0</span><span class="p">]</span>
+<span class="n">validation_rows</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">C</span> <span class="ow">in</span> <span class="n">candidate_C</span><span class="p">:</span>
+    <span class="n">candidate</span> <span class="o">=</span> <span class="n">Pipeline</span><span class="p">(</span>
+        <span class="p">[</span>
+            <span class="p">(</span><span class="s2">"tfidf"</span><span class="p">,</span> <span class="n">TfidfVectorizer</span><span class="p">()),</span>
+            <span class="p">(</span><span class="s2">"logistic"</span><span class="p">,</span> <span class="n">LogisticRegression</span><span class="p">(</span><span class="n">C</span><span class="o">=</span><span class="n">C</span><span class="p">,</span> <span class="n">solver</span><span class="o">=</span><span class="s2">"lbfgs"</span><span class="p">,</span> <span class="n">max_iter</span><span class="o">=</span><span class="mi">1500</span><span class="p">)),</span>
+        <span class="p">]</span>
+    <span class="p">)</span>
+    <span class="n">candidate</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">)</span>
+    <span class="n">prediction</span> <span class="o">=</span> <span class="n">candidate</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_validation</span><span class="p">)</span>
+    <span class="n">validation_rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+        <span class="p">{</span><span class="s2">"C"</span><span class="p">:</span> <span class="n">C</span><span class="p">,</span> <span class="s2">"macro_f1"</span><span class="p">:</span> <span class="n">f1_score</span><span class="p">(</span><span class="n">y_validation</span><span class="p">,</span> <span class="n">prediction</span><span class="p">,</span> <span class="n">average</span><span class="o">=</span><span class="s2">"macro"</span><span class="p">)}</span>
+    <span class="p">)</span>
+
+<span class="n">validation_scores</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">validation_rows</span><span class="p">)</span>
+<span class="n">display</span><span class="p">(</span><span class="n">validation_scores</span><span class="p">)</span>
+<span class="n">best_C</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span>
+    <span class="n">validation_scores</span><span class="o">.</span><span class="n">sort_values</span><span class="p">([</span><span class="s2">"macro_f1"</span><span class="p">,</span> <span class="s2">"C"</span><span class="p">],</span> <span class="n">ascending</span><span class="o">=</span><span class="p">[</span><span class="kc">False</span><span class="p">,</span> <span class="kc">True</span><span class="p">])</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">C</span>
+<span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Selected C using validation macro-F1:"</span><span class="p">,</span> <span class="n">best_C</span><span class="p">)</span>
+</pre></div>
+<details class="result-text"><summary>4. Elegir la regularización en validación y probar una sola vez · salida calculada</summary><pre>       C  macro_f1
+0   0.05  0.542456
+1   0.20  0.540300
+2   1.00  0.549523
+3   5.00  0.523175
+4  20.00  0.512367</pre></details><details class="result-text"><summary>4. Elegir la regularización en validación y probar una sola vez · salida calculada</summary><pre>Selected C using validation macro-F1: 1.0</pre></details></section><section class="cell" id="cell-cell-011"><div class="cell-label">Python · ejecutar en el cuaderno</div><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.dummy</span><span class="w"> </span><span class="kn">import</span> <span class="n">DummyClassifier</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">accuracy_score</span><span class="p">,</span> <span class="n">classification_report</span><span class="p">,</span> <span class="n">confusion_matrix</span>
+
+<span class="n">train_validation</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">splits</span><span class="p">[</span><span class="s2">"train"</span><span class="p">],</span> <span class="n">splits</span><span class="p">[</span><span class="s2">"validation"</span><span class="p">]],</span> <span class="n">ignore_index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">final_model</span> <span class="o">=</span> <span class="n">Pipeline</span><span class="p">(</span>
+    <span class="p">[</span>
+        <span class="p">(</span><span class="s2">"tfidf"</span><span class="p">,</span> <span class="n">TfidfVectorizer</span><span class="p">()),</span>
+        <span class="p">(</span><span class="s2">"logistic"</span><span class="p">,</span> <span class="n">LogisticRegression</span><span class="p">(</span><span class="n">C</span><span class="o">=</span><span class="n">best_C</span><span class="p">,</span> <span class="n">solver</span><span class="o">=</span><span class="s2">"lbfgs"</span><span class="p">,</span> <span class="n">max_iter</span><span class="o">=</span><span class="mi">1500</span><span class="p">)),</span>
+    <span class="p">]</span>
+<span class="p">)</span>
+<span class="n">final_model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">train_validation</span><span class="o">.</span><span class="n">text</span><span class="p">,</span> <span class="n">train_validation</span><span class="o">.</span><span class="n">category</span><span class="p">)</span>
+
+<span class="c1"># This is the one final test evaluation after model selection is frozen.</span>
+<span class="n">test_prediction</span> <span class="o">=</span> <span class="n">final_model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">splits</span><span class="p">[</span><span class="s2">"test"</span><span class="p">]</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+<span class="n">test_macro_f1</span> <span class="o">=</span> <span class="n">f1_score</span><span class="p">(</span><span class="n">splits</span><span class="p">[</span><span class="s2">"test"</span><span class="p">]</span><span class="o">.</span><span class="n">category</span><span class="p">,</span> <span class="n">test_prediction</span><span class="p">,</span> <span class="n">average</span><span class="o">=</span><span class="s2">"macro"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"test accuracy:"</span><span class="p">,</span> <span class="n">accuracy_score</span><span class="p">(</span><span class="n">splits</span><span class="p">[</span><span class="s2">"test"</span><span class="p">]</span><span class="o">.</span><span class="n">category</span><span class="p">,</span> <span class="n">test_prediction</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"test macro-F1:"</span><span class="p">,</span> <span class="n">test_macro_f1</span><span class="p">)</span>
+
+<span class="n">baseline</span> <span class="o">=</span> <span class="n">DummyClassifier</span><span class="p">(</span><span class="n">strategy</span><span class="o">=</span><span class="s2">"most_frequent"</span><span class="p">)</span>
+<span class="n">baseline</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">train_validation</span><span class="o">.</span><span class="n">text</span><span class="p">,</span> <span class="n">train_validation</span><span class="o">.</span><span class="n">category</span><span class="p">)</span>
+<span class="n">baseline_prediction</span> <span class="o">=</span> <span class="n">baseline</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">splits</span><span class="p">[</span><span class="s2">"test"</span><span class="p">]</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span>
+    <span class="s2">"most-frequent baseline accuracy:"</span><span class="p">,</span>
+    <span class="n">accuracy_score</span><span class="p">(</span><span class="n">splits</span><span class="p">[</span><span class="s2">"test"</span><span class="p">]</span><span class="o">.</span><span class="n">category</span><span class="p">,</span> <span class="n">baseline_prediction</span><span class="p">),</span>
+<span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span>
+    <span class="s2">"most-frequent baseline macro-F1:"</span><span class="p">,</span>
+    <span class="n">f1_score</span><span class="p">(</span><span class="n">splits</span><span class="p">[</span><span class="s2">"test"</span><span class="p">]</span><span class="o">.</span><span class="n">category</span><span class="p">,</span> <span class="n">baseline_prediction</span><span class="p">,</span> <span class="n">average</span><span class="o">=</span><span class="s2">"macro"</span><span class="p">),</span>
+<span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span>
+    <span class="n">classification_report</span><span class="p">(</span>
+        <span class="n">splits</span><span class="p">[</span><span class="s2">"test"</span><span class="p">]</span><span class="o">.</span><span class="n">category</span><span class="p">,</span> <span class="n">test_prediction</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="n">categories</span><span class="p">,</span> <span class="n">zero_division</span><span class="o">=</span><span class="mi">0</span>
+    <span class="p">)</span>
+<span class="p">)</span>
+<span class="n">confusion</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+    <span class="n">confusion_matrix</span><span class="p">(</span><span class="n">splits</span><span class="p">[</span><span class="s2">"test"</span><span class="p">]</span><span class="o">.</span><span class="n">category</span><span class="p">,</span> <span class="n">test_prediction</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="n">categories</span><span class="p">),</span>
+    <span class="n">index</span><span class="o">=</span><span class="p">[</span><span class="sa">f</span><span class="s2">"actual: </span><span class="si">{</span><span class="n">c</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">categories</span><span class="p">],</span>
+    <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="sa">f</span><span class="s2">"predicted: </span><span class="si">{</span><span class="n">c</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">categories</span><span class="p">],</span>
+<span class="p">)</span>
+<span class="n">display</span><span class="p">(</span><span class="n">confusion</span><span class="p">)</span>
+</pre></div>
+<details class="result-text"><summary>4. Elegir la regularización en validación y probar una sola vez · salida calculada</summary><pre>test accuracy: 0.675
+test macro-F1: 0.6715063520871143
+most-frequent baseline accuracy: 0.2
+most-frequent baseline macro-F1: 0.06666666666666667
+                 precision    recall  f1-score   support
+
+ account_access       0.53      0.50      0.52        16
+        billing       1.00      0.94      0.97        16
+   order_status       0.69      0.56      0.62        16
+  refund_return       0.64      0.88      0.74        16
+technical_issue       0.53      0.50      0.52        16
+
+       accuracy                           0.68        80
+      macro avg       0.68      0.68      0.67        80
+   weighted avg       0.68      0.68      0.67        80
+</pre></details><details class="result-text"><summary>4. Elegir la regularización en validación y probar una sola vez · salida calculada</summary><pre>                         predicted: account_access  predicted: billing  \
+actual: account_access                           8                   0
+actual: billing                                  0                  15
+actual: order_status                             7                   0
+actual: refund_return                            0                   0
+actual: technical_issue                          0                   0
+
+                         predicted: order_status  predicted: refund_return  \
+actual: account_access                         1                         0
+actual: billing                                1                         0
+actual: order_status                           9                         0
+actual: refund_return                          2                        14
+actual: technical_issue                        0                         8
+
+                         predicted: technical_issue
+actual: account_access                            7
+actual: billing                                   0
+actual: order_status                              0
+actual: refund_return                             0
+actual: technical_issue                           8</pre></details></section><section class="cell" id="cell-cell-012"><h2 id="section-12">5. Analizar errores y coeficientes</h2>
+<p>La matriz de confusión cuenta las filas reales en sus filas y las predicciones en sus columnas. Las celdas fuera de la diagonal señalan pares de categorías que conviene inspeccionar. Al revisar errores, pregúntese si un ticket realmente corresponde a una cola, si una frase es ambigua y si el modelo depende de una pista compartida por la plantilla. Los ejemplos sintéticos de prueba siguen relacionados con el pequeño conjunto de situaciones redactadas, aunque sus grupos se hayan reservado.</p></section><section class="cell" id="cell-cell-013"><div class="cell-label">Python · ejecutar en el cuaderno</div><div class="highlight"><pre><span></span><span class="n">test_review</span> <span class="o">=</span> <span class="n">splits</span><span class="p">[</span><span class="s2">"test"</span><span class="p">][[</span><span class="s2">"ticket_id"</span><span class="p">,</span> <span class="s2">"template_group"</span><span class="p">,</span> <span class="s2">"category"</span><span class="p">,</span> <span class="s2">"text"</span><span class="p">]]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+<span class="n">test_review</span><span class="p">[</span><span class="s2">"predicted"</span><span class="p">]</span> <span class="o">=</span> <span class="n">test_prediction</span>
+<span class="n">errors</span> <span class="o">=</span> <span class="n">test_review</span><span class="p">[</span><span class="n">test_review</span><span class="o">.</span><span class="n">category</span> <span class="o">!=</span> <span class="n">test_review</span><span class="o">.</span><span class="n">predicted</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">errors</span><span class="p">)</span><span class="si">}</span><span class="s2"> errors among </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">test_review</span><span class="p">)</span><span class="si">}</span><span class="s2"> held-out rows."</span><span class="p">)</span>
+<span class="k">if</span> <span class="n">errors</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"There are no test errors to inspect in this run."</span><span class="p">)</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="n">errors</span><span class="p">[</span><span class="s2">"actual/predicted"</span><span class="p">]</span> <span class="o">=</span> <span class="n">errors</span><span class="o">.</span><span class="n">category</span> <span class="o">+</span> <span class="s2">" -&gt; "</span> <span class="o">+</span> <span class="n">errors</span><span class="o">.</span><span class="n">predicted</span>
+    <span class="n">display</span><span class="p">(</span>
+        <span class="n">errors</span><span class="p">[[</span><span class="s2">"ticket_id"</span><span class="p">,</span> <span class="s2">"template_group"</span><span class="p">,</span> <span class="s2">"actual/predicted"</span><span class="p">,</span> <span class="s2">"text"</span><span class="p">]]</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">12</span><span class="p">)</span>
+    <span class="p">)</span>
+</pre></div>
+<details class="result-text"><summary>5. Analizar errores y coeficientes · salida calculada</summary><pre>26 errors among 80 held-out rows.</pre></details><details class="result-text"><summary>5. Analizar errores y coeficientes · salida calculada</summary><pre>   ticket_id               template_group                   actual/predicted  \
+3     T-0060          billing-template-08            billing -&gt; order_status
+24    T-0137   account_access-template-06  account_access -&gt; technical_issue
+25    T-0138   account_access-template-06  account_access -&gt; technical_issue
+26    T-0139   account_access-template-06  account_access -&gt; technical_issue
+27    T-0140   account_access-template-06     account_access -&gt; order_status
+28    T-0141   account_access-template-06  account_access -&gt; technical_issue
+29    T-0142   account_access-template-06  account_access -&gt; technical_issue
+30    T-0143   account_access-template-06  account_access -&gt; technical_issue
+31    T-0144   account_access-template-06  account_access -&gt; technical_issue
+40    T-0249  technical_issue-template-08   technical_issue -&gt; refund_return
+41    T-0250  technical_issue-template-08   technical_issue -&gt; refund_return
+42    T-0251  technical_issue-template-08   technical_issue -&gt; refund_return
+
+                                                 text
+3   I was billed a second workspace after removing...
+24  The one-time code arrives after it has already...
+25  The one-time code arrives after it has already...
+26  The one-time code arrives after it has already...
+27  The one-time code arrives after it has already...
+28  The one-time code arrives after it has already...
+29  The one-time code arrives after it has already...
+30  The one-time code arrives after it has already...
+31  The one-time code arrives after it has already...
+40  Keyboard shortcut Ctrl+K used to open search, ...
+41  Keyboard shortcut Alt+Enter used to open calen...
+42  Keyboard shortcut Ctrl+Shift+P used to open up...</pre></details></section><section class="cell" id="cell-cell-014"><div class="cell-label">Python · ejecutar en el cuaderno</div><div class="highlight"><pre><span></span><span class="n">fitted_tfidf</span> <span class="o">=</span> <span class="n">final_model</span><span class="o">.</span><span class="n">named_steps</span><span class="p">[</span><span class="s2">"tfidf"</span><span class="p">]</span>
+<span class="n">fitted_logistic</span> <span class="o">=</span> <span class="n">final_model</span><span class="o">.</span><span class="n">named_steps</span><span class="p">[</span><span class="s2">"logistic"</span><span class="p">]</span>
+<span class="n">feature_names</span> <span class="o">=</span> <span class="n">fitted_tfidf</span><span class="o">.</span><span class="n">get_feature_names_out</span><span class="p">()</span>
+
+<span class="k">for</span> <span class="n">category_index</span><span class="p">,</span> <span class="n">category</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">fitted_logistic</span><span class="o">.</span><span class="n">classes_</span><span class="p">):</span>
+    <span class="n">weights</span> <span class="o">=</span> <span class="n">fitted_logistic</span><span class="o">.</span><span class="n">coef_</span><span class="p">[</span><span class="n">category_index</span><span class="p">]</span>
+    <span class="n">highest</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">weights</span><span class="p">)[</span><span class="o">-</span><span class="mi">8</span><span class="p">:][::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">lowest</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">weights</span><span class="p">)[:</span><span class="mi">5</span><span class="p">]</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="si">{</span><span class="n">category</span><span class="si">}</span><span class="s2">: terms most associated with its logit"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">([(</span><span class="n">feature_names</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="nb">round</span><span class="p">(</span><span class="n">weights</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="mi">3</span><span class="p">))</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">highest</span><span class="p">])</span>
+    <span class="nb">print</span><span class="p">(</span>
+        <span class="s2">"terms lowering its logit:"</span><span class="p">,</span>
+        <span class="p">[(</span><span class="n">feature_names</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="nb">round</span><span class="p">(</span><span class="n">weights</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="mi">3</span><span class="p">))</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">lowest</span><span class="p">],</span>
+    <span class="p">)</span>
+</pre></div>
+<details class="result-text"><summary>5. Analizar errores y coeficientes · salida calculada</summary><pre>
+account_access: terms most associated with its logit
+[(&#x27;sign&#x27;, np.float64(1.765)), (&#x27;access&#x27;, np.float64(1.349)), (&#x27;to&#x27;, np.float64(1.234)), (&#x27;example&#x27;, np.float64(1.177)), (&#x27;as&#x27;, np.float64(1.153)), (&#x27;test&#x27;, np.float64(1.138)), (&#x27;my&#x27;, np.float64(1.062)), (&#x27;form&#x27;, np.float64(1.0))]
+terms lowering its logit: [(&#x27;order&#x27;, np.float64(-0.542)), (&#x27;of&#x27;, np.float64(-0.525)), (&#x27;00&#x27;, np.float64(-0.523)), (&#x27;return&#x27;, np.float64(-0.5)), (&#x27;invoice&#x27;, np.float64(-0.469))]
+
+billing: terms most associated with its logit
+[(&#x27;invoice&#x27;, np.float64(1.879)), (&#x27;00&#x27;, np.float64(1.379)), (&#x27;month&#x27;, np.float64(0.984)), (&#x27;card&#x27;, np.float64(0.981)), (&#x27;cycle&#x27;, np.float64(0.978)), (&#x27;team&#x27;, np.float64(0.89)), (&#x27;uses&#x27;, np.float64(0.836)), (&#x27;bill&#x27;, np.float64(0.836))]
+terms lowering its logit: [(&#x27;return&#x27;, np.float64(-0.616)), (&#x27;has&#x27;, np.float64(-0.601)), (&#x27;refund&#x27;, np.float64(-0.599)), (&#x27;to&#x27;, np.float64(-0.543)), (&#x27;delivery&#x27;, np.float64(-0.514))]
+
+order_status: terms most associated with its logit
+[(&#x27;delivery&#x27;, np.float64(1.771)), (&#x27;order&#x27;, np.float64(1.591)), (&#x27;tracking&#x27;, np.float64(1.534)), (&#x27;from&#x27;, np.float64(1.351)), (&#x27;is&#x27;, np.float64(1.191)), (&#x27;arrival&#x27;, np.float64(1.186)), (&#x27;or&#x27;, np.float64(1.153)), (&#x27;has&#x27;, np.float64(1.13))]
+terms lowering its logit: [(&#x27;00&#x27;, np.float64(-0.552)), (&#x27;refund&#x27;, np.float64(-0.523)), (&#x27;return&#x27;, np.float64(-0.521)), (&#x27;and&#x27;, np.float64(-0.491)), (&#x27;card&#x27;, np.float64(-0.464))]
+
+refund_return: terms most associated with its logit
+[(&#x27;return&#x27;, np.float64(2.137)), (&#x27;refund&#x27;, np.float64(2.056)), (&#x27;send&#x27;, np.float64(1.257)), (&#x27;product&#x27;, np.float64(1.221)), (&#x27;wrong&#x27;, np.float64(1.124)), (&#x27;returned&#x27;, np.float64(1.089)), (&#x27;item&#x27;, np.float64(1.085)), (&#x27;would&#x27;, np.float64(1.059))]
+terms lowering its logit: [(&#x27;in&#x27;, np.float64(-0.88)), (&#x27;says&#x27;, np.float64(-0.808)), (&#x27;from&#x27;, np.float64(-0.617)), (&#x27;my&#x27;, np.float64(-0.596)), (&#x27;has&#x27;, np.float64(-0.497))]
+
+technical_issue: terms most associated with its logit
+[(&#x27;whenever&#x27;, np.float64(1.208)), (&#x27;text&#x27;, np.float64(1.123)), (&#x27;with&#x27;, np.float64(1.046)), (&#x27;since&#x27;, np.float64(0.972)), (&#x27;app&#x27;, np.float64(0.928)), (&#x27;exported&#x27;, np.float64(0.801)), (&#x27;opens&#x27;, np.float64(0.801)), (&#x27;file&#x27;, np.float64(0.801))]
+terms lowering its logit: [(&#x27;is&#x27;, np.float64(-1.086)), (&#x27;my&#x27;, np.float64(-0.866)), (&#x27;but&#x27;, np.float64(-0.778)), (&#x27;says&#x27;, np.float64(-0.724)), (&#x27;can&#x27;, np.float64(-0.677))]</pre></details></section><section class="cell" id="cell-fresh-text"><h3 id="section-13">Predecir un mensaje nuevo e inspeccionar una representación vacía</h3>
+<p>El token desconocido que aparece abajo produce deliberadamente una fila con todos ceros al transformarlo. Sus probabilidades reflejan los interceptos ajustados; no las interprete como comprensión del mensaje. Estos ejemplos son sondeos de diagnóstico, no datos adicionales para seleccionar el modelo.</p></section><section class="cell" id="cell-fresh-text-code"><div class="cell-label">Python · ejecutar en el cuaderno</div><div class="highlight"><pre><span></span><span class="n">new_messages</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"Please help me reset my password"</span><span class="p">,</span> <span class="s2">"zzzzunseenword987654321"</span><span class="p">]</span>
+<span class="n">new_vectors</span> <span class="o">=</span> <span class="n">final_model</span><span class="o">.</span><span class="n">named_steps</span><span class="p">[</span><span class="s2">"tfidf"</span><span class="p">]</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">new_messages</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">new_vectors</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">nnz</span> <span class="o">==</span> <span class="mi">0</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Stored nonzeros:"</span><span class="p">,</span> <span class="n">new_vectors</span><span class="o">.</span><span class="n">getnnz</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
+<span class="n">display</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">final_model</span><span class="o">.</span><span class="n">predict_proba</span><span class="p">(</span><span class="n">new_messages</span><span class="p">),</span>
+                     <span class="n">columns</span><span class="o">=</span><span class="n">final_model</span><span class="o">.</span><span class="n">classes_</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">new_messages</span><span class="p">)</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span>
+</pre></div>
+<details class="result-text"><summary>5. Analizar errores y coeficientes · salida calculada</summary><pre>Stored nonzeros: [4 0]</pre></details><details class="result-text"><summary>5. Analizar errores y coeficientes · salida calculada</summary><pre>                                  account_access  billing  order_status  \
+Please help me reset my password           0.422    0.189         0.142
+zzzzunseenword987654321                    0.164    0.221         0.154
+
+                                  refund_return  technical_issue
+Please help me reset my password          0.123            0.124
+zzzzunseenword987654321                   0.178            0.283</pre></details></section><section class="cell" id="cell-cell-015"><h2 id="section-14">6. Qué permite y qué no permite concluir esta lección</h2>
+<p>TF-IDF más un clasificador lineal es una referencia supervisada clara: es rápido, disperso, interpretable y suele ser una primera comparación útil. Un modelo de embeddings preentrenado usa vectores densos diseñados para codificar relaciones semánticas, lo que puede ayudar a asociar paráfrasis con pocas palabras en común; su desempeño depende del modelo, el dominio y la evaluación. Los embeddings no eliminan la necesidad de etiquetas, evaluación por grupos ni revisión de errores en una tarea supervisada de clasificación de solicitudes. Adaptar o evaluar un modelo también requiere una evaluación defendible. Este curso no usa modelos externos ni descarga pesos preentrenados.</p>
+<p>Nuestra partición evalúa familias nuevas de plantillas redactadas con el mismo generador. Evita la filtración entre variantes hermanas, pero no permite estimar el desempeño con mensajes de clientes escritos de forma natural, cambiantes, multilingües, desbalanceados o sensibles. Un estudio de despliegue real requeriría datos representativos con una gobernanza adecuada, evaluación temporal o por fuente, costos operativos y revisión humana.</p></section></article><p><a href="05_text_classification-results.html">Explora la galería de resultados ejecutados de esta lección →</a></p><nav class="actions" aria-label="Secuencia de estudio"><a href="04_imbalanced_learning.html">← 04: Aprendizaje con clases desbalanceadas</a><a href="index.html#lectures">Todas las lecciones</a><a href="06_clustering.html">06: Agrupamiento →</a></nav></main></div><footer>Mathematical ML · Ocho lecciones prácticas para matemáticos<br>Python legible · Experimentos reproducibles · Datos sintéticos didácticos</footer></body></html>

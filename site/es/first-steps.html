@@ -1,0 +1,257 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Ocho lecciones de aprendizaje automático para matemáticos: fundamentos, opciones de software y ejemplos guiados en Python."><title>Primeros pasos · Mathematical ML</title><link rel="stylesheet" href="../style.css"><script defer src="../site.js"></script><script>window.MathJax={tex:{inlineMath:[['$','$'],['\\(','\\)']]}};</script><script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script><link rel="alternate" hreflang="en" href="../first-steps.html"><link rel="alternate" hreflang="es" href="first-steps.html"><link rel="alternate" hreflang="x-default" href="../first-steps.html"></head><body><a class="skip" href="#main">Saltar al contenido</a><header><button class="menu" aria-controls="sidebar" aria-expanded="false" aria-label="Mostrar u ocultar la navegación del curso">☰</button><a class="brand" href="index.html">∑ <span>Mathematical ML</span></a><nav aria-label="Enlaces rápidos"><a href="setup.html">Comenzar</a><a href="index.html#lectures">Lecciones</a><button id="theme" aria-label="Cambiar tema de color">◐</button></nav><nav class="languages" aria-label="Idioma"><a href="../first-steps.html" lang="en" hreflang="en">English</a><a href="first-steps.html" lang="es" hreflang="es" aria-current="true">Español</a></nav></header><div class="layout"><aside id="sidebar" aria-label="Navegación del curso"><a href="index.html">Presentación del curso</a><h3>Comienza aquí</h3><a href="setup.html">Instalación &amp; primeros pasos</a><a href="first-steps.html">¿Nuevo en aprendizaje automático? Comienza aquí</a><h3>Las lecciones</h3><details><summary><a href="01_regression.html">01 · Regresión</a></summary><a class="sub" href="01_regression-lesson.html">Fundamentos &amp; ejemplos</a></details><details><summary><a href="02_classification.html">02 · Clasificación</a></summary><a class="sub" href="02_classification-lesson.html">Fundamentos &amp; ejemplos</a></details><details><summary><a href="03_xgboost.html">03 · XGBoost</a></summary><a class="sub" href="03_xgboost-lesson.html">Fundamentos &amp; ejemplos</a></details><details><summary><a href="04_imbalanced_learning.html">04 · Aprendizaje con clases desbalanceadas</a></summary><a class="sub" href="04_imbalanced_learning-lesson.html">Fundamentos &amp; ejemplos</a></details><details><summary><a href="05_text_classification.html">05 · Clasificación de texto</a></summary><a class="sub" href="05_text_classification-lesson.html">Fundamentos &amp; ejemplos</a></details><details><summary><a href="06_clustering.html">06 · Agrupamiento</a></summary><a class="sub" href="06_clustering-lesson.html">Fundamentos &amp; ejemplos</a></details><details><summary><a href="07_time_series.html">07 · Pronóstico de series temporales</a></summary><a class="sub" href="07_time_series-lesson.html">Fundamentos &amp; ejemplos</a></details><details><summary><a href="08_deployment.html">08 · Del modelo al servicio</a></summary><a class="sub" href="08_deployment-lesson.html">Fundamentos &amp; ejemplos</a></details><h3>Recursos</h3><a href="results.html">Galerías de resultados ejecutados</a><a href="datasets.html">Conjuntos de datos</a><a href="course-project.html">Proyecto del curso</a><a href="instructor.html">Guía docente</a><a href="verification.html">Verificación</a></aside><main id="main"><p class="translation-note">Versión en español. El código, los datos, las salidas calculadas y las etiquetas dentro de las figuras se conservan en su idioma original. Los cuadernos descargables están en inglés.</p><article class="reading"><h1>Tu primer experimento de aprendizaje automático</h1>
+<p>Conoces Python y matemáticas. No necesitas conocer pandas, scikit-learn ni la terminología del aprendizaje automático para comenzar aquí.</p>
+<h2>¿Qué intentamos calcular?</h2>
+<p>En aprendizaje supervisado, una fila es una observación. Sus entradas medidas son <strong>variables predictoras</strong>, reunidas en un vector $x_i$. La cantidad que se predice es la <strong>variable objetivo</strong> $y_i$. Elegimos una familia de funciones $f_\theta$, estimamos sus parámetros con algunas observaciones y medimos los errores de predicción en observaciones excluidas del ajuste.</p>
+<p>Para vivienda, una fila describe una casa sintética. El área y la antigüedad son variables predictoras; el precio es el objetivo. Escribimos $X\in\mathbb{R}^{n\times p}$ con observaciones en filas y variables en columnas, y $y\in\mathbb{R}^n$. Una <strong>muestra</strong> aquí significa una fila; un <strong>conjunto de datos</strong> contiene muchas filas. Las entradas textuales y categóricas necesitan codificación numérica antes de formar esta matriz.</p>
+<p>En análisis numérico quizá conoces la ecuación gobernante y estudias el error de discretización. Aquí la relación entrada-salida es parcialmente desconocida y las observaciones pueden contener ruido. Minimizar solo el error de entrenamiento no establece predicciones precisas sobre observaciones nuevas. El mecanismo de muestreo importa tanto como el optimizador.</p>
+<h2>Vocabulario inicial</h2>
+<table>
+<thead>
+<tr>
+<th>Término</th>
+<th>Significado en este curso</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Modelo / estimador</td>
+<td>Regla con parámetros que pueden ajustarse a observaciones</td>
+</tr>
+<tr>
+<td>Conjunto de entrenamiento</td>
+<td>Filas usadas para estimar parámetros y preprocesamiento aprendido</td>
+</tr>
+<tr>
+<td>Conjunto de validación</td>
+<td>Filas separadas para elegir configuraciones o un umbral de decisión</td>
+</tr>
+<tr>
+<td>Conjunto de prueba</td>
+<td>Evaluación final una vez fijadas las decisiones</td>
+</tr>
+<tr>
+<td>Hiperparámetro</td>
+<td>Configuración elegida fuera del ajuste de parámetros, como profundidad del árbol o intensidad de Ridge</td>
+</tr>
+<tr>
+<td>Generalización</td>
+<td>Desempeño predictivo sobre observaciones nuevas de la población relevante</td>
+</tr>
+<tr>
+<td>Sobreajuste</td>
+<td>Adaptación a variaciones propias del entrenamiento que no ayudan a predecir datos nuevos</td>
+</tr>
+<tr>
+<td>Modelo de referencia</td>
+<td>Referencia sencilla, como predecir siempre la media del entrenamiento</td>
+</tr>
+<tr>
+<td>Fuga de información</td>
+<td>Permitir que información no disponible al predecir influya en el ajuste o la selección</td>
+</tr>
+<tr>
+<td>Métrica</td>
+<td>Resumen numérico de los errores, como RMSE; un RMSE menor es mejor</td>
+</tr>
+</tbody>
+</table>
+<p>La validación cruzada divide repetidamente los datos de desarrollo para estimar el desempeño de distintas elecciones del modelo. No sustituye la evaluación final de prueba. Las observaciones temporales o agrupadas necesitan particiones que respeten su dependencia; dividir filas al azar no es universal.</p>
+<p><img alt="Funciones del entrenamiento, la validación y la prueba final" src="../figures/evaluation-workflow.svg"></img></p>
+<p>El diagrama sigue el diseño de la lección 02: la validación cruzada interna elige la configuración del modelo; una partición de validación separada elige la regla de acción. Los coeficientes ajustados son parámetros; configuraciones como la intensidad de regularización son hiperparámetros. Mantén la prueba final fuera de ambas elecciones.</p>
+<h2>Qué hace cada herramienta</h2>
+<table>
+<thead>
+<tr>
+<th>Biblioteca</th>
+<th>Función</th>
+<th>Primeros objetos que reconocer</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>NumPy</td>
+<td>Arreglos numéricos y aritmética vectorizada</td>
+<td><code>ndarray</code>, <code>.shape</code>, <code>axis</code></td>
+</tr>
+<tr>
+<td>pandas</td>
+<td>Tablas con etiquetas cargadas desde archivos CSV</td>
+<td><code>DataFrame</code>, selección de columnas, valores faltantes</td>
+</tr>
+<tr>
+<td>Matplotlib</td>
+<td>Figuras para examinar datos y errores</td>
+<td><code>plt.subplots</code>, <code>ax.scatter</code>, <code>ax.plot</code></td>
+</tr>
+<tr>
+<td>scikit-learn</td>
+<td>Particiones, transformaciones, estimadores, métricas</td>
+<td><code>train_test_split</code>, <code>Pipeline</code>, <code>.fit</code>, <code>.predict</code></td>
+</tr>
+<tr>
+<td>XGBoost</td>
+<td>Implementación de árboles con boosting de gradiente</td>
+<td><code>XGBRegressor</code>, historial de validación</td>
+</tr>
+</tbody>
+</table>
+<p><code>df["price"]</code> selecciona una Series unidimensional con etiquetas. <code>df[["area_m2"]]</code> selecciona una tabla bidimensional con una columna predictora. Scikit-learn generalmente espera <code>X.shape == (n_rows, n_features)</code> y <code>y.shape == (n_rows,)</code>. Al codificar categorías puede aumentar el número de variables.</p>
+<h2>Un experimento mínimo completo</h2>
+<p>Lee las <a href="setup.html">instrucciones de instalación</a>y ejecuta lo siguiente desde la raíz del repositorio en el entorno Python del curso:</p>
+<div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.model_selection</span><span class="w"> </span><span class="kn">import</span> <span class="n">train_test_split</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.linear_model</span><span class="w"> </span><span class="kn">import</span> <span class="n">LinearRegression</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.dummy</span><span class="w"> </span><span class="kn">import</span> <span class="n">DummyRegressor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">mean_squared_error</span>
+
+<span class="n">houses</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">"data/housing.csv"</span><span class="p">)</span>
+<span class="n">X</span> <span class="o">=</span> <span class="n">houses</span><span class="p">[[</span><span class="s2">"area_m2"</span><span class="p">]]</span>  <span class="c1"># Keep the feature matrix two-dimensional.</span>
+<span class="n">y</span> <span class="o">=</span> <span class="n">houses</span><span class="p">[</span><span class="s2">"price"</span><span class="p">]</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">y</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+
+<span class="n">X_train</span><span class="p">,</span> <span class="n">X_test</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">y_test</span> <span class="o">=</span> <span class="n">train_test_split</span><span class="p">(</span>
+    <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">test_size</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">42</span>
+<span class="p">)</span>
+<span class="n">baseline</span> <span class="o">=</span> <span class="n">DummyRegressor</span><span class="p">(</span><span class="n">strategy</span><span class="o">=</span><span class="s2">"mean"</span><span class="p">)</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">LinearRegression</span><span class="p">()</span>
+<span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">estimator</span> <span class="ow">in</span> <span class="p">[(</span><span class="s2">"Training mean"</span><span class="p">,</span> <span class="n">baseline</span><span class="p">),</span> <span class="p">(</span><span class="s2">"Area-only line"</span><span class="p">,</span> <span class="n">model</span><span class="p">)]:</span>
+    <span class="n">estimator</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">)</span>
+    <span class="n">predictions</span> <span class="o">=</span> <span class="n">estimator</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_test</span><span class="p">)</span>
+    <span class="n">rmse</span> <span class="o">=</span> <span class="n">mean_squared_error</span><span class="p">(</span><span class="n">y_test</span><span class="p">,</span> <span class="n">predictions</span><span class="p">)</span> <span class="o">**</span> <span class="mf">0.5</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">: test RMSE = </span><span class="si">{</span><span class="n">rmse</span><span class="si">:</span><span class="s2">,.2f</span><span class="si">}</span><span class="s2"> price units"</span><span class="p">)</span>
+</pre></div>
+
+<p><code>fit</code> modifica el estimador: aprende parámetros con los datos de entrenamiento. <code>predict</code> usa esos parámetros aprendidos sobre otra matriz de variables; no vuelve a ajustar. <code>random_state=42</code> hace repetible la partición; no la hace representativa de todas las poblaciones.</p>
+<p>Esta demostración compara deliberadamente dos modelos fijos sin seleccionar hiperparámetros. Si eliges variables o configuraciones a partir de sus resultados de prueba, esas filas pasan a ser datos de validación y necesitas nuevos datos para la prueba final.</p>
+<p><strong>Detente y explica:</strong> ¿Por qué el predictor constante usa la media de entrenamiento? ¿Qué mide RMSE y en qué unidades? ¿Qué información sobre las casas ignora la recta basada solo en el área? Un error bajo sobre viviendas sintéticas no demuestra precisión en un mercado inmobiliario real.</p>
+<h2>Tu primer cuaderno, paso a paso</h2>
+<ol>
+<li>Descarga y descomprime el <strong>curso completo</strong>o clona el repositorio. Descargar solo un cuaderno no incluye sus archivos CSV.</li>
+<li>Completa la instalación e inicia <code>python -m jupyterlab</code> desde la raíz del repositorio.</li>
+<li>Abre <code>lectures/01_regression/lesson.ipynb</code>. Selecciona el núcleo <strong>Mathematical ML</strong> : el proceso Python que ejecuta las celdas y mantiene sus variables.</li>
+<li>Ejecuta las celdas de arriba abajo con <strong>Shift+Enter</strong>. Las celdas Markdown explican el razonamiento; las de código calculan resultados. Una celda en ejecución muestra <code>[*]</code>.</li>
+<li>Cuando modifiques una celda anterior, vuelve a ejecutar las que dependen de ella. Antes de confiar en un resultado, elige <strong>Kernel → Restart Kernel and Run All Cells</strong> para comprobar que no depende de variables antiguas.</li>
+<li>Continúa con los ejemplos guiados de <code>lesson.ipynb</code>. Para cada opción, conecta su comportamiento en el software con el efecto matemático descrito.</li>
+</ol>
+<p>El sitio es una vista de lectura estática. Sus bloques de código no ejecutan Python. El cuaderno se ejecuta localmente, incluidas las gráficas y salidas impresas. El sitio distingue las ilustraciones conceptuales de las capturas de resultados calculados. Cada galería enlaza los resultados con sus celdas de origen y registra el entorno usado para producirlos.</p>
+<h2>Lee la API del estimador como matemáticas</h2>
+<table>
+<thead>
+<tr>
+<th>Operación</th>
+<th>Qué significa</th>
+<th>Qué aprende</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>estimator.fit(X_train, y_train)</code></td>
+<td>Estimar parámetros del modelo</td>
+<td>Coeficientes, particiones u otro estado ajustado</td>
+</tr>
+<tr>
+<td><code>transformer.fit(X_train)</code></td>
+<td>Estimar una representación</td>
+<td>Medias, escalas, categorías, vocabulario</td>
+</tr>
+<tr>
+<td><code>transformer.transform(X_new)</code></td>
+<td>Aplicar una representación fija</td>
+<td>Nada nuevo</td>
+</tr>
+<tr>
+<td><code>transformer.fit_transform(X_train)</code></td>
+<td>Ajustar y aplicar sobre los datos de entrenamiento</td>
+<td>Estado de la representación</td>
+</tr>
+<tr>
+<td><code>estimator.predict(X_new)</code></td>
+<td>Aplicar el predictor ajustado</td>
+<td>Nada nuevo</td>
+</tr>
+<tr>
+<td><code>classifier.predict_proba(X_new)</code></td>
+<td>Devolver una probabilidad por clase</td>
+<td>Nada nuevo; consulta <code>.classes_</code> para conocer el orden de columnas</td>
+</tr>
+</tbody>
+</table>
+<p>Un <code>Pipeline</code> compone transformaciones y un estimador. Su método <code>.fit</code> aprende cada etapa de preprocesamiento con las filas de entrenamiento proporcionadas y ajusta después el modelo final. Un <code>ColumnTransformer</code> aplica distintas transformaciones a grupos de columnas con nombre y une las variables numéricas resultantes. Ninguno protege frente a una mala partición o a un preprocesamiento ya ajustado fuera del pipeline.</p>
+<p>Una <strong>época</strong> es una pasada completa por los datos en algunos algoritmos de entrenamiento; una <strong>ronda de boosting</strong> añade un árbol o etapa. Son ideas distintas. Una GPU cambia cómo se ejecutan algunos cálculos; no cambia qué datos es legítimo usar para ajustar o evaluar.</p>
+<h2>Comprende una opción antes de cambiarla</h2>
+<p>Un constructor como <code>Ridge(alpha=1.0)</code> declara un procedimiento; todavía no ha ajustado coeficientes. Después de <code>fit</code>, las cantidades aprendidas suelen terminar con un guion bajo, como <code>coef_</code>, <code>mean_</code>, o <code>classes_</code>. <code>get_params()</code> muestra la configuración, no el estado aprendido. <code>set_params(model__alpha=10)</code> cambia la opción indicada del pipeline; vuelve a ajustar para obtener coeficientes correspondientes al nuevo objetivo. No actualiza por sí solo los coeficientes ya aprendidos.</p>
+<p>Distingue cuatro clases de elecciones:</p>
+<table>
+<thead>
+<tr>
+<th>Tipo</th>
+<th>Ejemplos</th>
+<th>Pregunta matemática</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Representación</td>
+<td>escalado, ventanas de retardos, vocabulario</td>
+<td>¿Qué aplicación $\phi$ convierte las observaciones en entradas del modelo?</td>
+</tr>
+<tr>
+<td>Modelo y objetivo</td>
+<td>Ridge <code>alpha</code>, profundidad de árboles, pesos de clase</td>
+<td>¿Qué funciones se permiten y qué pérdida se minimiza?</td>
+</tr>
+<tr>
+<td>Cálculo numérico</td>
+<td>algoritmo de resolución, tolerancia, límite de iteraciones</td>
+<td>¿Con qué precisión y eficiencia aproximamos ese minimizador?</td>
+</tr>
+<tr>
+<td>Evaluación y política</td>
+<td>partición, métrica, umbral</td>
+<td>¿Qué población o periodo futuro se evalúa y cómo se convierten las predicciones en acciones?</td>
+</tr>
+</tbody>
+</table>
+<p>Un límite de iteraciones no es un parámetro de regularización estadística, aunque detener pronto una optimización puede afectar la solución ajustada. En cambio, el número de etapas de boosting modifica el modelo aditivo y puede actuar como regularización. Su función depende del algoritmo, no del nombre de la opción.</p>
+<p>Lee cada ejemplo desarrollado en este orden:</p>
+<ol>
+<li>Identifica las filas de entrada, el significado de las columnas y las dimensiones de los arreglos.</li>
+<li>Escribe la representación y la función objetivo en notación matemática.</li>
+<li>Relaciona cada argumento explícito con la representación, el objetivo, el algoritmo numérico o la política de evaluación.</li>
+<li>Identifica qué almacena <code>fit</code> y qué <code>predict</code> reutiliza.</li>
+<li>Compara un cambio controlado sobre datos de entrenamiento o desarrollo. Explica el resultado antes de elegir una configuración.</li>
+<li>Fija la elección antes de examinar la prueba final. Una demostración de un parámetro no demuestra que su valor sea universalmente óptimo.</li>
+</ol>
+<p>Los valores predeterminados de las bibliotecas pueden cambiar. Las lecciones explicitan las configuraciones importantes y enlazan las referencias; el archivo de versiones registra el entorno de los resultados publicados. Una semilla controla ciertas elecciones aleatorias, pero no promete resultados idénticos en punto flotante entre equipos o versiones.</p>
+<h2>Cuando algo falla</h2>
+<table>
+<thead>
+<tr>
+<th>Síntoma</th>
+<th>Primera comprobación</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ModuleNotFoundError</code></td>
+<td>El núcleo del cuaderno debe usar el entorno del curso, no otra instalación de Python</td>
+</tr>
+<tr>
+<td>No se encuentra el CSV</td>
+<td>Mantén unido el directorio completo del curso; inicia Jupyter desde su raíz</td>
+</tr>
+<tr>
+<td><code>NameError</code></td>
+<td>Ejecuta las celdas anteriores; si el estado no está claro, reinicia y ejecuta todo</td>
+</tr>
+<tr>
+<td>Dimensiones de entrada incorrectas</td>
+<td>Examina <code>X.shape</code>; selecciona una lista de columnas para conservar dos dimensiones</td>
+</tr>
+<tr>
+<td>Una métrica parece extraordinariamente buena</td>
+<td>Comprueba si el objetivo o información futura se filtraron en las entradas o el preprocesamiento</td>
+</tr>
+</tbody>
+</table>
+<p>Continúa con <a href="01_regression.html">la lección 01: regresión</a>. Mantén esta página abierta como referencia; no necesitas memorizar las API.</p></article></main></div><footer>Mathematical ML · Ocho lecciones prácticas para matemáticos<br>Python legible · Experimentos reproducibles · Datos sintéticos didácticos</footer></body></html>

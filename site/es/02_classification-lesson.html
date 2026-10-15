@@ -1,0 +1,356 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Ocho lecciones de aprendizaje automático para matemáticos: fundamentos, opciones de software y ejemplos guiados en Python."><title>Clasificación: lección · Mathematical ML</title><link rel="stylesheet" href="../style.css"><script defer src="../site.js"></script><script>window.MathJax={tex:{inlineMath:[['$','$'],['\\(','\\)']]}};</script><script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script><link rel="alternate" hreflang="en" href="../02_classification-lesson.html"><link rel="alternate" hreflang="es" href="02_classification-lesson.html"><link rel="alternate" hreflang="x-default" href="../02_classification-lesson.html"></head><body><a class="skip" href="#main">Saltar al contenido</a><header><button class="menu" aria-controls="sidebar" aria-expanded="false" aria-label="Mostrar u ocultar la navegación del curso">☰</button><a class="brand" href="index.html">∑ <span>Mathematical ML</span></a><nav aria-label="Enlaces rápidos"><a href="setup.html">Comenzar</a><a href="index.html#lectures">Lecciones</a><button id="theme" aria-label="Cambiar tema de color">◐</button></nav><nav class="languages" aria-label="Idioma"><a href="../02_classification-lesson.html" lang="en" hreflang="en">English</a><a href="02_classification-lesson.html" lang="es" hreflang="es" aria-current="true">Español</a></nav></header><div class="layout"><aside id="sidebar" aria-label="Navegación del curso"><a href="index.html">Presentación del curso</a><h3>Comienza aquí</h3><a href="setup.html">Instalación &amp; primeros pasos</a><a href="first-steps.html">¿Nuevo en aprendizaje automático? Comienza aquí</a><h3>Las lecciones</h3><details><summary><a href="01_regression.html">01 · Regresión</a></summary><a class="sub" href="01_regression-lesson.html">Fundamentos &amp; ejemplos</a></details><details><summary><a href="02_classification.html">02 · Clasificación</a></summary><a class="sub" href="02_classification-lesson.html">Fundamentos &amp; ejemplos</a></details><details><summary><a href="03_xgboost.html">03 · XGBoost</a></summary><a class="sub" href="03_xgboost-lesson.html">Fundamentos &amp; ejemplos</a></details><details><summary><a href="04_imbalanced_learning.html">04 · Aprendizaje con clases desbalanceadas</a></summary><a class="sub" href="04_imbalanced_learning-lesson.html">Fundamentos &amp; ejemplos</a></details><details><summary><a href="05_text_classification.html">05 · Clasificación de texto</a></summary><a class="sub" href="05_text_classification-lesson.html">Fundamentos &amp; ejemplos</a></details><details><summary><a href="06_clustering.html">06 · Agrupamiento</a></summary><a class="sub" href="06_clustering-lesson.html">Fundamentos &amp; ejemplos</a></details><details><summary><a href="07_time_series.html">07 · Pronóstico de series temporales</a></summary><a class="sub" href="07_time_series-lesson.html">Fundamentos &amp; ejemplos</a></details><details><summary><a href="08_deployment.html">08 · Del modelo al servicio</a></summary><a class="sub" href="08_deployment-lesson.html">Fundamentos &amp; ejemplos</a></details><h3>Recursos</h3><a href="results.html">Galerías de resultados ejecutados</a><a href="datasets.html">Conjuntos de datos</a><a href="course-project.html">Proyecto del curso</a><a href="instructor.html">Guía docente</a><a href="verification.html">Verificación</a></aside><main id="main"><p class="translation-note">Versión en español. El código, los datos, las salidas calculadas y las etiquetas dentro de las figuras se conservan en su idioma original. Los cuadernos descargables están en inglés.</p><div class="eyebrow">Lección 02 / lección</div><div class="actions"><a href="02_classification.html">← Guía de la lección</a><a href="../downloads/02_classification/lesson.ipynb" download>Descargar el cuaderno</a></div><p class="note">Esta página es una vista de lectura. Para ejecutar Python, descarga el curso completo y abre este cuaderno en Jupyter. <a href="first-steps.html">Recorrido inicial del cuaderno →</a></p><details class="contents"><summary>En esta página</summary><nav aria-label="Contenido de la página"><a href="#section-1">Una puntuación, una probabilidad y una decisión</a><a href="#section-2">1. Verosimilitud de Bernoulli y optimización convexa</a><a href="#section-3">2. Cargar datos sintéticos</a><a href="#section-4">3. Entrenamiento, validación y prueba final</a><a href="#section-5">4. Pipeline para entradas mixtas</a><a href="#section-6">5. Regularización con las filas de entrenamiento</a><a href="#section-7">Interpretar la configuración del clasificador a partir de la verosimilitud</a><a href="#section-8">6. Métricas de validación antes de elegir un umbral</a><a href="#section-9">Inspeccionar los conteos de validación y la calibración de probabilidades</a><a href="#section-10">7. Elegir un umbral con validación y luego evaluar una vez en prueba</a><a href="#section-11">8. Coeficientes como asociaciones condicionales de log-odds</a><a href="#section-12">Conclusiones clave</a></nav></details><article class="reading"><section class="cell" id="cell-cell-000"><h1>02 — Clasificación: predicción de un resultado binario</h1>
+<p>Estimaremos si un cliente abandona el servicio mediante datos generados. La lección relaciona la verosimilitud de Bernoulli con estimaciones de probabilidad y, después, con una regla de decisión elegida por separado; no describe clientes reales.</p></section><section class="cell" id="cell-beginner-bridge"><p><img alt="Figura didáctica sobre clasificación" src="../figures/02_classification.svg"></img></p>
+<p><em>Sigmoide y umbral de decisión ilustrativos. Una probabilidad continua y una acción discreta son resultados distintos.</em></p>
+<h2 id="section-1">Una puntuación, una probabilidad y una decisión</h2>
+<p>La sigmoide es $\sigma(z)=1/(1+e^{-z})$. Un logit $z=\log 3$ da la probabilidad $p=0.75$. Para una observación positiva, su log-verosimilitud negativa es $-\log(0.75)\approx0.288$, y la derivada respecto del logit es $p-y=-0.25$. En código, evalúa la pérdida logística como <code>np.logaddexp(0, z) - y*z</code> en vez de formar exponenciales que pueden ser inestables.</p>
+<p><code>fit(X, y)</code> aprende coeficientes a partir de las filas y sus etiquetas. <code>predict_proba(X_new)</code> devuelve probabilidades en el orden indicado por <code>classes_</code>, así que revisa ese atributo antes de suponer qué columna corresponde a la clase positiva. <code>predict(X_new)</code> convierte las puntuaciones en etiquetas usando el umbral predeterminado del estimador, normalmente 0.5 en regresión logística binaria. Cambiar el umbral de decisión cambia la acción, no la probabilidad ajustada.</p>
+<p>Si se señalan 10 personas y 6 abandonan el servicio, la precisión es 6/10. Si 8 personas abandonan en total, la exhaustividad es 6/8. Los conteos de la matriz de confusión son VP=6, FP=4 y FN=2; el número de VN depende del tamaño total de la población. La calibración plantea otra pregunta: entre muchos casos a los que se asigna una probabilidad cercana a 0.75, ¿el resultado es 1 en aproximadamente el 75 %? Un buen ordenamiento no garantiza una buena calibración.</p></section><section class="cell" id="cell-cell-001"><h2 id="section-2">1. Verosimilitud de Bernoulli y optimización convexa</h2>
+<p>Con predictor lineal $\eta_i=\beta_0+x_i^T\beta$ y $p_i=\sigma(\eta_i)$, la verosimilitud de Bernoulli es $p_i^{y_i}(1-p_i)^{1-y_i}$. La log-verosimilitud negativa por observación es</p>
+<p>$$\ell_i(\beta)=\log(1+e^{\eta_i})-y_i\eta_i,$$</p>
+<p>y el riesgo empírico es $L(\beta)=n^{-1}\sum_i\ell_i(\beta)$. Al derivar mediante $p_i=\sigma(\eta_i)$, se obtiene el gradiente respecto de las pendientes $X^T(p-y)/n$ y la Hessiana $X^TWX/n$, donde $W_{ii}=p_i(1-p_i)\ge0$. La Hessiana es semidefinida positiva, por lo que la pérdida logística es convexa. Añadir $\lambda\|\beta\|_2^2/2$ suma $\lambda\beta$ al gradiente y $\lambda I$ al bloque de pendientes de la Hessiana. Una penalización positiva vuelve definido positivo ese bloque. Por convención, el intercepto no se penaliza; scikit-learn lo trata por separado.</p></section><section class="cell" id="cell-cell-002"><h2 id="section-3">2. Cargar datos sintéticos</h2>
+<p>Las filas se generaron con fines didácticos. No representan clientes reales, prevalencia ni efectos de intervenciones.</p></section><section class="cell" id="cell-cell-003"><div class="cell-label">Python · ejecutar en el cuaderno</div><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">find_data_file</span><span class="p">(</span><span class="n">filename</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Search the current directory and its parents for a repository data file."""</span>
+    <span class="k">for</span> <span class="n">directory</span> <span class="ow">in</span> <span class="p">(</span><span class="n">Path</span><span class="o">.</span><span class="n">cwd</span><span class="p">(),</span> <span class="o">*</span><span class="n">Path</span><span class="o">.</span><span class="n">cwd</span><span class="p">()</span><span class="o">.</span><span class="n">parents</span><span class="p">):</span>
+        <span class="n">data_path</span> <span class="o">=</span> <span class="n">directory</span> <span class="o">/</span> <span class="s2">"data"</span> <span class="o">/</span> <span class="n">filename</span>
+        <span class="k">if</span> <span class="n">data_path</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
+            <span class="k">return</span> <span class="n">data_path</span>
+    <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">"Could not find data/</span><span class="si">{</span><span class="n">filename</span><span class="si">}</span><span class="s2">. Start Jupyter at the repository root "</span>
+        <span class="s2">"or inside this lecture directory."</span>
+    <span class="p">)</span>
+
+
+<span class="n">churn_path</span> <span class="o">=</span> <span class="n">find_data_file</span><span class="p">(</span><span class="s2">"churn.csv"</span><span class="p">)</span>
+<span class="n">customer_data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">churn_path</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Loaded </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">customer_data</span><span class="p">)</span><span class="si">}</span><span class="s2"> synthetic rows from </span><span class="si">{</span><span class="n">churn_path</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="n">customer_data</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+</pre></div>
+<details class="result-text"><summary>2. Cargar datos sintéticos · resultado calculado</summary><pre>Loaded 1800 synthetic rows from F:\Proyectos\RBF-Machine learning\data\churn.csv</pre></details><details class="result-text"><summary>2. Cargar datos sintéticos · resultado calculado</summary><pre>   tenure_months  monthly_charge  support_calls  contract  churn
+0             10         86.0045              0    annual      0
+1             48         63.7697              1   monthly      0
+2             42        129.0949              1    annual      0
+3             18         62.8151              1   monthly      0
+4             59         41.0848              1  two_year      0</pre></details></section><section class="cell" id="cell-cell-004"><h2 id="section-4">3. Entrenamiento, validación y prueba final</h2>
+<p>Reservamos el 20 % de las observaciones para una prueba final. El resto de los datos de desarrollo se divide en conjuntos de entrenamiento y validación. La estratificación conserva proporciones similares de las clases. La validación cruzada y la selección de regularización usan las filas de entrenamiento; la validación selecciona un umbral bajo un costo hipotético especificado; la prueba final evalúa una sola vez el modelo y el umbral ya fijados.</p></section><section class="cell" id="cell-cell-005"><div class="cell-label">Python · ejecutar en el cuaderno</div><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.model_selection</span><span class="w"> </span><span class="kn">import</span> <span class="n">train_test_split</span>
+
+<span class="n">feature_data</span> <span class="o">=</span> <span class="n">customer_data</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="s2">"churn"</span><span class="p">)</span>
+<span class="n">churn_response</span> <span class="o">=</span> <span class="n">customer_data</span><span class="p">[</span><span class="s2">"churn"</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+
+<span class="p">(</span>
+    <span class="n">development_features</span><span class="p">,</span>
+    <span class="n">final_test_features</span><span class="p">,</span>
+    <span class="n">development_response</span><span class="p">,</span>
+    <span class="n">final_test_response</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">=</span> <span class="n">train_test_split</span><span class="p">(</span>
+    <span class="n">feature_data</span><span class="p">,</span>
+    <span class="n">churn_response</span><span class="p">,</span>
+    <span class="n">test_size</span><span class="o">=</span><span class="mf">0.20</span><span class="p">,</span>
+    <span class="n">random_state</span><span class="o">=</span><span class="mi">19</span><span class="p">,</span>
+    <span class="n">stratify</span><span class="o">=</span><span class="n">churn_response</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="p">(</span>
+    <span class="n">training_features</span><span class="p">,</span>
+    <span class="n">validation_features</span><span class="p">,</span>
+    <span class="n">training_response</span><span class="p">,</span>
+    <span class="n">validation_response</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">=</span> <span class="n">train_test_split</span><span class="p">(</span>
+    <span class="n">development_features</span><span class="p">,</span>
+    <span class="n">development_response</span><span class="p">,</span>
+    <span class="n">test_size</span><span class="o">=</span><span class="mf">0.25</span><span class="p">,</span>
+    <span class="n">random_state</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
+    <span class="n">stratify</span><span class="o">=</span><span class="n">development_response</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Training rows: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">training_features</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Validation rows: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">validation_features</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Final test rows: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">final_test_features</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Training class proportions:"</span><span class="p">)</span>
+<span class="n">training_response</span><span class="o">.</span><span class="n">value_counts</span><span class="p">(</span><span class="n">normalize</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">sort_index</span><span class="p">()</span>
+</pre></div>
+<details class="result-text"><summary>3. Entrenamiento, validación y prueba final · resultado calculado</summary><pre>Training rows: 1080
+Validation rows: 360
+Final test rows: 360
+Training class proportions:</pre></details><details class="result-text"><summary>3. Entrenamiento, validación y prueba final · resultado calculado</summary><pre>churn
+0    0.768519
+1    0.231481
+Name: proportion, dtype: float64</pre></details></section><section class="cell" id="cell-cell-006"><h2 id="section-5">4. Pipeline para entradas mixtas</h2>
+<p>Escala las características numéricas y codifica el tipo de contrato con indicadores one-hot. Codificar categorías como enteros sugeriría un orden artificial. Todas las transformaciones forman parte del pipeline, por lo que la validación cruzada vuelve a ajustarlas dentro de cada partición.</p></section><section class="cell" id="cell-cell-007"><div class="cell-label">Python · ejecutar en el cuaderno</div><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.compose</span><span class="w"> </span><span class="kn">import</span> <span class="n">ColumnTransformer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.impute</span><span class="w"> </span><span class="kn">import</span> <span class="n">SimpleImputer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.linear_model</span><span class="w"> </span><span class="kn">import</span> <span class="n">LogisticRegression</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.pipeline</span><span class="w"> </span><span class="kn">import</span> <span class="n">Pipeline</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.preprocessing</span><span class="w"> </span><span class="kn">import</span> <span class="n">OneHotEncoder</span><span class="p">,</span> <span class="n">StandardScaler</span>
+
+<span class="n">numeric_columns</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"tenure_months"</span><span class="p">,</span> <span class="s2">"monthly_charge"</span><span class="p">,</span> <span class="s2">"support_calls"</span><span class="p">]</span>
+<span class="n">categorical_columns</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"contract"</span><span class="p">]</span>
+
+<span class="n">numeric_preprocessing</span> <span class="o">=</span> <span class="n">Pipeline</span><span class="p">(</span>
+    <span class="n">steps</span><span class="o">=</span><span class="p">[</span>
+        <span class="p">(</span><span class="s2">"impute"</span><span class="p">,</span> <span class="n">SimpleImputer</span><span class="p">(</span><span class="n">strategy</span><span class="o">=</span><span class="s2">"median"</span><span class="p">)),</span>
+        <span class="p">(</span><span class="s2">"scale"</span><span class="p">,</span> <span class="n">StandardScaler</span><span class="p">()),</span>
+    <span class="p">]</span>
+<span class="p">)</span>
+<span class="n">categorical_preprocessing</span> <span class="o">=</span> <span class="n">Pipeline</span><span class="p">(</span>
+    <span class="n">steps</span><span class="o">=</span><span class="p">[</span>
+        <span class="p">(</span><span class="s2">"impute"</span><span class="p">,</span> <span class="n">SimpleImputer</span><span class="p">(</span><span class="n">strategy</span><span class="o">=</span><span class="s2">"most_frequent"</span><span class="p">)),</span>
+        <span class="p">(</span><span class="s2">"one_hot"</span><span class="p">,</span> <span class="n">OneHotEncoder</span><span class="p">(</span><span class="n">handle_unknown</span><span class="o">=</span><span class="s2">"ignore"</span><span class="p">)),</span>
+    <span class="p">]</span>
+<span class="p">)</span>
+<span class="n">preprocessing</span> <span class="o">=</span> <span class="n">ColumnTransformer</span><span class="p">(</span>
+    <span class="n">transformers</span><span class="o">=</span><span class="p">[</span>
+        <span class="p">(</span><span class="s2">"numeric"</span><span class="p">,</span> <span class="n">numeric_preprocessing</span><span class="p">,</span> <span class="n">numeric_columns</span><span class="p">),</span>
+        <span class="p">(</span><span class="s2">"category"</span><span class="p">,</span> <span class="n">categorical_preprocessing</span><span class="p">,</span> <span class="n">categorical_columns</span><span class="p">),</span>
+    <span class="p">]</span>
+<span class="p">)</span>
+<span class="n">classification_pipeline</span> <span class="o">=</span> <span class="n">Pipeline</span><span class="p">(</span>
+    <span class="n">steps</span><span class="o">=</span><span class="p">[</span>
+        <span class="p">(</span><span class="s2">"preprocessing"</span><span class="p">,</span> <span class="n">preprocessing</span><span class="p">),</span>
+        <span class="p">(</span><span class="s2">"model"</span><span class="p">,</span> <span class="n">LogisticRegression</span><span class="p">(</span><span class="n">max_iter</span><span class="o">=</span><span class="mi">2000</span><span class="p">)),</span>
+    <span class="p">]</span>
+<span class="p">)</span>
+</pre></div>
+</section><section class="cell" id="cell-cell-008"><h2 id="section-6">5. Regularización con las filas de entrenamiento</h2>
+<p>La derivación expresa la pérdida logarítmica negativa media más una penalización de las pendientes $\lambda\|\beta\|^2/2$. Para la implementación <code>lbfgs</code> instalada con filas sin ponderar, la lambda equivalente es $1/(Cn)$; con pesos de clase o de muestra, se sustituye $n$ por la suma de los pesos. Así, C es la intensidad inversa de regularización y su relación numérica con lambda depende del número de filas de ajuste. La validación cruzada estratificada elige C usando las filas de entrenamiento; la validación se reserva para definir la política del umbral y la prueba final permanece intacta.</p></section><section class="cell" id="cell-logistic-library-guide"><h2 id="section-7">Interpretar la configuración del clasificador a partir de la verosimilitud</h2>
+<p>El preprocesamiento transforma las filas originales en coordenadas numéricas; la regresión logística asigna a cada fila un logit lineal y aplica la sigmoide. La tabla resume las opciones usadas; la página oficial de la API documenta otros solvers y penalizaciones.</p>
+<table>
+<thead>
+<tr>
+<th>Objeto o parámetro</th>
+<th>Valor usado</th>
+<th>Efecto y compromiso</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>SimpleImputer</code></td>
+<td>mediana para las columnas numéricas; categoría más frecuente para el contrato</td>
+<td>Aprende los valores de reemplazo con las filas de ajuste. La ausencia de datos no se modela como un efecto independiente.</td>
+</tr>
+<tr>
+<td><code>StandardScaler</code></td>
+<td>centrar y escalar las columnas numéricas</td>
+<td>Hace que la penalización L2 actúe en escalas numéricas comparables y favorece una optimización estable.</td>
+</tr>
+<tr>
+<td><code>OneHotEncoder</code></td>
+<td><code>handle_unknown="ignore"</code>, <code>drop=None</code></td>
+<td>Codifica las categorías de contrato sin imponerles un orden artificial. La regularización L2 controla la redundancia entre el intercepto y los indicadores de categoría.</td>
+</tr>
+<tr>
+<td><code>LogisticRegression</code></td>
+<td><code>penalty="l2"</code>, <code>solver="lbfgs"</code>, <code>fit_intercept=True</code>, <code>max_iter=2000</code></td>
+<td>Ajusta la verosimilitud de Bernoulli con penalización en las pendientes. El intercepto no se penaliza. Un límite mayor de iteraciones permite converger, pero no resuelve la separación ni un escalado deficiente.</td>
+</tr>
+<tr>
+<td><code>C</code> y <code>GridSearchCV</code></td>
+<td>C en <code>[0.03, 0.1, 0.3, 1, 3, 10]</code>; 5 particiones estratificadas; ROC-AUC; <code>refit=True</code></td>
+<td>C es la inversa de la intensidad de regularización: un C menor implica más contracción. La búsqueda selecciona el rendimiento de ordenamiento en las particiones de entrenamiento y luego reajusta el modelo con todas las filas de entrenamiento.</td>
+</tr>
+</tbody>
+</table>
+<p>Para la implementación <code>lbfgs</code> , con datos sin ponderar se usa la convención $\text{mean Bernoulli loss}+\|w\|_2^2/(2Cn)$, donde $n$ es el número de filas de ajuste y el intercepto queda excluido de $w$. Por tanto, en este caso sin ponderar, la $\lambda$ de la derivación corresponde a $1/(Cn)$. Con pesos de muestra o de clase, la implementación usa la suma total de esos pesos en este escalado. La relación muestra por qué C cambia con el tamaño de los datos cuando se expresa el objetivo con pérdida media. Consulta la referencia oficial de <a href="https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html"><code>LogisticRegression</code></a>, <a href="https://scikit-learn.org/stable/modules/generated/sklearn.pipeline.Pipeline.html"><code>Pipeline</code></a>, y <a href="https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.OneHotEncoder.html"><code>OneHotEncoder</code></a> para ver las referencias.</p></section><section class="cell" id="cell-logistic-c-demo"><div class="cell-label">Python · ejecutar en el cuaderno</div><div class="highlight"><pre><span></span><span class="c1"># Keep the small dataset and solver fixed; vary only inverse penalty C.</span>
+<span class="c1"># This illustrates shrinkage, not test-set tuning.</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">log_loss</span>
+
+<span class="n">small_X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="o">-</span><span class="mf">2.0</span><span class="p">],</span> <span class="p">[</span><span class="o">-</span><span class="mf">1.5</span><span class="p">],</span> <span class="p">[</span><span class="o">-</span><span class="mf">1.0</span><span class="p">],</span> <span class="p">[</span><span class="o">-</span><span class="mf">0.5</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">],</span>
+                    <span class="p">[</span><span class="mf">0.2</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.5</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.8</span><span class="p">],</span> <span class="p">[</span><span class="mf">1.2</span><span class="p">],</span> <span class="p">[</span><span class="mf">1.7</span><span class="p">]])</span>
+<span class="n">small_y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+<span class="n">small_query</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="o">-</span><span class="mf">0.5</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.5</span><span class="p">],</span> <span class="p">[</span><span class="mf">1.5</span><span class="p">]])</span>
+<span class="n">logistic_comparison</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">C_value</span> <span class="ow">in</span> <span class="p">(</span><span class="mf">0.05</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">100.0</span><span class="p">):</span>
+    <span class="n">small_model</span> <span class="o">=</span> <span class="n">LogisticRegression</span><span class="p">(</span><span class="n">C</span><span class="o">=</span><span class="n">C_value</span><span class="p">,</span> <span class="n">solver</span><span class="o">=</span><span class="s2">"lbfgs"</span><span class="p">,</span> <span class="n">max_iter</span><span class="o">=</span><span class="mi">2000</span><span class="p">)</span>
+    <span class="n">small_model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">small_X</span><span class="p">,</span> <span class="n">small_y</span><span class="p">)</span>
+    <span class="n">small_probabilities</span> <span class="o">=</span> <span class="n">small_model</span><span class="o">.</span><span class="n">predict_proba</span><span class="p">(</span><span class="n">small_X</span><span class="p">)[:,</span> <span class="mi">1</span><span class="p">]</span>
+    <span class="n">logistic_comparison</span><span class="o">.</span><span class="n">append</span><span class="p">({</span>
+        <span class="s2">"C"</span><span class="p">:</span> <span class="n">C_value</span><span class="p">,</span>
+        <span class="s2">"slope"</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">small_model</span><span class="o">.</span><span class="n">coef_</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]),</span>
+        <span class="s2">"training_log_loss"</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">log_loss</span><span class="p">(</span><span class="n">small_y</span><span class="p">,</span> <span class="n">small_probabilities</span><span class="p">)),</span>
+        <span class="s2">"probabilities_at_-0.5_0.5_1.5"</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span>
+            <span class="n">small_model</span><span class="o">.</span><span class="n">predict_proba</span><span class="p">(</span><span class="n">small_query</span><span class="p">)[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="mi">3</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span>
+    <span class="p">})</span>
+<span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">logistic_comparison</span><span class="p">)</span>
+</pre></div>
+<details class="result-text"><summary>Interpretar la configuración del clasificador a partir de la verosimilitud · resultado calculado</summary><pre>        C     slope  training_log_loss probabilities_at_-0.5_0.5_1.5
+0    0.05  0.179824           0.603472          [0.38, 0.423, 0.468]
+1    1.00  1.253934           0.359757         [0.238, 0.523, 0.793]
+2  100.00  3.766378           0.252702         [0.037, 0.622, 0.986]</pre></details></section><section class="cell" id="cell-logistic-c-demo-explanation"><p>La magnitud del coeficiente y las probabilidades cambian porque solo varía C. La pérdida logarítmica mostrada se calcula con la misma muestra sintética usada para ajustar cada modelo: ilustra la flexibilidad del ajuste, pero no permite saber cuál generalizará mejor. En el flujo principal, C se compara mediante validación cruzada dentro de las filas de entrenamiento.</p></section><section class="cell" id="cell-cell-009"><div class="cell-label">Python · ejecutar en el cuaderno</div><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.model_selection</span><span class="w"> </span><span class="kn">import</span> <span class="n">GridSearchCV</span><span class="p">,</span> <span class="n">StratifiedKFold</span>
+
+<span class="n">training_folds</span> <span class="o">=</span> <span class="n">StratifiedKFold</span><span class="p">(</span><span class="n">n_splits</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">19</span><span class="p">)</span>
+<span class="n">regularization_search</span> <span class="o">=</span> <span class="n">GridSearchCV</span><span class="p">(</span>
+    <span class="n">estimator</span><span class="o">=</span><span class="n">classification_pipeline</span><span class="p">,</span>
+    <span class="n">param_grid</span><span class="o">=</span><span class="p">{</span><span class="s2">"model__C"</span><span class="p">:</span> <span class="p">[</span><span class="mf">0.03</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">,</span> <span class="mf">10.0</span><span class="p">]},</span>
+    <span class="n">scoring</span><span class="o">=</span><span class="s2">"roc_auc"</span><span class="p">,</span>
+    <span class="n">cv</span><span class="o">=</span><span class="n">training_folds</span><span class="p">,</span>
+    <span class="n">refit</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">regularization_search</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">training_features</span><span class="p">,</span> <span class="n">training_response</span><span class="p">)</span>
+
+<span class="n">selected_inverse_penalty</span> <span class="o">=</span> <span class="n">regularization_search</span><span class="o">.</span><span class="n">best_params_</span><span class="p">[</span><span class="s2">"model__C"</span><span class="p">]</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Selected C: </span><span class="si">{</span><span class="n">selected_inverse_penalty</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Mean training-fold ROC-AUC: </span><span class="si">{</span><span class="n">regularization_search</span><span class="o">.</span><span class="n">best_score_</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</pre></div>
+<details class="result-text"><summary>Interpretar la configuración del clasificador a partir de la verosimilitud · resultado calculado</summary><pre>Selected C: 3.0
+Mean training-fold ROC-AUC: 0.771</pre></details></section><section class="cell" id="cell-cell-010"><h2 id="section-8">6. Métricas de validación antes de elegir un umbral</h2>
+<p>Con umbral 0.5, la exactitud es la proporción de decisiones correctas. La precisión es la proporción de clientes señalados que realmente abandonan el servicio; la exhaustividad es la proporción de quienes lo abandonan que se detecta. Su media armónica es $F_1=2PR/(P+R)$. ROC-AUC es la probabilidad de que una persona positiva elegida al azar reciba una puntuación mayor que una negativa elegida al azar, contando los empates como medio. Mide el ordenamiento, no la calibración de probabilidades ni una política concreta.</p>
+<p>El umbral 0.5 predeterminado sirve como referencia, no como política universal. Esta sección informa las métricas de validación con umbral 0.5 y frente a una línea base de la clase mayoritaria. La partición final de prueba sigue intacta.</p></section><section class="cell" id="cell-cell-011"><div class="cell-label">Python · ejecutar en el cuaderno</div><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.dummy</span><span class="w"> </span><span class="kn">import</span> <span class="n">DummyClassifier</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">accuracy_score</span><span class="p">,</span>
+    <span class="n">confusion_matrix</span><span class="p">,</span>
+    <span class="n">f1_score</span><span class="p">,</span>
+    <span class="n">precision_score</span><span class="p">,</span>
+    <span class="n">recall_score</span><span class="p">,</span>
+    <span class="n">roc_auc_score</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">best_classifier</span> <span class="o">=</span> <span class="n">regularization_search</span><span class="o">.</span><span class="n">best_estimator_</span>
+<span class="n">validation_probabilities</span> <span class="o">=</span> <span class="n">best_classifier</span><span class="o">.</span><span class="n">predict_proba</span><span class="p">(</span><span class="n">validation_features</span><span class="p">)[:,</span> <span class="mi">1</span><span class="p">]</span>
+<span class="n">validation_predictions_at_half</span> <span class="o">=</span> <span class="p">(</span><span class="n">validation_probabilities</span> <span class="o">&gt;=</span> <span class="mf">0.5</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+
+<span class="n">majority_baseline</span> <span class="o">=</span> <span class="n">DummyClassifier</span><span class="p">(</span><span class="n">strategy</span><span class="o">=</span><span class="s2">"most_frequent"</span><span class="p">)</span>
+<span class="n">majority_baseline</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">training_features</span><span class="p">,</span> <span class="n">training_response</span><span class="p">)</span>
+<span class="n">baseline_predictions</span> <span class="o">=</span> <span class="n">majority_baseline</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">validation_features</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Validation majority-baseline accuracy:"</span><span class="p">,</span>
+      <span class="nb">round</span><span class="p">(</span><span class="n">accuracy_score</span><span class="p">(</span><span class="n">validation_response</span><span class="p">,</span> <span class="n">baseline_predictions</span><span class="p">),</span> <span class="mi">3</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Validation metrics at threshold 0.5:"</span><span class="p">,</span> <span class="p">{</span>
+    <span class="s2">"accuracy"</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">accuracy_score</span><span class="p">(</span><span class="n">validation_response</span><span class="p">,</span> <span class="n">validation_predictions_at_half</span><span class="p">),</span> <span class="mi">3</span><span class="p">),</span>
+    <span class="s2">"precision"</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">precision_score</span><span class="p">(</span><span class="n">validation_response</span><span class="p">,</span> <span class="n">validation_predictions_at_half</span><span class="p">,</span> <span class="n">zero_division</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span> <span class="mi">3</span><span class="p">),</span>
+    <span class="s2">"recall"</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">recall_score</span><span class="p">(</span><span class="n">validation_response</span><span class="p">,</span> <span class="n">validation_predictions_at_half</span><span class="p">,</span> <span class="n">zero_division</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span> <span class="mi">3</span><span class="p">),</span>
+    <span class="s2">"F1"</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">f1_score</span><span class="p">(</span><span class="n">validation_response</span><span class="p">,</span> <span class="n">validation_predictions_at_half</span><span class="p">,</span> <span class="n">zero_division</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span> <span class="mi">3</span><span class="p">),</span>
+    <span class="s2">"ROC-AUC"</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">roc_auc_score</span><span class="p">(</span><span class="n">validation_response</span><span class="p">,</span> <span class="n">validation_probabilities</span><span class="p">),</span> <span class="mi">3</span><span class="p">),</span>
+<span class="p">})</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Validation confusion matrix [actual rows, predicted columns]:</span><span class="se">\n</span><span class="s2">"</span><span class="p">,</span>
+      <span class="n">confusion_matrix</span><span class="p">(</span><span class="n">validation_response</span><span class="p">,</span> <span class="n">validation_predictions_at_half</span><span class="p">))</span>
+</pre></div>
+<details class="result-text"><summary>6. Métricas de validación antes de elegir un umbral · resultado calculado</summary><pre>Validation majority-baseline accuracy: 0.769
+Validation metrics at threshold 0.5: {&#x27;accuracy&#x27;: 0.781, &#x27;precision&#x27;: 0.556, &#x27;recall&#x27;: 0.241, &#x27;F1&#x27;: 0.336, &#x27;ROC-AUC&#x27;: 0.793}
+Validation confusion matrix [actual rows, predicted columns]:
+ [[261  16]
+ [ 63  20]]</pre></details></section><section class="cell" id="cell-calibration-guide"><h3 id="section-9">Inspeccionar los conteos de validación y la calibración de probabilidades</h3>
+<p>Las filas de la matriz de confusión son las clases reales; las columnas, las predichas. La calibración compara la probabilidad predicha media con la fracción observada de positivos dentro de cada intervalo. La diagonal discontinua representa la calibración ideal. El número de casos por intervalo importa: uno pequeño puede alejarse de la línea por variabilidad muestral. Este diagnóstico usa validación; no ajusta una calibración nueva ni toma decisiones a partir de la prueba.</p></section><section class="cell" id="cell-calibration-code"><div class="cell-label">Python · ejecutar en el cuaderno</div><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.calibration</span><span class="w"> </span><span class="kn">import</span> <span class="n">calibration_curve</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConfusionMatrixDisplay</span>
+
+<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">11</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
+<span class="n">ConfusionMatrixDisplay</span><span class="o">.</span><span class="n">from_predictions</span><span class="p">(</span>
+    <span class="n">validation_response</span><span class="p">,</span> <span class="n">validation_predictions_at_half</span><span class="p">,</span>
+    <span class="n">labels</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">display_labels</span><span class="o">=</span><span class="p">[</span><span class="s2">"stays"</span><span class="p">,</span> <span class="s2">"churns"</span><span class="p">],</span>
+    <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">colorbar</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s2">"Blues"</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">"Validation counts at threshold 0.5"</span><span class="p">)</span>
+<span class="n">observed</span><span class="p">,</span> <span class="n">predicted</span> <span class="o">=</span> <span class="n">calibration_curve</span><span class="p">(</span>
+    <span class="n">validation_response</span><span class="p">,</span> <span class="n">validation_probabilities</span><span class="p">,</span> <span class="n">n_bins</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span> <span class="n">strategy</span><span class="o">=</span><span class="s2">"uniform"</span>
+<span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">predicted</span><span class="p">,</span> <span class="n">observed</span><span class="p">,</span> <span class="s2">"o-"</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"Validation bins"</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="s2">"--"</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">"gray"</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"Ideal calibration"</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">xlabel</span><span class="o">=</span><span class="s2">"Mean predicted probability"</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s2">"Observed churn fraction"</span><span class="p">,</span>
+            <span class="n">xlim</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">ylim</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">title</span><span class="o">=</span><span class="s2">"Reliability diagram"</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+<span class="n">bins</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">cut</span><span class="p">(</span><span class="n">validation_probabilities</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">7</span><span class="p">),</span> <span class="n">include_lowest</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">display</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s2">"bin"</span><span class="p">:</span> <span class="n">bins</span><span class="p">,</span> <span class="s2">"probability"</span><span class="p">:</span> <span class="n">validation_probabilities</span><span class="p">,</span>
+                      <span class="s2">"outcome"</span><span class="p">:</span> <span class="n">validation_response</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()})</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">"bin"</span><span class="p">,</span> <span class="n">observed</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">agg</span><span class="p">(</span>
+    <span class="n">rows</span><span class="o">=</span><span class="p">(</span><span class="s2">"outcome"</span><span class="p">,</span> <span class="s2">"size"</span><span class="p">),</span> <span class="n">mean_probability</span><span class="o">=</span><span class="p">(</span><span class="s2">"probability"</span><span class="p">,</span> <span class="s2">"mean"</span><span class="p">),</span>
+    <span class="n">observed_fraction</span><span class="o">=</span><span class="p">(</span><span class="s2">"outcome"</span><span class="p">,</span> <span class="s2">"mean"</span><span class="p">)))</span>
+</pre></div>
+<figure class="result-figure"><img loading="lazy" src="../results/02_classification-calibration-code-0.png" alt="Resultado ejecutado: 6. Métricas de validación antes de elegir un umbral"><figcaption>6. Métricas de validación antes de elegir un umbral · salida capturada del cuaderno</figcaption></figure><details class="result-text"><summary>6. Métricas de validación antes de elegir un umbral · resultado calculado</summary><pre>                 rows  mean_probability  observed_fraction
+bin
+(-0.001, 0.167]   167          0.081809           0.065868
+(0.167, 0.333]    112          0.239926           0.285714
+(0.333, 0.5]       45          0.399132           0.444444
+(0.5, 0.667]       24          0.579287           0.583333
+(0.667, 0.833]     11          0.729602           0.454545
+(0.833, 1.0]        1          0.899345           1.000000</pre></details></section><section class="cell" id="cell-cell-012"><p>La exactitud por sí sola puede ocultar que no se detecta la clase positiva. Una línea base mayoritaria puede obtener una puntuación alta si la clase que no abandona el servicio es común, aunque no detecte a ningún cliente que sí lo abandone. Compara precisión y exhaustividad con el uso previsto.</p></section><section class="cell" id="cell-cell-013"><h2 id="section-10">7. Elegir un umbral con validación y luego evaluar una vez en prueba</h2>
+<p>Supongamos que un falso positivo tiene costo $C_{FP}$ y un falso negativo, costo $C_{FN}$; las decisiones correctas tienen costo cero. Si la probabilidad $p$ está calibrada, predecir abandono cuesta en promedio $C_{FP}(1-p)$, mientras que predecir permanencia cuesta $C_{FN}p$. Se elige abandono cuando</p>
+<p>$$C_{FP}(1-p)\le C_{FN}p\quad\Longleftrightarrow\quad p\ge\frac{C_{FP}}{C_{FP}+C_{FN}}.$$</p>
+<p>Este umbral supone que las probabilidades están calibradas para la población donde se tomarán las decisiones, que los costos son conocidos y constantes, y que las decisiones no comparten una restricción de capacidad. Usaremos la razón hipotética $C_{FP}=1$, $C_{FN}=5$, que da un umbral teórico $1/6\approx0.167$. Revisamos varios umbrales en los datos de validación para observar el compromiso en una muestra finita y elegimos el de menor costo estimado. Luego fijamos el umbral y evaluamos una sola vez el conjunto de prueba. Estos costos ilustrativos no describen una intervención real.</p></section><section class="cell" id="cell-cell-014"><div class="cell-label">Python · ejecutar en el cuaderno</div><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">RocCurveDisplay</span>
+
+<span class="n">RocCurveDisplay</span><span class="o">.</span><span class="n">from_predictions</span><span class="p">(</span><span class="n">validation_response</span><span class="p">,</span> <span class="n">validation_probabilities</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">"Validation ROC curve"</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+<span class="n">false_positive_cost</span> <span class="o">=</span> <span class="mf">1.0</span>
+<span class="n">false_negative_cost</span> <span class="o">=</span> <span class="mf">5.0</span>
+<span class="n">threshold_candidates</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.10</span><span class="p">,</span> <span class="mf">0.17</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">,</span> <span class="mf">0.35</span><span class="p">,</span> <span class="mf">0.50</span><span class="p">,</span> <span class="mf">0.65</span><span class="p">]</span>
+<span class="n">threshold_results</span> <span class="o">=</span> <span class="p">[]</span>
+
+<span class="k">for</span> <span class="n">threshold</span> <span class="ow">in</span> <span class="n">threshold_candidates</span><span class="p">:</span>
+    <span class="n">validation_decisions</span> <span class="o">=</span> <span class="p">(</span><span class="n">validation_probabilities</span> <span class="o">&gt;=</span> <span class="n">threshold</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+    <span class="n">true_negative</span><span class="p">,</span> <span class="n">false_positive</span><span class="p">,</span> <span class="n">false_negative</span><span class="p">,</span> <span class="n">true_positive</span> <span class="o">=</span> <span class="n">confusion_matrix</span><span class="p">(</span>
+        <span class="n">validation_response</span><span class="p">,</span> <span class="n">validation_decisions</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
+    <span class="p">)</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
+    <span class="n">estimated_cost</span> <span class="o">=</span> <span class="p">(</span><span class="n">false_positive_cost</span> <span class="o">*</span> <span class="n">false_positive</span>
+                      <span class="o">+</span> <span class="n">false_negative_cost</span> <span class="o">*</span> <span class="n">false_negative</span><span class="p">)</span>
+    <span class="n">threshold_results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+        <span class="p">{</span>
+            <span class="s2">"threshold"</span><span class="p">:</span> <span class="n">threshold</span><span class="p">,</span>
+            <span class="s2">"flagged"</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">validation_decisions</span><span class="o">.</span><span class="n">sum</span><span class="p">()),</span>
+            <span class="s2">"false_positives"</span><span class="p">:</span> <span class="n">false_positive</span><span class="p">,</span>
+            <span class="s2">"false_negatives"</span><span class="p">:</span> <span class="n">false_negative</span><span class="p">,</span>
+            <span class="s2">"estimated_cost"</span><span class="p">:</span> <span class="n">estimated_cost</span><span class="p">,</span>
+        <span class="p">}</span>
+    <span class="p">)</span>
+
+<span class="n">validation_cost_table</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">threshold_results</span><span class="p">)</span>
+<span class="n">validation_cost_table</span>
+</pre></div>
+<figure class="result-figure"><img loading="lazy" src="../results/02_classification-cell-014-0.png" alt="Resultado ejecutado: 7. Elegir un umbral con validación y luego evaluar una vez en prueba"><figcaption>7. Elegir un umbral con validación y luego evaluar una vez en prueba · salida capturada del cuaderno</figcaption></figure><details class="result-text"><summary>7. Elegir un umbral con validación y luego evaluar una vez en prueba · resultado calculado</summary><pre>   threshold  flagged  false_positives  false_negatives  estimated_cost
+0       0.10      252              174                5           199.0
+1       0.17      188              117               12           177.0
+2       0.25      127               70               26           200.0
+3       0.35       71               32               44           252.0
+4       0.50       36               16               63           331.0
+5       0.65       15                6               74           376.0</pre></details></section><section class="cell" id="cell-cell-015"><p>La tabla de validación está ordenada por el costo hipotético estimado. Elegimos el umbral a partir de la validación y lo mantenemos fijo. El conjunto de prueba final se evalúa una sola vez con ese umbral.</p></section><section class="cell" id="cell-cell-016"><div class="cell-label">Python · ejecutar en el cuaderno</div><div class="highlight"><pre><span></span><span class="n">validation_cost_table</span> <span class="o">=</span> <span class="n">validation_cost_table</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span>
+    <span class="p">[</span><span class="s2">"estimated_cost"</span><span class="p">,</span> <span class="s2">"threshold"</span><span class="p">]</span>
+<span class="p">)</span>
+<span class="n">selected_threshold</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">validation_cost_table</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s2">"threshold"</span><span class="p">])</span>
+
+<span class="n">final_test_probabilities</span> <span class="o">=</span> <span class="n">best_classifier</span><span class="o">.</span><span class="n">predict_proba</span><span class="p">(</span><span class="n">final_test_features</span><span class="p">)[:,</span> <span class="mi">1</span><span class="p">]</span>
+<span class="n">final_test_predictions</span> <span class="o">=</span> <span class="p">(</span><span class="n">final_test_probabilities</span> <span class="o">&gt;=</span> <span class="n">selected_threshold</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Chosen validation threshold: </span><span class="si">{</span><span class="n">selected_threshold</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Final test metrics:"</span><span class="p">,</span> <span class="p">{</span>
+    <span class="s2">"accuracy"</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">accuracy_score</span><span class="p">(</span><span class="n">final_test_response</span><span class="p">,</span> <span class="n">final_test_predictions</span><span class="p">),</span> <span class="mi">3</span><span class="p">),</span>
+    <span class="s2">"precision"</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">precision_score</span><span class="p">(</span><span class="n">final_test_response</span><span class="p">,</span> <span class="n">final_test_predictions</span><span class="p">,</span> <span class="n">zero_division</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span> <span class="mi">3</span><span class="p">),</span>
+    <span class="s2">"recall"</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">recall_score</span><span class="p">(</span><span class="n">final_test_response</span><span class="p">,</span> <span class="n">final_test_predictions</span><span class="p">,</span> <span class="n">zero_division</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span> <span class="mi">3</span><span class="p">),</span>
+    <span class="s2">"F1"</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">f1_score</span><span class="p">(</span><span class="n">final_test_response</span><span class="p">,</span> <span class="n">final_test_predictions</span><span class="p">,</span> <span class="n">zero_division</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span> <span class="mi">3</span><span class="p">),</span>
+    <span class="s2">"ROC-AUC"</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">roc_auc_score</span><span class="p">(</span><span class="n">final_test_response</span><span class="p">,</span> <span class="n">final_test_probabilities</span><span class="p">),</span> <span class="mi">3</span><span class="p">),</span>
+<span class="p">})</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Final test confusion matrix [actual rows, predicted columns]:</span><span class="se">\n</span><span class="s2">"</span><span class="p">,</span>
+      <span class="n">confusion_matrix</span><span class="p">(</span><span class="n">final_test_response</span><span class="p">,</span> <span class="n">final_test_predictions</span><span class="p">))</span>
+</pre></div>
+<details class="result-text"><summary>7. Elegir un umbral con validación y luego evaluar una vez en prueba · resultado calculado</summary><pre>Chosen validation threshold: 0.17
+Final test metrics: {&#x27;accuracy&#x27;: 0.656, &#x27;precision&#x27;: 0.384, &#x27;recall&#x27;: 0.819, &#x27;F1&#x27;: 0.523, &#x27;ROC-AUC&#x27;: 0.772}
+Final test confusion matrix [actual rows, predicted columns]:
+ [[168 109]
+ [ 15  68]]</pre></details></section><section class="cell" id="cell-cell-017"><h2 id="section-11">8. Coeficientes como asociaciones condicionales de log-odds</h2>
+<p>Un coeficiente cambia los log-odds ajustados en esa cantidad cuando una variable aumenta una unidad —o una desviación estándar si se trata de una variable numérica escalada—, condicionando por las demás entradas codificadas. Al exponenciarlo se obtiene una razón de momios del modelo. Las razones de momios no son razones de riesgo, y los coeficientes observacionales no establecen causalidad.</p></section><section class="cell" id="cell-cell-018"><div class="cell-label">Python · ejecutar en el cuaderno</div><div class="highlight"><pre><span></span><span class="n">encoded_feature_names</span> <span class="o">=</span> <span class="n">best_classifier</span><span class="o">.</span><span class="n">named_steps</span><span class="p">[</span><span class="s2">"preprocessing"</span><span class="p">]</span><span class="o">.</span><span class="n">get_feature_names_out</span><span class="p">()</span>
+<span class="n">log_odds_coefficients</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span>
+    <span class="n">best_classifier</span><span class="o">.</span><span class="n">named_steps</span><span class="p">[</span><span class="s2">"model"</span><span class="p">]</span><span class="o">.</span><span class="n">coef_</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+    <span class="n">index</span><span class="o">=</span><span class="n">encoded_feature_names</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">log_odds_coefficients</span><span class="o">.</span><span class="n">reindex</span><span class="p">(</span>
+    <span class="n">log_odds_coefficients</span><span class="o">.</span><span class="n">abs</span><span class="p">()</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="n">ascending</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">index</span>
+<span class="p">)</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+</pre></div>
+<details class="result-text"><summary>8. Coeficientes como asociaciones condicionales de log-odds · resultado calculado</summary><pre>category__contract_monthly     0.860
+category__contract_two_year   -0.752
+numeric__support_calls         0.602
+numeric__monthly_charge        0.598
+numeric__tenure_months        -0.559
+category__contract_annual     -0.099
+dtype: float64</pre></details></section><section class="cell" id="cell-cell-019"><h2 id="section-12">Conclusiones clave</h2>
+<ul>
+<li>Entrena con una partición, selecciona la regularización mediante validación cruzada solo en entrenamiento y elige el umbral de decisión con los datos de validación.</li>
+<li>Evalúa una sola vez el modelo y el umbral fijados en los datos de prueba final.</li>
+<li>Informa los conteos por clase, la matriz de confusión y las métricas pertinentes para la decisión prevista.</li>
+<li>El rendimiento con datos generados no demuestra resultados para clientes reales ni efectos causales.</li>
+</ul></section></article><p><a href="02_classification-results.html">Explora la galería de resultados ejecutados de esta lección →</a></p><nav class="actions" aria-label="Secuencia de estudio"><a href="01_regression.html">← 01: Regresión</a><a href="index.html#lectures">Todas las lecciones</a><a href="03_xgboost.html">03: XGBoost →</a></nav></main></div><footer>Mathematical ML · Ocho lecciones prácticas para matemáticos<br>Python legible · Experimentos reproducibles · Datos sintéticos didácticos</footer></body></html>

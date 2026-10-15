@@ -1,0 +1,66 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Ocho lecciones de aprendizaje automático para matemáticos: fundamentos, opciones de software y ejemplos guiados en Python."><title>Del modelo al servicio: resultados ejecutados · ML matemático</title><link rel="stylesheet" href="../style.css"><script defer src="../site.js"></script><script>window.MathJax={tex:{inlineMath:[['$','$'],['\\(','\\)']]}};</script><script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script><link rel="alternate" hreflang="en" href="../08_deployment-results.html"><link rel="alternate" hreflang="es" href="08_deployment-results.html"><link rel="alternate" hreflang="x-default" href="../08_deployment-results.html"></head><body><a class="skip" href="#main">Saltar al contenido</a><header><button class="menu" aria-controls="sidebar" aria-expanded="false" aria-label="Mostrar u ocultar la navegación del curso">☰</button><a class="brand" href="index.html">∑ <span>Mathematical ML</span></a><nav aria-label="Enlaces rápidos"><a href="setup.html">Comenzar</a><a href="index.html#lectures">Lecciones</a><button id="theme" aria-label="Cambiar tema de color">◐</button></nav><nav class="languages" aria-label="Idioma"><a href="../08_deployment-results.html" lang="en" hreflang="en">English</a><a href="08_deployment-results.html" lang="es" hreflang="es" aria-current="true">Español</a></nav></header><div class="layout"><aside id="sidebar" aria-label="Navegación del curso"><a href="index.html">Presentación del curso</a><h3>Comienza aquí</h3><a href="setup.html">Instalación &amp; primeros pasos</a><a href="first-steps.html">¿Nuevo en aprendizaje automático? Comienza aquí</a><h3>Las lecciones</h3><details><summary><a href="01_regression.html">01 · Regresión</a></summary><a class="sub" href="01_regression-lesson.html">Fundamentos &amp; ejemplos</a></details><details><summary><a href="02_classification.html">02 · Clasificación</a></summary><a class="sub" href="02_classification-lesson.html">Fundamentos &amp; ejemplos</a></details><details><summary><a href="03_xgboost.html">03 · XGBoost</a></summary><a class="sub" href="03_xgboost-lesson.html">Fundamentos &amp; ejemplos</a></details><details><summary><a href="04_imbalanced_learning.html">04 · Aprendizaje con clases desbalanceadas</a></summary><a class="sub" href="04_imbalanced_learning-lesson.html">Fundamentos &amp; ejemplos</a></details><details><summary><a href="05_text_classification.html">05 · Clasificación de texto</a></summary><a class="sub" href="05_text_classification-lesson.html">Fundamentos &amp; ejemplos</a></details><details><summary><a href="06_clustering.html">06 · Agrupamiento</a></summary><a class="sub" href="06_clustering-lesson.html">Fundamentos &amp; ejemplos</a></details><details><summary><a href="07_time_series.html">07 · Pronóstico de series temporales</a></summary><a class="sub" href="07_time_series-lesson.html">Fundamentos &amp; ejemplos</a></details><details><summary><a href="08_deployment.html">08 · Del modelo al servicio</a></summary><a class="sub" href="08_deployment-lesson.html">Fundamentos &amp; ejemplos</a></details><h3>Recursos</h3><a href="results.html">Galerías de resultados ejecutados</a><a href="datasets.html">Conjuntos de datos</a><a href="course-project.html">Proyecto del curso</a><a href="instructor.html">Guía docente</a><a href="verification.html">Verificación</a></aside><main id="main"><p class="translation-note">Versión en español. El código, los datos, las salidas calculadas y las etiquetas dentro de las figuras se conservan en su idioma original. Los cuadernos descargables están en inglés.</p><div class="eyebrow">Lección 08 / Resultados ejecutados</div><h1>Del modelo al servicio: resultados</h1><p>Capturados tras ejecutar correctamente el cuaderno proporcionado con datos sintéticos didácticos. Son resultados calculados, distintos de las ilustraciones conceptuales. En cada compilación del sitio se verifican los hashes del código fuente y del conjunto de datos.</p><p><a href="08_deployment-lesson.html">Lee la explicación y sigue la implementación →</a></p><p class="note"><strong>Qué observar</strong> Siga el umbral seleccionado en validación hasta el artefacto guardado y compare las probabilidades antes de guardar, después de cargar y a través de la API. La corrección de HTTP y la calidad predictiva son comprobaciones distintas.</p><h2>Figuras calculadas</h2><section class="gallery-result"><figure class="result-figure"><img loading="lazy" src="../results/08_deployment-deployment-05-2.png" alt="Resultado ejecutado: 2. Ajustar una vez y elegir una política en validación"><figcaption>2. Ajustar una vez y elegir una política en validación · salida del cuaderno capturada</figcaption></figure><a class="result-source" href="08_deployment-lesson.html#cell-deployment-05">Celda de origen y explicación →</a></section><section class="gallery-result"><figure class="result-figure"><img loading="lazy" src="../results/08_deployment-deployment-15-1.png" alt="Resultado ejecutado: 7. Revisar el contrato que se entregará"><figcaption>7. Revisar el contrato que se entregará · salida del cuaderno capturada</figcaption></figure><a class="result-source" href="08_deployment-lesson.html#cell-deployment-15">Celda de origen y explicación →</a></section><h2>Tablas y resultados impresos</h2><section class="gallery-result"><details class="result-text"><summary>1. Qué atraviesa la frontera · resultado calculado</summary><pre>Rows: 1800</pre></details><a class="result-source" href="08_deployment-lesson.html#cell-deployment-03">Celda de origen y explicación →</a></section><section class="gallery-result"><details class="result-text"><summary>1. Qué atraviesa la frontera · resultado calculado</summary><pre>   tenure_months  monthly_charge  support_calls contract  churn
+0             10         86.0045              0   annual      0
+1             48         63.7697              1  monthly      0
+2             42        129.0949              1   annual      0</pre></details><a class="result-source" href="08_deployment-lesson.html#cell-deployment-03">Celda de origen y explicación →</a></section><section class="gallery-result"><details class="result-text"><summary>2. Ajustar una vez y elegir una política en validación · resultado calculado</summary><pre>Validation-selected threshold: 0.25</pre></details><a class="result-source" href="08_deployment-lesson.html#cell-deployment-05">Celda de origen y explicación →</a></section><section class="gallery-result"><details class="result-text"><summary>2. Ajustar una vez y elegir una política en validación · resultado calculado</summary><pre>    threshold   cost  alerts
+0        0.05  180.0     236
+1        0.10  160.0     198
+2        0.15  147.0     173
+3        0.20  144.0     128
+4        0.25  141.0     101
+5        0.30  157.0      87
+6        0.35  167.0      67
+7        0.40  189.0      47
+8        0.45  219.0      35
+9        0.50  249.0      23
+10       0.55  266.0      16
+11       0.60  273.0      11
+12       0.65  286.0       6
+13       0.70  291.0       5
+14       0.75  296.0       4
+15       0.80  305.0       1
+16       0.85  310.0       0
+17       0.90  310.0       0
+18       0.95  310.0       0</pre></details><a class="result-source" href="08_deployment-lesson.html#cell-deployment-05">Celda de origen y explicación →</a></section><section class="gallery-result"><details class="result-text"><summary>3. Evaluar el pipeline congelado y guardar la misma política · resultado calculado</summary><pre>Saved: churn-c5252101f56d4f1aaea160e1159dbf2a.joblib</pre></details><a class="result-source" href="08_deployment-lesson.html#cell-deployment-07">Celda de origen y explicación →</a></section><section class="gallery-result"><details class="result-text"><summary>3. Evaluar el pipeline congelado y guardar la misma política · resultado calculado</summary><pre>roc_auc        0.764312
+precision      0.464286
+recall         0.625000
+cost         270.000000
+Name: Final test metrics, dtype: float64</pre></details><a class="result-source" href="08_deployment-lesson.html#cell-deployment-07">Celda de origen y explicación →</a></section><section class="gallery-result"><details class="result-text"><summary>4. Una predicción correcta antes y después de guardar · resultado calculado</summary><pre>{&#x27;before_saving&#x27;: 0.7378078852870725, &#x27;after_loading&#x27;: 0.7378078852870725, &#x27;threshold&#x27;: 0.25, &#x27;decision&#x27;: 1}</pre></details><a class="result-source" href="08_deployment-lesson.html#cell-deployment-09">Celda de origen y explicación →</a></section><section class="gallery-result"><details class="result-text"><summary>5. Enviar el mismo cliente a la API · resultado calculado</summary><pre>HTTP status: 200
+{
+  &quot;churn_probability&quot;: 0.7378078852870725,
+  &quot;threshold&quot;: 0.25,
+  &quot;prediction&quot;: 1
+}
+Parity verified: before saving = after loading = API probability.</pre></details><a class="result-source" href="08_deployment-lesson.html#cell-deployment-11">Celda de origen y explicación →</a></section><section class="gallery-result"><details class="result-text"><summary>6. Rechazar una solicitud no válida · resultado calculado</summary><pre>Invalid request status: 422
+{
+  &quot;detail&quot;: [
+    {
+      &quot;type&quot;: &quot;literal_error&quot;,
+      &quot;loc&quot;: [
+        &quot;body&quot;,
+        &quot;contract&quot;
+      ],
+      &quot;msg&quot;: &quot;Input should be &#x27;monthly&#x27;, &#x27;annual&#x27; or &#x27;two_year&#x27;&quot;,
+      &quot;input&quot;: &quot;quarterly&quot;,
+      &quot;ctx&quot;: {
+        &quot;expected&quot;: &quot;&#x27;monthly&#x27;, &#x27;annual&#x27; or &#x27;two_year&#x27;&quot;
+      }
+    }
+  ]
+}</pre></details><a class="result-source" href="08_deployment-lesson.html#cell-deployment-13">Celda de origen y explicación →</a></section><section class="gallery-result"><details class="result-text"><summary>7. Revisar el contrato que se entregará · resultado calculado</summary><pre>artifact_format                                                        1
+features               [tenure_months, monthly_charge, support_calls,...
+contract_values                              [monthly, annual, two_year]
+positive_class                                                         1
+threshold                                                           0.25
+metrics                {&#x27;roc_auc&#x27;: 0.7643119164072922, &#x27;precision&#x27;: 0...
+fit_rows                                                            1080
+validation_rows                                                      270
+test_rows                                                            450
+data_sha256            898c44641ba4d89be279e5739c7da2689230303499b67e...
+dependency_versions    {&#x27;python&#x27;: &#x27;3.12.10&#x27;, &#x27;scikit_learn&#x27;: &#x27;1.9.1&#x27;,...
+dtype: object</pre></details><a class="result-source" href="08_deployment-lesson.html#cell-deployment-15">Celda de origen y explicación →</a></section><section class="gallery-result"><details class="result-text"><summary>Extensión opcional: registrar este mismo artefacto con MLflow · resultado calculado</summary><pre>Tracked the same saved artifact in run: a71f773c9b6c472fbca003b6684a87c9</pre></details><a class="result-source" href="08_deployment-lesson.html#cell-deployment-17">Celda de origen y explicación →</a></section><details class="contents"><summary>Entorno de ejecución y procedencia</summary><pre>{
+  &quot;python&quot;: &quot;3.12.10&quot;,
+  &quot;numpy&quot;: &quot;2.5.4&quot;,
+  &quot;pandas&quot;: &quot;2.3.3&quot;,
+  &quot;scikit_learn&quot;: &quot;1.9.1&quot;,
+  &quot;xgboost&quot;: &quot;3.4.1&quot;
+}</pre><a href="../results/manifest.json">Hashes de origen y manifiesto de resultados</a></details></main></div><footer>Mathematical ML · Ocho lecciones prácticas para matemáticos<br>Python legible · Experimentos reproducibles · Datos sintéticos didácticos</footer></body></html>

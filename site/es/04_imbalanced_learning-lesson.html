@@ -1,0 +1,397 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Ocho lecciones de aprendizaje automático para matemáticos: fundamentos, opciones de software y ejemplos guiados en Python."><title>Aprendizaje con clases desbalanceadas: lección · ML matemático</title><link rel="stylesheet" href="../style.css"><script defer src="../site.js"></script><script>window.MathJax={tex:{inlineMath:[['$','$'],['\\(','\\)']]}};</script><script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script><link rel="alternate" hreflang="en" href="../04_imbalanced_learning-lesson.html"><link rel="alternate" hreflang="es" href="04_imbalanced_learning-lesson.html"><link rel="alternate" hreflang="x-default" href="../04_imbalanced_learning-lesson.html"></head><body><a class="skip" href="#main">Saltar al contenido</a><header><button class="menu" aria-controls="sidebar" aria-expanded="false" aria-label="Mostrar u ocultar la navegación del curso">☰</button><a class="brand" href="index.html">∑ <span>Mathematical ML</span></a><nav aria-label="Enlaces rápidos"><a href="setup.html">Comenzar</a><a href="index.html#lectures">Lecciones</a><button id="theme" aria-label="Cambiar tema de color">◐</button></nav><nav class="languages" aria-label="Idioma"><a href="../04_imbalanced_learning-lesson.html" lang="en" hreflang="en">English</a><a href="04_imbalanced_learning-lesson.html" lang="es" hreflang="es" aria-current="true">Español</a></nav></header><div class="layout"><aside id="sidebar" aria-label="Navegación del curso"><a href="index.html">Presentación del curso</a><h3>Comienza aquí</h3><a href="setup.html">Instalación &amp; primeros pasos</a><a href="first-steps.html">¿Nuevo en aprendizaje automático? Comienza aquí</a><h3>Las lecciones</h3><details><summary><a href="01_regression.html">01 · Regresión</a></summary><a class="sub" href="01_regression-lesson.html">Fundamentos &amp; ejemplos</a></details><details><summary><a href="02_classification.html">02 · Clasificación</a></summary><a class="sub" href="02_classification-lesson.html">Fundamentos &amp; ejemplos</a></details><details><summary><a href="03_xgboost.html">03 · XGBoost</a></summary><a class="sub" href="03_xgboost-lesson.html">Fundamentos &amp; ejemplos</a></details><details><summary><a href="04_imbalanced_learning.html">04 · Aprendizaje con clases desbalanceadas</a></summary><a class="sub" href="04_imbalanced_learning-lesson.html">Fundamentos &amp; ejemplos</a></details><details><summary><a href="05_text_classification.html">05 · Clasificación de texto</a></summary><a class="sub" href="05_text_classification-lesson.html">Fundamentos &amp; ejemplos</a></details><details><summary><a href="06_clustering.html">06 · Agrupamiento</a></summary><a class="sub" href="06_clustering-lesson.html">Fundamentos &amp; ejemplos</a></details><details><summary><a href="07_time_series.html">07 · Pronóstico de series temporales</a></summary><a class="sub" href="07_time_series-lesson.html">Fundamentos &amp; ejemplos</a></details><details><summary><a href="08_deployment.html">08 · Del modelo al servicio</a></summary><a class="sub" href="08_deployment-lesson.html">Fundamentos &amp; ejemplos</a></details><h3>Recursos</h3><a href="results.html">Galerías de resultados ejecutados</a><a href="datasets.html">Conjuntos de datos</a><a href="course-project.html">Proyecto del curso</a><a href="instructor.html">Guía docente</a><a href="verification.html">Verificación</a></aside><main id="main"><p class="translation-note">Versión en español. El código, los datos, las salidas calculadas y las etiquetas dentro de las figuras se conservan en su idioma original. Los cuadernos descargables están en inglés.</p><div class="eyebrow">Lección 04 / lección</div><div class="actions"><a href="04_imbalanced_learning.html">← Guía de la lección</a><a href="../downloads/04_imbalanced_learning/lesson.ipynb" download>Descargar el cuaderno</a></div><p class="note">Esta página es una vista de lectura. Para ejecutar Python, descarga el curso completo y abre este cuaderno en Jupyter. <a href="first-steps.html">Recorrido inicial del cuaderno →</a></p><details class="contents"><summary>En esta página</summary><nav aria-label="Contenido de la página"><a href="#section-1">Lea los conteos antes de consultar una métrica</a><a href="#section-2">1. Por qué la exactitud puede inducir a error</a><a href="#section-3">2. Riesgo logístico y ponderación de clases</a><a href="#section-4">2a. Por qué ponderar las clases desplaza la distribución posterior</a><a href="#section-5">2b. Interpretar la llamada al estimador desde las matemáticas</a><a href="#section-6">Controles de los árboles de XGBoost en el ajuste ponderado</a><a href="#section-7">3. Métricas PR y ROC</a><a href="#section-8">La precisión depende de la prevalencia</a><a href="#section-9">4. Costo en validación y prueba final</a><a href="#section-10">Examine el equilibrio en validación antes de fijar la política</a><a href="#section-11">Política de referencia para la prueba final</a><a href="#section-12">Limitaciones</a></nav></details><article class="reading"><section class="cell" id="cell-cell-000"><h1>Lección 04 — Aprendizaje con clases desbalanceadas: eventos raros y decisiones</h1>
+<p>Un ejemplo sintético de transacciones separa el ordenamiento, la escala de probabilidad y la política del umbral.</p></section><section class="cell" id="cell-beginner-bridge"><p><img alt="Figura didáctica sobre aprendizaje con clases desbalanceadas" src="../figures/04_imbalanced_learning.svg"></img></p>
+<p><em>Conteos calculados con el conjunto completo de datos de fraude proporcionado, antes de dividirlo. La cantidad de casos de la clase minoritaria explica por qué la exactitud no basta.</em></p>
+<h2 id="section-1">Lea los conteos antes de consultar una métrica</h2>
+<p>Suponga que un detector tiene una exhaustividad (TPR) del 80 % y una tasa de falsos positivos del 1 %. Entre 10 000 transacciones con un 1 % de fraude, se esperan 80 alertas verdaderas y 99 falsas: la precisión es de alrededor del 45 %. Con un 0,1 % de fraude, se esperan 8 alertas verdaderas y unas 100 falsas: la precisión es de alrededor del 7 %. Esto supone que el comportamiento condicional del detector es el mismo en ambas prevalencias; al cambiar la población, esas tasas también pueden variar.</p>
+<p>Una regla que siempre predice la clase negativa puede alcanzar una exactitud alta y, aun así, pasar por alto todos los fraudes. Su costo es <code>number_of_frauds * cost_per_missed_fraud</code>, aunque no genere ninguna alerta. Compare este costo con el de la política elegida, no solo con la exactitud. Un umbral es una regla de acción que se elige con las filas de validación; ponderar una clase modifica el objetivo de ajuste y puede cambiar la interpretación de las probabilidades sin procesar.</p></section><section class="cell" id="cell-cell-001"><h2 id="section-2">1. Por qué la exactitud puede inducir a error</h2>
+<p>Con prevalencia positiva $\pi$, la regla que siempre predice la clase negativa tiene exactitud $1-\pi$ y exhaustividad cero. Con una prevalencia del 3 %, alcanza un 97 % de exactitud sin detectar ningún caso. Informe los conteos de cada clase y los tipos de error. Con el umbral $t$, prediga $\hat y=\mathbf1[p\ge t]$; la precisión es $TP/(TP+FP)$ y la exhaustividad es $TP/(TP+FN)$. Al variar $t$, se intercambian falsas alarmas y casos no detectados.</p></section><section class="cell" id="cell-cell-002"><div class="cell-label">Python · ejecutar en el cuaderno</div><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.model_selection</span><span class="w"> </span><span class="kn">import</span> <span class="n">train_test_split</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.preprocessing</span><span class="w"> </span><span class="kn">import</span> <span class="n">StandardScaler</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.pipeline</span><span class="w"> </span><span class="kn">import</span> <span class="n">make_pipeline</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.linear_model</span><span class="w"> </span><span class="kn">import</span> <span class="n">LogisticRegression</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">average_precision_score</span><span class="p">,</span>
+    <span class="n">precision_recall_curve</span><span class="p">,</span>
+    <span class="n">auc</span><span class="p">,</span>
+    <span class="n">roc_auc_score</span><span class="p">,</span>
+    <span class="n">confusion_matrix</span><span class="p">,</span>
+    <span class="n">precision_score</span><span class="p">,</span>
+    <span class="n">recall_score</span><span class="p">,</span>
+    <span class="n">brier_score_loss</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">xgboost</span><span class="w"> </span><span class="kn">import</span> <span class="n">XGBClassifier</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">repo_root</span><span class="p">(</span><span class="n">start</span><span class="o">=</span><span class="n">Path</span><span class="o">.</span><span class="n">cwd</span><span class="p">()):</span>
+    <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="o">*</span><span class="n">start</span><span class="o">.</span><span class="n">parents</span><span class="p">):</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">path</span> <span class="o">/</span> <span class="s2">"data"</span> <span class="o">/</span> <span class="s2">"fraud.csv"</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="k">return</span> <span class="n">path</span>
+    <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="s2">"Could not find data/fraud.csv"</span><span class="p">)</span>
+
+
+<span class="n">ROOT</span> <span class="o">=</span> <span class="n">repo_root</span><span class="p">()</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">ROOT</span> <span class="o">/</span> <span class="s2">"data"</span> <span class="o">/</span> <span class="s2">"fraud.csv"</span><span class="p">)</span>
+<span class="n">features</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">"amount"</span><span class="p">,</span>
+    <span class="s2">"hour"</span><span class="p">,</span>
+    <span class="s2">"card_present"</span><span class="p">,</span>
+    <span class="s2">"international"</span><span class="p">,</span>
+    <span class="s2">"account_age_days"</span><span class="p">,</span>
+    <span class="s2">"transactions_24h"</span><span class="p">,</span>
+    <span class="s2">"merchant_risk"</span><span class="p">,</span>
+<span class="p">]</span>
+<span class="n">X</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">features</span><span class="p">],</span> <span class="n">data</span><span class="p">[</span><span class="s2">"fraud"</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"rows=</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span><span class="si">}</span><span class="s2">, positives=</span><span class="si">{</span><span class="n">y</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="si">}</span><span class="s2">, prevalence=</span><span class="si">{</span><span class="n">y</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span><span class="si">:</span><span class="s2">.3%</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="c1"># Split first. The test rows remain untouched until all choices are frozen.</span>
+<span class="n">X_dev</span><span class="p">,</span> <span class="n">X_test</span><span class="p">,</span> <span class="n">y_dev</span><span class="p">,</span> <span class="n">y_test</span> <span class="o">=</span> <span class="n">train_test_split</span><span class="p">(</span>
+    <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">test_size</span><span class="o">=</span><span class="mf">0.20</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">14</span><span class="p">,</span> <span class="n">stratify</span><span class="o">=</span><span class="n">y</span>
+<span class="p">)</span>
+<span class="n">X_train</span><span class="p">,</span> <span class="n">X_valid</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">y_valid</span> <span class="o">=</span> <span class="n">train_test_split</span><span class="p">(</span>
+    <span class="n">X_dev</span><span class="p">,</span> <span class="n">y_dev</span><span class="p">,</span> <span class="n">test_size</span><span class="o">=</span><span class="mf">0.25</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">15</span><span class="p">,</span> <span class="n">stratify</span><span class="o">=</span><span class="n">y_dev</span>
+<span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"sizes:"</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">X_train</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">X_valid</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">X_test</span><span class="p">))</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">empirical_cost</span><span class="p">(</span><span class="n">actual</span><span class="p">,</span> <span class="n">scores</span><span class="p">,</span> <span class="n">threshold</span><span class="p">,</span> <span class="n">c_fn</span><span class="o">=</span><span class="mf">20.0</span><span class="p">,</span> <span class="n">c_fp</span><span class="o">=</span><span class="mf">1.0</span><span class="p">):</span>
+    <span class="n">predicted</span> <span class="o">=</span> <span class="n">scores</span> <span class="o">&gt;=</span> <span class="n">threshold</span>
+    <span class="n">false_negative</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">((</span><span class="n">actual</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span> <span class="o">&amp;</span> <span class="o">~</span><span class="n">predicted</span><span class="p">)</span>
+    <span class="n">false_positive</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">((</span><span class="n">actual</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">predicted</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">c_fn</span> <span class="o">*</span> <span class="n">false_negative</span> <span class="o">+</span> <span class="n">c_fp</span> <span class="o">*</span> <span class="n">false_positive</span>
+</pre></div>
+<details class="result-text"><summary>1. Por qué la exactitud puede inducir a error · salida calculada</summary><pre>rows=5000, positives=217, prevalence=4.340%
+sizes: 3000 1000 1000</pre></details></section><section class="cell" id="cell-cell-003"><h2 id="section-3">2. Riesgo logístico y ponderación de clases</h2>
+<p>Para $p=\sigma(\eta)$ y $\eta=x^T\beta$, la log-verosimilitud negativa de Bernoulli es $\ell=\log(1+e^\eta)-y\eta$. Su gradiente es $(p-y)x$ y su Hessiano es $p(1-p)xx^T\succeq0$. Una penalización L2 añade curvatura y contrae las pendientes.</p>
+<p>La ponderación multiplica la pérdida por $w_y$. Bajo pesos de clase constantes ideales, el óptimo ponderado cumple $q/(1-q)=(w_1/w_0)p/(1-p)$, por lo que la ponderación desplaza las momios posteriores y la escala de probabilidad. También puede modificar el ordenamiento en muestras finitas, pero no garantiza probabilidades naturales calibradas.</p></section><section class="cell" id="cell-cell-004"><h2 id="section-4">2a. Por qué ponderar las clases desplaza la distribución posterior</h2>
+<p>Fijemos las características $x$ y sea $p$ la probabilidad natural de la clase positiva. El riesgo condicional de Bernoulli ponderado para una probabilidad propuesta $q$ es $R(q|x)=-w_1p\log q-w_0(1-p)\log(1-q)$. Su derivada es $-w_1p/q+w_0(1-p)/(1-q)$. Al igualarla a cero se obtiene $q/(1-q)=(w_1/w_0)p/(1-p)$. Por tanto, la ponderación desplaza las odds incluso con un modelo ideal; no se deben interpretar automáticamente las probabilidades ajustadas con pesos como el riesgo natural.</p>
+<p>Para pesos de observación $w_i$ y un vector de pendientes $\beta$, el objetivo binario ponderado con penalización L2 puede escribirse así:</p>
+<p>$$\min_{\beta,b}\;\sum_i w_i\,\ell(y_i, x_i^T\beta+b)+\frac{\|\beta\|_2^2}{2C},$$</p>
+<p>con un intercepto $b$ sin penalizar, mediante el algoritmo <code>lbfgs</code> como solucionador. Para la opción <code>class_weight="balanced"</code> con dos clases, cada observación de la clase $c$ recibe $w_i=n/(2n_c)$, donde $n_c$ es el número de filas de entrenamiento de su clase. Así, el peso agregado de cada clase es igual. El cálculo de momios anterior describe el óptimo condicional sin regularización; las muestras finitas y el término de regularización también influyen en el modelo ajustado. Consulte la documentación oficial de <a href="https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html">documentación de LogisticRegression</a> para conocer <code>C</code> y las definiciones de los pesos de clase.</p></section><section class="cell" id="cell-software-options"><h2 id="section-5">2b. Interpretar la llamada al estimador desde las matemáticas</h2>
+<p>Un estimador es un objeto que almacena opciones y, después de <code>fit</code>, cantidades aprendidas. <code>fit(X_train, y_train)</code> estima las medias y escalas del escalador, los coeficientes logísticos y los interceptos usando las filas de entrenamiento. Una <code>Pipeline</code> aplica cada paso en orden: <code>StandardScaler</code> aprende la transformación de coordenadas y luego <code>LogisticRegression</code> minimiza la pérdida empírica regularizada, ponderada o no, sobre la matriz de entrenamiento transformada. Al predecir, se aplica el mismo escalador ajustado antes del clasificador. <code>predict_proba(X)</code> devuelve una columna por clase; aquí, la columna 1 contiene la puntuación de la clase positiva del modelo ajustado. Es una estimación en la escala de probabilidad del modelo, no necesariamente una probabilidad natural calibrada de fraude.</p>
+<table>
+<thead>
+<tr>
+<th>Opción usada aquí</th>
+<th style="text-align: right;">Valor predeterminado de la biblioteca</th>
+<th style="text-align: right;">Elección de esta lección</th>
+<th>Efecto matemático o computacional</th>
+<th>Balance</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>StandardScaler()</code></td>
+<td style="text-align: right;">Centra y escala cada característica</td>
+<td style="text-align: right;">Valor predeterminado que se aplica explícitamente en este paso</td>
+<td>Transforma cada coordenada de entrenamiento como $(x_j-\bar x_j)/s_j$; el flujo aplica esos valores ajustados a validación y prueba</td>
+<td>Pone las características en unidades comparables; puede ser sensible a valores atípicos</td>
+</tr>
+<tr>
+<td><code>LogisticRegression(C=...)</code></td>
+<td style="text-align: right;"><code>C=1.0</code></td>
+<td style="text-align: right;"><code>C=1</code></td>
+<td>Inverso de la intensidad de regularización; un valor menor <code>C</code> penaliza con más fuerza el tamaño de los coeficientes</td>
+<td>La contracción puede estabilizar predictores correlacionados, pero, si es excesiva, puede producir subajuste</td>
+</tr>
+<tr>
+<td><code>class_weight</code></td>
+<td style="text-align: right;"><code>None</code></td>
+<td style="text-align: right;"><code>None</code> y <code>'balanced'</code></td>
+<td>Multiplica la contribución de cada clase a la pérdida; <code>'balanced'</code> usa pesos inversos a la frecuencia de clase, calculados a partir de las etiquetas entregadas a <code>fit</code></td>
+<td>Da más importancia a los casos positivos poco frecuentes y, a la vez, desplaza la escala de probabilidad ajustada</td>
+</tr>
+<tr>
+<td>XGBoost <code>scale_pos_weight</code></td>
+<td style="text-align: right;"><code>1</code></td>
+<td style="text-align: right;">Razón entre la cantidad de casos negativos y positivos en entrenamiento</td>
+<td>Escala las contribuciones de gradiente y Hessiano de los ejemplos positivos durante el ajuste de los árboles</td>
+<td>Modifica las divisiones y las actualizaciones de las hojas sin cambiar las filas muestreadas</td>
+</tr>
+<tr>
+<td><code>max_iter</code></td>
+<td style="text-align: right;"><code>100</code></td>
+<td style="text-align: right;"><code>2000</code></td>
+<td>Límite superior de iteraciones del optimizador; no es un parámetro de complejidad del modelo</td>
+<td>Permite que el optimizador converja; puede aumentar el cómputo si necesita más iteraciones</td>
+</tr>
+<tr>
+<td>LogisticRegression <code>random_state</code></td>
+<td style="text-align: right;"><code>None</code></td>
+<td style="text-align: right;"><code>14</code></td>
+<td>Controla el barajado solo con solucionadores estocásticos; no tiene efecto con el solucionador <code>lbfgs</code> de esta lección</td>
+<td>Una semilla ayuda a reproducir los ajustes estocásticos, aunque siguen influyendo el solucionador y la plataforma</td>
+</tr>
+</tbody>
+</table>
+<p><code>class_weight='balanced'</code> y <code>scale_pos_weight</code> son decisiones de ajuste en los objetivos logístico y de XGBoost. En cambio, un calibrador de probabilidades aprende una función que transforma puntuaciones en frecuencias observadas, usando datos de calibración separados o pliegues de validación cruzada. Luego, un umbral convierte una puntuación en una acción. Estas tres operaciones responden a preguntas distintas: qué errores influyen en el ajuste, si un valor representa el riesgo natural y cuándo actuar. El umbral no calibra las probabilidades, y la calibración no elige la política de costos operativos.</p>
+<p>La ponderación y <code>C</code> deben interpretarse en conjunto. Los pesos de clase o de observación multiplican las contribuciones de cada observación a la pérdida, mientras que <code>C</code> controla la penalización con respecto al término de ajuste a los datos en el objetivo regularizado de scikit-learn. Por eso, cambiar los pesos puede alterar el equilibrio entre ajuste y penalización aunque <code>C</code> permanezca fijo; compare primero las ponderaciones con el mismo valor de <code>C</code> como se hace en la siguiente celda. De manera similar, en XGBoost <code>scale_pos_weight=negative/positive</code> escala las contribuciones de gradiente y Hessiano de los casos positivos durante la construcción de los árboles. Modifica la forma en que el objetivo determina las divisiones y los valores de las hojas; no duplica ni elimina filas.</p>
+<h3 id="section-6">Controles de los árboles de XGBoost en el ajuste ponderado</h3>
+<p>Estos valores se pasan explícitamente en la llamada a <code>XGBClassifier</code> que aparece abajo. XGBoost documenta los siguientes valores predeterminados para el árbol; cambiar una opción a la vez ayuda a entender su función.</p>
+<table>
+<thead>
+<tr>
+<th>Opción</th>
+<th style="text-align: right;">Valor predeterminado</th>
+<th style="text-align: right;">Elección de esta lección</th>
+<th>Efecto en este ajuste</th>
+<th>Balance</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>max_depth</code></td>
+<td style="text-align: right;"><code>6</code></td>
+<td style="text-align: right;"><code>3</code></td>
+<td>Limita el número de niveles de división de cada árbol</td>
+<td>Los árboles menos profundos expresan interacciones más simples; los más profundos aumentan la capacidad y pueden sobreajustarse</td>
+</tr>
+<tr>
+<td><code>learning_rate</code> (<code>eta</code>)</td>
+<td style="text-align: right;"><code>0.3</code></td>
+<td style="text-align: right;"><code>0.06</code></td>
+<td>Reduce cada actualización de boosting</td>
+<td>Los pasos menores son más conservadores y suelen requerir más árboles</td>
+</tr>
+<tr>
+<td><code>min_child_weight</code></td>
+<td style="text-align: right;"><code>1</code></td>
+<td style="text-align: right;"><code>4</code></td>
+<td>Exige que la suma de los Hessianos ponderados de un nodo hijo alcance al menos este valor</td>
+<td>Los valores mayores desalientan divisiones con poca curvatura local</td>
+</tr>
+<tr>
+<td><code>reg_lambda</code></td>
+<td style="text-align: right;"><code>1</code></td>
+<td style="text-align: right;"><code>2</code></td>
+<td>Penalización L2 de las puntuaciones de las hojas en el objetivo del árbol</td>
+<td>Una contracción mayor vuelve más conservadoras las actualizaciones de las hojas</td>
+</tr>
+<tr>
+<td><code>scale_pos_weight</code></td>
+<td style="text-align: right;"><code>1</code></td>
+<td style="text-align: right;">Razón entre la cantidad de casos negativos y positivos en entrenamiento</td>
+<td>Escala las contribuciones de la clase positiva a los gradientes y Hessianos del objetivo</td>
+<td>Modifica los cálculos de las divisiones y las hojas; no vuelve a muestrear observaciones</td>
+</tr>
+<tr>
+<td><code>subsample</code></td>
+<td style="text-align: right;"><code>1</code></td>
+<td style="text-align: right;"><code>0.85</code></td>
+<td>Muestrea el 85 % de las filas de entrenamiento en cada iteración de boosting</td>
+<td>Añade aleatoriedad al ajuste y puede reducir el sobreajuste; cada árbol usa menos filas</td>
+</tr>
+<tr>
+<td><code>colsample_bytree</code></td>
+<td style="text-align: right;"><code>1</code></td>
+<td style="text-align: right;"><code>0.9</code></td>
+<td>Muestrea el 90 % de las columnas de características para cada árbol</td>
+<td>Añade aleatoriedad en las características; un árbol podría omitir un predictor útil</td>
+</tr>
+<tr>
+<td><code>n_estimators</code></td>
+<td style="text-align: right;"><code>100</code></td>
+<td style="text-align: right;"><code>180</code></td>
+<td>Construye 180 árboles secuenciales</td>
+<td>Más rondas aumentan la capacidad y el tiempo de ejecución; la cantidad de árboles debe considerarse junto con la tasa de aprendizaje</td>
+</tr>
+</tbody>
+</table>
+<p>La documentación oficial de <a href="https://xgboost.readthedocs.io/en/stable/parameter.html">parámetros de árboles de XGBoost</a> define estos valores predeterminados y sus efectos. Los dos parámetros de ponderación de esta lección modifican las contribuciones al objetivo de optimización. Ninguno genera ejemplos positivos adicionales.</p></section><section class="cell" id="cell-cell-005"><div class="cell-label">Python · ejecutar en el cuaderno</div><div class="highlight"><pre><span></span><span class="n">negative</span><span class="p">,</span> <span class="n">positive</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">bincount</span><span class="p">(</span><span class="n">y_train</span><span class="p">,</span> <span class="n">minlength</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">ratio</span> <span class="o">=</span> <span class="n">negative</span> <span class="o">/</span> <span class="n">positive</span>
+<span class="n">models</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"Logistic unweighted"</span><span class="p">:</span> <span class="n">make_pipeline</span><span class="p">(</span>
+        <span class="n">StandardScaler</span><span class="p">(),</span> <span class="n">LogisticRegression</span><span class="p">(</span><span class="n">C</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">max_iter</span><span class="o">=</span><span class="mi">2000</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">14</span><span class="p">)</span>
+    <span class="p">),</span>
+    <span class="s2">"Logistic balanced"</span><span class="p">:</span> <span class="n">make_pipeline</span><span class="p">(</span>
+        <span class="n">StandardScaler</span><span class="p">(),</span>
+        <span class="n">LogisticRegression</span><span class="p">(</span>
+            <span class="n">C</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">class_weight</span><span class="o">=</span><span class="s2">"balanced"</span><span class="p">,</span> <span class="n">max_iter</span><span class="o">=</span><span class="mi">2000</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">14</span>
+        <span class="p">),</span>
+    <span class="p">),</span>
+    <span class="s2">"XGBoost weighted"</span><span class="p">:</span> <span class="n">XGBClassifier</span><span class="p">(</span>
+        <span class="n">n_estimators</span><span class="o">=</span><span class="mi">180</span><span class="p">,</span>
+        <span class="n">max_depth</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+        <span class="n">learning_rate</span><span class="o">=</span><span class="mf">0.06</span><span class="p">,</span>
+        <span class="n">min_child_weight</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
+        <span class="n">subsample</span><span class="o">=</span><span class="mf">0.85</span><span class="p">,</span>
+        <span class="n">colsample_bytree</span><span class="o">=</span><span class="mf">0.9</span><span class="p">,</span>
+        <span class="n">reg_lambda</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+        <span class="n">scale_pos_weight</span><span class="o">=</span><span class="n">ratio</span><span class="p">,</span>
+        <span class="n">eval_metric</span><span class="o">=</span><span class="s2">"logloss"</span><span class="p">,</span>
+        <span class="n">n_jobs</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="n">random_state</span><span class="o">=</span><span class="mi">14</span><span class="p">,</span>
+    <span class="p">),</span>
+<span class="p">}</span>
+<span class="k">for</span> <span class="n">model</span> <span class="ow">in</span> <span class="n">models</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">)</span>
+<span class="n">valid_scores</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="n">name</span><span class="p">:</span> <span class="n">model</span><span class="o">.</span><span class="n">predict_proba</span><span class="p">(</span><span class="n">X_valid</span><span class="p">)[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">model</span> <span class="ow">in</span> <span class="n">models</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+<span class="p">}</span>
+<span class="n">rows</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">scores</span> <span class="ow">in</span> <span class="n">valid_scores</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="n">precision</span><span class="p">,</span> <span class="n">recall</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">precision_recall_curve</span><span class="p">(</span><span class="n">y_valid</span><span class="p">,</span> <span class="n">scores</span><span class="p">)</span>
+    <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+        <span class="p">{</span>
+            <span class="s2">"model"</span><span class="p">:</span> <span class="n">name</span><span class="p">,</span>
+            <span class="s2">"AP"</span><span class="p">:</span> <span class="n">average_precision_score</span><span class="p">(</span><span class="n">y_valid</span><span class="p">,</span> <span class="n">scores</span><span class="p">),</span>
+            <span class="s2">"trapezoid_PR_area"</span><span class="p">:</span> <span class="n">auc</span><span class="p">(</span><span class="n">recall</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">precision</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]),</span>
+            <span class="s2">"ROC_AUC"</span><span class="p">:</span> <span class="n">roc_auc_score</span><span class="p">(</span><span class="n">y_valid</span><span class="p">,</span> <span class="n">scores</span><span class="p">),</span>
+            <span class="s2">"Brier"</span><span class="p">:</span> <span class="n">brier_score_loss</span><span class="p">(</span><span class="n">y_valid</span><span class="p">,</span> <span class="n">scores</span><span class="p">),</span>
+        <span class="p">}</span>
+    <span class="p">)</span>
+<span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">rows</span><span class="p">)</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s2">"model"</span><span class="p">)</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span>
+</pre></div>
+<details class="result-text"><summary>2b. Interpretar la llamada al estimador desde las matemáticas · salida calculada</summary><pre>                         AP  trapezoid_PR_area  ROC_AUC   Brier
+model
+Logistic unweighted  0.0924             0.0838   0.6410  0.0406
+Logistic balanced    0.0910             0.0838   0.6503  0.2199
+XGBoost weighted     0.0618             0.0590   0.6164  0.1349</pre></details></section><section class="cell" id="cell-weighting-readout"><p>La siguiente comparación mantiene fijos la partición, la familia del modelo logístico, el escalador y <code>C</code> y solo cambia <code>class_weight</code>. Las filas de validación muestran cómo esa decisión de ajuste afecta las métricas de ordenamiento, la escala de probabilidad sin procesar y una regla de acción con umbral fijo de 0,5. La comparación con 0,5 es solo diagnóstica; no es el umbral elegido. La tabla de costos posterior selecciona una política distinta con los datos de validación.</p>
+<p>Una puntuación de Brier menor indica menor error cuadrático de probabilidad en estas filas de validación, pero una sola partición no permite establecer la calibración para prevalencias futuras. Si se necesitan probabilidades naturales, ajuste una función de calibración con datos separados de los usados para elegir el umbral o mediante calibración con validación cruzada. Después, elija un umbral según los costos declarados, la capacidad u otra restricción operativa. Aquí usamos las puntuaciones de validación para ilustrar ambos pasos conceptualmente; no ajustamos un calibrador ni usamos la prueba para elegir una política.</p></section><section class="cell" id="cell-weighting-option-comparison"><div class="cell-label">Python · ejecutar en el cuaderno</div><div class="highlight"><pre><span></span><span class="c1"># Controlled validation comparison: only the logistic class_weight setting changes.</span>
+<span class="n">fixed_threshold</span> <span class="o">=</span> <span class="mf">0.5</span>
+<span class="n">comparison_C_FN</span><span class="p">,</span> <span class="n">comparison_C_FP</span> <span class="o">=</span> <span class="mf">20.0</span><span class="p">,</span> <span class="mf">1.0</span>
+<span class="n">weighting_rows</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">"Logistic unweighted"</span><span class="p">,</span> <span class="s2">"Logistic balanced"</span><span class="p">]:</span>
+    <span class="n">scores</span> <span class="o">=</span> <span class="n">valid_scores</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+    <span class="n">predicted</span> <span class="o">=</span> <span class="n">scores</span> <span class="o">&gt;=</span> <span class="n">fixed_threshold</span>
+    <span class="n">weighting_rows</span><span class="o">.</span><span class="n">append</span><span class="p">({</span>
+        <span class="s2">"fit objective"</span><span class="p">:</span> <span class="n">name</span><span class="p">,</span>
+        <span class="s2">"average precision"</span><span class="p">:</span> <span class="n">average_precision_score</span><span class="p">(</span><span class="n">y_valid</span><span class="p">,</span> <span class="n">scores</span><span class="p">),</span>
+        <span class="s2">"Brier score"</span><span class="p">:</span> <span class="n">brier_score_loss</span><span class="p">(</span><span class="n">y_valid</span><span class="p">,</span> <span class="n">scores</span><span class="p">),</span>
+        <span class="s2">"alerts at fixed threshold 0.5"</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">predicted</span><span class="o">.</span><span class="n">sum</span><span class="p">()),</span>
+        <span class="s2">"validation cost at 0.5"</span><span class="p">:</span> <span class="n">empirical_cost</span><span class="p">(</span><span class="n">y_valid</span><span class="p">,</span> <span class="n">scores</span><span class="p">,</span> <span class="n">fixed_threshold</span><span class="p">,</span> <span class="n">comparison_C_FN</span><span class="p">,</span> <span class="n">comparison_C_FP</span><span class="p">),</span>
+    <span class="p">})</span>
+<span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">weighting_rows</span><span class="p">)</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s2">"fit objective"</span><span class="p">)</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span>
+</pre></div>
+<details class="result-text"><summary>2b. Interpretar la llamada al estimador desde las matemáticas · salida calculada</summary><pre>                     average precision  Brier score  \
+fit objective
+Logistic unweighted             0.0924       0.0406
+Logistic balanced               0.0910       0.2199
+
+                     alerts at fixed threshold 0.5  validation cost at 0.5
+fit objective
+Logistic unweighted                              0                   860.0
+Logistic balanced                              335                   733.0</pre></details></section><section class="cell" id="cell-cell-006"><h2 id="section-7">3. Métricas PR y ROC</h2>
+<p>La precisión esperada de una clasificación sin capacidad predictiva es la prevalencia. La precisión media pondera la precisión por los incrementos de exhaustividad; el área trapezoidal interpola linealmente los puntos de la curva y, por lo general, da un resultado distinto. ROC-AUC resume el ordenamiento a lo largo de las tasas de falsos positivos, pero un ROC-AUC alto no garantiza una precisión útil en alertas cuando la prevalencia es baja. Ninguna de estas métricas elige un umbral.</p>
+<p>Para niveles de exhaustividad ordenados desde los umbrales más estrictos hasta los más laxos, $\operatorname{AP}=\sum_j(R_j-R_{j-1})P_j$. Cada precisión alcanzada se pondera por el incremento de exhaustividad correspondiente. La línea de prevalencia es una referencia poblacional de precisión sin capacidad predictiva; en una muestra finita, la precisión media de un ordenamiento aleatorio no tiene por qué coincidir exactamente con ella.</p></section><section class="cell" id="cell-cell-007"><h2 id="section-8">La precisión depende de la prevalencia</h2>
+<p>Con un umbral fijo, sea TPR la exhaustividad y FPR la tasa de falsos positivos. La regla de Bayes da</p>
+<p>$$\operatorname{Precision}=\frac{\pi\,\operatorname{TPR}}{\pi\,\operatorname{TPR}+(1-\pi)\,\operatorname{FPR}}.$$</p>
+<p>Cuando la prevalencia $\pi$ es baja, incluso una FPR moderada puede generar muchas alertas falsas. Esta identidad explica por qué el ordenamiento ROC puede parecer bueno mientras la precisión sigue siendo limitada para una exhaustividad útil.</p></section><section class="cell" id="cell-cell-008"><div class="cell-label">Python · ejecutar en el cuaderno</div><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">roc_curve</span>
+
+<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mf">4.5</span><span class="p">))</span>
+<span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">scores</span> <span class="ow">in</span> <span class="n">valid_scores</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="n">precision</span><span class="p">,</span> <span class="n">recall</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">precision_recall_curve</span><span class="p">(</span><span class="n">y_valid</span><span class="p">,</span> <span class="n">scores</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+        <span class="n">recall</span><span class="p">,</span>
+        <span class="n">precision</span><span class="p">,</span>
+        <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> AP=</span><span class="si">{</span><span class="n">average_precision_score</span><span class="p">(</span><span class="n">y_valid</span><span class="p">,</span><span class="w"> </span><span class="n">scores</span><span class="p">)</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">fpr</span><span class="p">,</span> <span class="n">tpr</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">roc_curve</span><span class="p">(</span><span class="n">y_valid</span><span class="p">,</span> <span class="n">scores</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">fpr</span><span class="p">,</span> <span class="n">tpr</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> AUC=</span><span class="si">{</span><span class="n">roc_auc_score</span><span class="p">(</span><span class="n">y_valid</span><span class="p">,</span><span class="w"> </span><span class="n">scores</span><span class="p">)</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">axhline</span><span class="p">(</span><span class="n">y_valid</span><span class="o">.</span><span class="n">mean</span><span class="p">(),</span> <span class="n">color</span><span class="o">=</span><span class="s2">"black"</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s2">"--"</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"prevalence"</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">xlabel</span><span class="o">=</span><span class="s2">"recall"</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s2">"precision"</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">"Validation PR"</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="s2">"black"</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s2">"--"</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set</span><span class="p">(</span>
+    <span class="n">xlabel</span><span class="o">=</span><span class="s2">"false positive rate"</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s2">"true positive rate"</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">"Validation ROC"</span>
+<span class="p">)</span>
+<span class="k">for</span> <span class="n">axis</span> <span class="ow">in</span> <span class="n">axes</span><span class="p">:</span>
+    <span class="n">axis</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+</pre></div>
+<figure class="result-figure"><img loading="lazy" src="../results/04_imbalanced_learning-cell-008-0.png" alt="Resultado ejecutado: la precisión depende de la prevalencia"><figcaption>La precisión depende de la prevalencia · salida capturada del cuaderno</figcaption></figure></section><section class="cell" id="cell-cell-009"><h2 id="section-9">4. Costo en validación y prueba final</h2>
+<p>Con una probabilidad natural calibrada $p$ y costos constantes, se predice la clase positiva cuando $C_{FP}(1-p)\le C_{FN}p$, lo que equivale a $p\ge C_{FP}/(C_{FP}+C_{FN})$. Esto supone que el riesgo está calibrado y que las acciones no tienen restricciones. Elegimos umbrales empíricos con las puntuaciones de validación, los fijamos y evaluamos la prueba una sola vez.</p></section><section class="cell" id="cell-cell-010"><div class="cell-label">Python · ejecutar en el cuaderno</div><div class="highlight"><pre><span></span><span class="n">C_FN</span><span class="p">,</span> <span class="n">C_FP</span> <span class="o">=</span> <span class="mf">20.0</span><span class="p">,</span> <span class="mf">1.0</span>
+<span class="n">grid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">r_</span><span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.01</span><span class="p">,</span> <span class="mf">0.99</span><span class="p">,</span> <span class="mi">197</span><span class="p">),</span> <span class="mf">1.0</span><span class="p">])</span>
+<span class="n">thresholds</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">scores</span> <span class="ow">in</span> <span class="n">valid_scores</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="n">costs</span> <span class="o">=</span> <span class="p">[</span><span class="n">empirical_cost</span><span class="p">(</span><span class="n">y_valid</span><span class="p">,</span> <span class="n">scores</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">C_FN</span><span class="p">,</span> <span class="n">C_FP</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">grid</span><span class="p">]</span>
+    <span class="n">thresholds</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">grid</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">costs</span><span class="p">))])</span>
+<span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+    <span class="p">{</span>
+        <span class="s2">"threshold"</span><span class="p">:</span> <span class="n">thresholds</span><span class="p">,</span>
+        <span class="s2">"validation_cost"</span><span class="p">:</span> <span class="p">{</span>
+            <span class="n">n</span><span class="p">:</span> <span class="n">empirical_cost</span><span class="p">(</span><span class="n">y_valid</span><span class="p">,</span> <span class="n">valid_scores</span><span class="p">[</span><span class="n">n</span><span class="p">],</span> <span class="n">t</span><span class="p">,</span> <span class="n">C_FN</span><span class="p">,</span> <span class="n">C_FP</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">thresholds</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+        <span class="p">},</span>
+        <span class="s2">"alert_rate"</span><span class="p">:</span> <span class="p">{</span><span class="n">n</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">valid_scores</span><span class="p">[</span><span class="n">n</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">t</span><span class="p">)</span> <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">thresholds</span><span class="o">.</span><span class="n">items</span><span class="p">()},</span>
+    <span class="p">}</span>
+<span class="p">)</span><span class="o">.</span><span class="n">T</span>
+</pre></div>
+<details class="result-text"><summary>4. Costo en validación y prueba final · salida calculada</summary><pre>                 Logistic unweighted  Logistic balanced  XGBoost weighted
+threshold                      0.030              0.410             0.335
+validation_cost              706.000            667.000           705.000
+alert_rate                     0.581              0.542             0.370</pre></details></section><section class="cell" id="cell-threshold-tradeoff"><h3 id="section-10">Examine el equilibrio en validación antes de fijar la política</h3>
+<p>El primer mínimo que devuelve <code>np.argmin</code> es el elegido; como los umbrales están ordenados de menor a mayor, si hay empate de costos se elige el umbral más bajo. Esto tiende a generar más alertas entre las políticas empatadas. Los costos son unidades ilustrativas: 20 por cada falso negativo y 1 por cada falso positivo. Ambos paneles usan únicamente filas de validación.</p></section><section class="cell" id="cell-threshold-tradeoff-code"><div class="cell-label">Python · ejecutar en el cuaderno</div><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
+<span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">scores</span> <span class="ow">in</span> <span class="n">valid_scores</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="n">costs</span> <span class="o">=</span> <span class="p">[</span><span class="n">empirical_cost</span><span class="p">(</span><span class="n">y_valid</span><span class="p">,</span> <span class="n">scores</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">C_FN</span><span class="p">,</span> <span class="n">C_FP</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">grid</span><span class="p">]</span>
+    <span class="n">alerts</span> <span class="o">=</span> <span class="p">[(</span><span class="n">scores</span> <span class="o">&gt;=</span> <span class="n">t</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">grid</span><span class="p">]</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">grid</span><span class="p">,</span> <span class="n">costs</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">grid</span><span class="p">,</span> <span class="n">alerts</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">thresholds</span><span class="p">[</span><span class="n">name</span><span class="p">],</span> <span class="nb">min</span><span class="p">(</span><span class="n">costs</span><span class="p">),</span> <span class="n">s</span><span class="o">=</span><span class="mi">30</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">xlabel</span><span class="o">=</span><span class="s2">"Threshold"</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s2">"Validation cost"</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">"Choose a policy using validation"</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">xlabel</span><span class="o">=</span><span class="s2">"Threshold"</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s2">"Number of validation alerts"</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">"Operational workload"</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">axis</span> <span class="ow">in</span> <span class="n">axes</span><span class="p">:</span>
+    <span class="n">axis</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+<figure class="result-figure"><img loading="lazy" src="../results/04_imbalanced_learning-threshold-tradeoff-code-0.png" alt="Resultado ejecutado: costo en validación y prueba final"><figcaption>4. Costo en validación y prueba final · salida capturada del cuaderno</figcaption></figure></section><section class="cell" id="cell-cell-011"><h3 id="section-11">Política de referencia para la prueba final</h3>
+<p>La política que siempre predice la clase negativa no genera alertas y omite todos los casos positivos. Su exactitud es uno menos la prevalencia de la prueba. Compare los modelos congelados de abajo con esta referencia usando las mismas unidades de costo; ni la referencia ni los resultados de prueba se usan para ajustar un umbral.</p></section><section class="cell" id="cell-cell-012"><div class="cell-label">Python · ejecutar en el cuaderno</div><div class="highlight"><pre><span></span><span class="n">test_negative</span><span class="p">,</span> <span class="n">test_positive</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">bincount</span><span class="p">(</span><span class="n">y_test</span><span class="p">,</span> <span class="n">minlength</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">baseline</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+    <span class="p">[</span>
+        <span class="p">{</span>
+            <span class="s2">"accuracy"</span><span class="p">:</span> <span class="n">test_negative</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">y_test</span><span class="p">),</span>
+            <span class="s2">"recall"</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span>
+            <span class="s2">"alerts"</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="s2">"missed positives"</span><span class="p">:</span> <span class="n">test_positive</span><span class="p">,</span>
+        <span class="p">}</span>
+    <span class="p">],</span>
+    <span class="n">index</span><span class="o">=</span><span class="p">[</span><span class="s2">"always negative"</span><span class="p">],</span>
+<span class="p">)</span>
+<span class="n">baseline</span>
+</pre></div>
+<details class="result-text"><summary>4. Costo en validación y prueba final · salida calculada</summary><pre>                 accuracy  recall  alerts  missed positives
+always negative     0.957     0.0       0                43</pre></details></section><section class="cell" id="cell-cell-013"><div class="cell-label">Python · ejecutar en el cuaderno</div><div class="highlight"><pre><span></span><span class="n">rows</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">model</span> <span class="ow">in</span> <span class="n">models</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="n">scores</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">predict_proba</span><span class="p">(</span><span class="n">X_test</span><span class="p">)[:,</span> <span class="mi">1</span><span class="p">]</span>
+    <span class="n">prediction</span> <span class="o">=</span> <span class="n">scores</span> <span class="o">&gt;=</span> <span class="n">thresholds</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+    <span class="n">tn</span><span class="p">,</span> <span class="n">fp</span><span class="p">,</span> <span class="n">fn</span><span class="p">,</span> <span class="n">tp</span> <span class="o">=</span> <span class="n">confusion_matrix</span><span class="p">(</span><span class="n">y_test</span><span class="p">,</span> <span class="n">prediction</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
+    <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+        <span class="p">{</span>
+            <span class="s2">"model"</span><span class="p">:</span> <span class="n">name</span><span class="p">,</span>
+            <span class="s2">"threshold"</span><span class="p">:</span> <span class="n">thresholds</span><span class="p">[</span><span class="n">name</span><span class="p">],</span>
+            <span class="s2">"TP"</span><span class="p">:</span> <span class="n">tp</span><span class="p">,</span>
+            <span class="s2">"FP"</span><span class="p">:</span> <span class="n">fp</span><span class="p">,</span>
+            <span class="s2">"FN"</span><span class="p">:</span> <span class="n">fn</span><span class="p">,</span>
+            <span class="s2">"TN"</span><span class="p">:</span> <span class="n">tn</span><span class="p">,</span>
+            <span class="s2">"precision"</span><span class="p">:</span> <span class="n">precision_score</span><span class="p">(</span><span class="n">y_test</span><span class="p">,</span> <span class="n">prediction</span><span class="p">,</span> <span class="n">zero_division</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span>
+            <span class="s2">"recall"</span><span class="p">:</span> <span class="n">recall_score</span><span class="p">(</span><span class="n">y_test</span><span class="p">,</span> <span class="n">prediction</span><span class="p">,</span> <span class="n">zero_division</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span>
+            <span class="s2">"AP"</span><span class="p">:</span> <span class="n">average_precision_score</span><span class="p">(</span><span class="n">y_test</span><span class="p">,</span> <span class="n">scores</span><span class="p">),</span>
+            <span class="s2">"ROC_AUC"</span><span class="p">:</span> <span class="n">roc_auc_score</span><span class="p">(</span><span class="n">y_test</span><span class="p">,</span> <span class="n">scores</span><span class="p">),</span>
+            <span class="s2">"cost"</span><span class="p">:</span> <span class="n">C_FN</span> <span class="o">*</span> <span class="n">fn</span> <span class="o">+</span> <span class="n">C_FP</span> <span class="o">*</span> <span class="n">fp</span><span class="p">,</span>
+            <span class="s2">"test_alert_rate"</span><span class="p">:</span> <span class="n">prediction</span><span class="o">.</span><span class="n">mean</span><span class="p">(),</span>
+        <span class="p">}</span>
+    <span class="p">)</span>
+<span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">({</span>
+    <span class="s2">"model"</span><span class="p">:</span> <span class="s2">"Always negative"</span><span class="p">,</span> <span class="s2">"threshold"</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span>
+    <span class="s2">"TP"</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">"FP"</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">"FN"</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">test_positive</span><span class="p">),</span> <span class="s2">"TN"</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">test_negative</span><span class="p">),</span>
+    <span class="s2">"precision"</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span> <span class="s2">"recall"</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span> <span class="s2">"AP"</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="s2">"ROC_AUC"</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span>
+    <span class="s2">"cost"</span><span class="p">:</span> <span class="n">C_FN</span> <span class="o">*</span> <span class="n">test_positive</span><span class="p">,</span> <span class="s2">"test_alert_rate"</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span>
+<span class="p">})</span>
+<span class="c1"># AP and ROC-AUC are omitted for this action-only reference policy.</span>
+<span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">rows</span><span class="p">)</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s2">"model"</span><span class="p">)</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span>
+</pre></div>
+<details class="result-text"><summary>4. Costo en validación y prueba final · salida calculada</summary><pre>                     threshold  TP   FP  FN   TN  precision  recall      AP  \
+model
+Logistic unweighted      0.030  29  558  14  399     0.0494  0.6744  0.0813
+Logistic balanced        0.410  28  518  15  439     0.0513  0.6512  0.0822
+XGBoost weighted         0.335  19  344  24  613     0.0523  0.4419  0.0703
+Always negative            NaN   0    0  43  957     0.0000  0.0000     NaN
+
+                     ROC_AUC   cost  test_alert_rate
+model
+Logistic unweighted   0.5944  838.0            0.587
+Logistic balanced     0.5973  818.0            0.546
+XGBoost weighted      0.5371  824.0            0.363
+Always negative          NaN  860.0            0.000</pre></details></section><section class="cell" id="cell-cell-014"><h2 id="section-12">Limitaciones</h2>
+<p>La búsqueda del umbral puede sobreajustarse a la validación. Las probabilidades de modelos ponderados no tienen por qué estar calibradas con la prevalencia natural. No se realiza remuestreo y la división se hace antes de cualquier ajuste. Estos datos sintéticos controlados no justifican afirmaciones operativas.</p></section></article><p><a href="04_imbalanced_learning-results.html">Explora la galería de resultados ejecutados de esta lección →</a></p><nav class="actions" aria-label="Secuencia de estudio"><a href="03_xgboost.html">← 03: XGBoost</a><a href="index.html#lectures">Todas las lecciones</a><a href="05_text_classification.html">05: Clasificación de texto →</a></nav></main></div><footer>Mathematical ML · Ocho lecciones prácticas para matemáticos<br>Python legible · Experimentos reproducibles · Datos sintéticos didácticos</footer></body></html>

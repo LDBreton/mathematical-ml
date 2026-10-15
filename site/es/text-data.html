@@ -1,0 +1,34 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Ocho lecciones de aprendizaje automático para matemáticos: fundamentos, opciones de software y ejemplos guiados en Python."><title>Datos de texto · Mathematical ML</title><link rel="stylesheet" href="../style.css"><script defer src="../site.js"></script><script>window.MathJax={tex:{inlineMath:[['$','$'],['\\(','\\)']]}};</script><script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script><link rel="alternate" hreflang="en" href="../text-data.html"><link rel="alternate" hreflang="es" href="text-data.html"><link rel="alternate" hreflang="x-default" href="../text-data.html"></head><body><a class="skip" href="#main">Saltar al contenido</a><header><button class="menu" aria-controls="sidebar" aria-expanded="false" aria-label="Mostrar u ocultar la navegación del curso">☰</button><a class="brand" href="index.html">∑ <span>Mathematical ML</span></a><nav aria-label="Enlaces rápidos"><a href="setup.html">Comenzar</a><a href="index.html#lectures">Lecciones</a><button id="theme" aria-label="Cambiar tema de color">◐</button></nav><nav class="languages" aria-label="Idioma"><a href="../text-data.html" lang="en" hreflang="en">English</a><a href="text-data.html" lang="es" hreflang="es" aria-current="true">Español</a></nav></header><div class="layout"><aside id="sidebar" aria-label="Navegación del curso"><a href="index.html">Presentación del curso</a><h3>Comienza aquí</h3><a href="setup.html">Instalación &amp; primeros pasos</a><a href="first-steps.html">¿Nuevo en aprendizaje automático? Comienza aquí</a><h3>Las lecciones</h3><details><summary><a href="01_regression.html">01 · Regresión</a></summary><a class="sub" href="01_regression-lesson.html">Fundamentos &amp; ejemplos</a></details><details><summary><a href="02_classification.html">02 · Clasificación</a></summary><a class="sub" href="02_classification-lesson.html">Fundamentos &amp; ejemplos</a></details><details><summary><a href="03_xgboost.html">03 · XGBoost</a></summary><a class="sub" href="03_xgboost-lesson.html">Fundamentos &amp; ejemplos</a></details><details><summary><a href="04_imbalanced_learning.html">04 · Aprendizaje con clases desbalanceadas</a></summary><a class="sub" href="04_imbalanced_learning-lesson.html">Fundamentos &amp; ejemplos</a></details><details><summary><a href="05_text_classification.html">05 · Clasificación de texto</a></summary><a class="sub" href="05_text_classification-lesson.html">Fundamentos &amp; ejemplos</a></details><details><summary><a href="06_clustering.html">06 · Agrupamiento</a></summary><a class="sub" href="06_clustering-lesson.html">Fundamentos &amp; ejemplos</a></details><details><summary><a href="07_time_series.html">07 · Pronóstico de series temporales</a></summary><a class="sub" href="07_time_series-lesson.html">Fundamentos &amp; ejemplos</a></details><details><summary><a href="08_deployment.html">08 · Del modelo al servicio</a></summary><a class="sub" href="08_deployment-lesson.html">Fundamentos &amp; ejemplos</a></details><h3>Recursos</h3><a href="results.html">Galerías de resultados ejecutados</a><a href="datasets.html">Conjuntos de datos</a><a href="course-project.html">Proyecto del curso</a><a href="instructor.html">Guía docente</a><a href="verification.html">Verificación</a></aside><main id="main"><p class="translation-note">Versión en español. El código, los datos, las salidas calculadas y las etiquetas dentro de las figuras se conservan en su idioma original. Los cuadernos descargables están en inglés.</p><article class="reading"><h1>Solicitudes de soporte para la lección 05</h1>
+<p><code>support_tickets.csv</code> es un conjunto didáctico determinista y enteramente sintético. Contiene 480 variantes redactadas: 96 solicitudes en cada una de cinco categorías del mismo tamaño y 60 grupos de plantillas escritos independientemente. Cada grupo tiene ocho variantes relacionadas. No se usaron mensajes, personas, organizaciones ni registros de clientes reales.</p>
+<table>
+<thead>
+<tr>
+<th>Columna</th>
+<th>Significado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ticket_id</code></td>
+<td>Identificador estable de fila (<code>T-0001</code> hasta <code>T-0480</code>).</td>
+</tr>
+<tr>
+<td><code>category</code></td>
+<td>Cola de soporte prevista: <code>account_access</code>, <code>billing</code>, <code>order_status</code>, <code>refund_return</code>, o <code>technical_issue</code>.</td>
+</tr>
+<tr>
+<td><code>template_group</code></td>
+<td>Identificador de la familia de plantillas redactada independientemente para generar la fila. Las ocho variantes relacionadas comparten este ID. Úsalo como grupo al dividir para impedir que mensajes hermanos aparezcan en entrenamiento, validación y prueba.</td>
+</tr>
+<tr>
+<td><code>text</code></td>
+<td>Solicitud breve y sintética al estilo de un cliente. Los nombres y códigos de referencia son ficticios o reservados para ejemplos.</td>
+</tr>
+</tbody>
+</table>
+<p>El conjunto está balanceado por construcción: 12 grupos por categoría y ocho filas por grupo. La lección asigna ocho grupos por categoría al entrenamiento, dos a validación y dos a prueba: 320, 80 y 80 filas, respectivamente, con 64, 16 y 16 filas de cada categoría por partición. La partición es reproducible y conserva cada grupo de plantillas intacto.</p>
+<p>Regenera desde la raíz del repositorio con:</p>
+<div class="highlight"><pre><span></span><span class="p">.</span><span class="n">venv</span><span class="p">\</span><span class="n">Scripts</span><span class="p">\</span><span class="n">python</span><span class="p">.</span><span class="n">exe</span> <span class="n">scripts</span><span class="p">\</span><span class="n">generate_text_data</span><span class="p">.</span><span class="n">py</span>
+</pre></div>
+
+<p>Es una actividad con plantillas redactadas, no un benchmark de lenguaje real. Las estructuras repetidas y el vocabulario pequeño permiten enseñar TF-IDF, modelos lineales dispersos, macro-F1 y fuga de información. Las puntuaciones no estiman desempeño con solicitudes reales, lenguaje cambiante, colas desbalanceadas ni costos operativos. Estos datos no respaldan afirmaciones de preparación para producción ni resultados para clientes.</p></article></main></div><footer>Mathematical ML · Ocho lecciones prácticas para matemáticos<br>Python legible · Experimentos reproducibles · Datos sintéticos didácticos</footer></body></html>

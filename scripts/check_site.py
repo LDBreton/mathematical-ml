@@ -34,7 +34,7 @@ class LocalLinks(HTMLParser):
 
 
 if __name__ == "__main__":
-    pages = sorted((ROOT / "site").glob("*.html"))
+    pages = sorted((ROOT / "site").rglob("*.html"))
     if not pages:
         raise SystemExit("Build the website first: python scripts/build_site.py")
     errors = []

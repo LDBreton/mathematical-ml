@@ -23,11 +23,23 @@ sidebar.querySelectorAll('a').forEach(link => {
 const themeButton = document.querySelector('#theme');
 function setTheme(theme) {
   document.documentElement.dataset.theme = theme;
-  themeButton.setAttribute('aria-label', `Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`);
+  const spanish = document.documentElement.lang === 'es';
+  themeButton.setAttribute('aria-label', spanish
+    ? `Cambiar a modo ${theme === 'dark' ? 'claro' : 'oscuro'}`
+    : `Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`);
 }
 try { setTheme(localStorage.getItem('course-theme') || 'light'); } catch { setTheme('light'); }
 themeButton.addEventListener('click', () => {
   const theme = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
   setTheme(theme);
   try { localStorage.setItem('course-theme', theme); } catch { /* Storage may be disabled. */ }
+});
+
+// Keep the current section when switching languages; never redirect the default.
+document.querySelectorAll('.languages a').forEach(link => {
+  link.addEventListener('click', () => {
+    const destination = new URL(link.href);
+    destination.hash = location.hash;
+    link.href = destination.href;
+  });
 });

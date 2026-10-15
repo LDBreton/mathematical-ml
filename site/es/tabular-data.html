@@ -1,0 +1,149 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Ocho lecciones de aprendizaje automático para matemáticos: fundamentos, opciones de software y ejemplos guiados en Python."><title>Datos tabulares adicionales · Mathematical ML</title><link rel="stylesheet" href="../style.css"><script defer src="../site.js"></script><script>window.MathJax={tex:{inlineMath:[['$','$'],['\\(','\\)']]}};</script><script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script><link rel="alternate" hreflang="en" href="../tabular-data.html"><link rel="alternate" hreflang="es" href="tabular-data.html"><link rel="alternate" hreflang="x-default" href="../tabular-data.html"></head><body><a class="skip" href="#main">Saltar al contenido</a><header><button class="menu" aria-controls="sidebar" aria-expanded="false" aria-label="Mostrar u ocultar la navegación del curso">☰</button><a class="brand" href="index.html">∑ <span>Mathematical ML</span></a><nav aria-label="Enlaces rápidos"><a href="setup.html">Comenzar</a><a href="index.html#lectures">Lecciones</a><button id="theme" aria-label="Cambiar tema de color">◐</button></nav><nav class="languages" aria-label="Idioma"><a href="../tabular-data.html" lang="en" hreflang="en">English</a><a href="tabular-data.html" lang="es" hreflang="es" aria-current="true">Español</a></nav></header><div class="layout"><aside id="sidebar" aria-label="Navegación del curso"><a href="index.html">Presentación del curso</a><h3>Comienza aquí</h3><a href="setup.html">Instalación &amp; primeros pasos</a><a href="first-steps.html">¿Nuevo en aprendizaje automático? Comienza aquí</a><h3>Las lecciones</h3><details><summary><a href="01_regression.html">01 · Regresión</a></summary><a class="sub" href="01_regression-lesson.html">Fundamentos &amp; ejemplos</a></details><details><summary><a href="02_classification.html">02 · Clasificación</a></summary><a class="sub" href="02_classification-lesson.html">Fundamentos &amp; ejemplos</a></details><details><summary><a href="03_xgboost.html">03 · XGBoost</a></summary><a class="sub" href="03_xgboost-lesson.html">Fundamentos &amp; ejemplos</a></details><details><summary><a href="04_imbalanced_learning.html">04 · Aprendizaje con clases desbalanceadas</a></summary><a class="sub" href="04_imbalanced_learning-lesson.html">Fundamentos &amp; ejemplos</a></details><details><summary><a href="05_text_classification.html">05 · Clasificación de texto</a></summary><a class="sub" href="05_text_classification-lesson.html">Fundamentos &amp; ejemplos</a></details><details><summary><a href="06_clustering.html">06 · Agrupamiento</a></summary><a class="sub" href="06_clustering-lesson.html">Fundamentos &amp; ejemplos</a></details><details><summary><a href="07_time_series.html">07 · Pronóstico de series temporales</a></summary><a class="sub" href="07_time_series-lesson.html">Fundamentos &amp; ejemplos</a></details><details><summary><a href="08_deployment.html">08 · Del modelo al servicio</a></summary><a class="sub" href="08_deployment-lesson.html">Fundamentos &amp; ejemplos</a></details><h3>Recursos</h3><a href="results.html">Galerías de resultados ejecutados</a><a href="datasets.html">Conjuntos de datos</a><a href="course-project.html">Proyecto del curso</a><a href="instructor.html">Guía docente</a><a href="verification.html">Verificación</a></aside><main id="main"><p class="translation-note">Versión en español. El código, los datos, las salidas calculadas y las etiquetas dentro de las figuras se conservan en su idioma original. Los cuadernos descargables están en inglés.</p><article class="reading"><h1>Conjuntos de datos tabulares adicionales</h1>
+<p>Ambos archivos son conjuntos didácticos sintéticos y deterministas. Regenera los CSV desde la raíz con <code>.venv/Scripts/python.exe scripts/generate_tabular_extensions.py</code>. Los generadores de fraude y clientes usan generadores aleatorios NumPy independientes con semillas 404 y 606. Solo escriben los dos CSV; esta nota documenta sus versiones guardadas.</p>
+<p>Las variables monetarias usan unidades arbitrarias. El índice de riesgo del comercio es un predictor artificial, no una probabilidad validada externamente.</p>
+<h2><code>fraud.csv</code></h2>
+<p>La tabla contiene 5,000 escenarios independientes de transacciones. Los parámetros lognormales de NumPy son la media y desviación estándar de la normal subyacente. El importe se limita a [2, 1800]; los campos continuos se redondean a cinco decimales.</p>
+<table>
+<thead>
+<tr>
+<th>Columna</th>
+<th>Generación sintética</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>amount</code></td>
+<td>LogNormal(3.45, 0.85), limitado a [2, 1800]</td>
+</tr>
+<tr>
+<td><code>hour</code></td>
+<td>Entero uniforme entre 0 y 23</td>
+</tr>
+<tr>
+<td><code>card_present</code></td>
+<td>Bernoulli(0.72)</td>
+</tr>
+<tr>
+<td><code>international</code></td>
+<td>Bernoulli(0.11)</td>
+</tr>
+<tr>
+<td><code>account_age_days</code></td>
+<td>Entero uniforme entre 3 y 3650</td>
+</tr>
+<tr>
+<td><code>transactions_24h</code></td>
+<td>Poisson(1.5)</td>
+</tr>
+<tr>
+<td><code>merchant_risk</code></td>
+<td>Beta(2, 5)</td>
+</tr>
+<tr>
+<td><code>fraud</code></td>
+<td>Bernoulli con la probabilidad indicada abajo</td>
+</tr>
+</tbody>
+</table>
+<p>Sea <code>night</code> igual a uno cuando <code>hour &lt;= 5</code> o <code>hour &gt;= 23</code>. La probabilidad de la etiqueta es $\sigma(\eta)=1/(1+e^{-\eta})$, con</p>
+<p>$$
+\eta=-4.35+0.58\log(1+\mathrm{amount}/40)+0.82\,\mathrm{international}+0.72(1-\mathrm{card\_present})+0.43\,\mathrm{night}+0.16\,\mathrm{transactions\_24h}+1.15\,\mathrm{merchant\_risk}-0.12\log(1+\mathrm{account\_age\_days}/90).
+$$</p>
+<p>La muestra guardada con semilla 404 tiene 217 positivos entre 5,000 filas (4.34 %). Divide antes de remuestrear o ajustar el preprocesamiento; las lecciones no remuestrean.</p>
+<h2><code>customer_segments.csv</code></h2>
+<p>Esta tabla tiene 1,200 filas y cuatro grupos ocultos del generador. Los centros de las variables se muestran en unidades originales. Los valores se muestrean independientemente condicionados al grupo con las distribuciones siguientes y se limitan y redondean. En particular, el gasto anual se genera independientemente del número y valor medio de pedidos: son variables artificiales, no un registro contable consistente.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: right;"><code>segment_truth</code></th>
+<th style="text-align: right;">Filas</th>
+<th style="text-align: right;">Días desde la última compra</th>
+<th style="text-align: right;">Pedidos / 12 meses</th>
+<th style="text-align: right;">Valor medio del pedido</th>
+<th style="text-align: right;">Gasto anual</th>
+<th style="text-align: right;">Proporción por internet</th>
+<th style="text-align: right;">Antigüedad en meses</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">320</td>
+<td style="text-align: right;">78</td>
+<td style="text-align: right;">2.2</td>
+<td style="text-align: right;">180</td>
+<td style="text-align: right;">470</td>
+<td style="text-align: right;">0.20</td>
+<td style="text-align: right;">30</td>
+</tr>
+<tr>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">300</td>
+<td style="text-align: right;">30</td>
+<td style="text-align: right;">10.5</td>
+<td style="text-align: right;">360</td>
+<td style="text-align: right;">980</td>
+<td style="text-align: right;">0.62</td>
+<td style="text-align: right;">22</td>
+</tr>
+<tr>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">300</td>
+<td style="text-align: right;">115</td>
+<td style="text-align: right;">1.4</td>
+<td style="text-align: right;">95</td>
+<td style="text-align: right;">260</td>
+<td style="text-align: right;">0.35</td>
+<td style="text-align: right;">48</td>
+</tr>
+<tr>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">280</td>
+<td style="text-align: right;">18</td>
+<td style="text-align: right;">16</td>
+<td style="text-align: right;">520</td>
+<td style="text-align: right;">1450</td>
+<td style="text-align: right;">0.78</td>
+<td style="text-align: right;">9</td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Distribución condicional e intervalo almacenado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>recency_days</code></td>
+<td>Normal(centro, DE 12; grupo 3 usa DE 6), limitado a [1, 180], redondeado a entero</td>
+</tr>
+<tr>
+<td><code>orders_12m</code></td>
+<td>Poisson(centro del grupo), limitado inferiormente a 0, entero</td>
+</tr>
+<tr>
+<td><code>average_order_value</code></td>
+<td>LogNormal(log(centro), 0.27), limitado inferiormente a 10, redondeado a centavos</td>
+</tr>
+<tr>
+<td><code>annual_spend</code></td>
+<td>LogNormal(log(centro), 0.22), limitado inferiormente a 20, redondeado a centavos</td>
+</tr>
+<tr>
+<td><code>web_share</code></td>
+<td>Beta(max(1.2, 12q), max(1.2, 12(1-q))), limitado a [0, 1], redondeado a 4 decimales</td>
+</tr>
+<tr>
+<td><code>tenure_months</code></td>
+<td>Normal(centro, DE 8), limitado a [1, 72], redondeado a entero</td>
+</tr>
+<tr>
+<td><code>support_contacts_12m</code></td>
+<td>Poisson(0.6 + 0.12 por centro de pedidos del grupo), limitado inferiormente a 0, entero</td>
+</tr>
+</tbody>
+</table>
+<p><code>segment_truth</code> registra el grupo generador únicamente para análisis ARI posterior. Exclúyelo del escalado, PCA, K-means, silueta y selección del número de grupos. No hay registros reales ni personales y las relaciones sintéticas no justifican decisiones reales.</p></article></main></div><footer>Mathematical ML · Ocho lecciones prácticas para matemáticos<br>Python legible · Experimentos reproducibles · Datos sintéticos didácticos</footer></body></html>

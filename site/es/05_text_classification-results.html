@@ -1,0 +1,149 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Ocho lecciones de aprendizaje automático para matemáticos: fundamentos, opciones de software y ejemplos guiados en Python."><title>Clasificación de texto: resultados ejecutados · ML matemático</title><link rel="stylesheet" href="../style.css"><script defer src="../site.js"></script><script>window.MathJax={tex:{inlineMath:[['$','$'],['\\(','\\)']]}};</script><script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script><link rel="alternate" hreflang="en" href="../05_text_classification-results.html"><link rel="alternate" hreflang="es" href="05_text_classification-results.html"><link rel="alternate" hreflang="x-default" href="../05_text_classification-results.html"></head><body><a class="skip" href="#main">Saltar al contenido</a><header><button class="menu" aria-controls="sidebar" aria-expanded="false" aria-label="Mostrar u ocultar la navegación del curso">☰</button><a class="brand" href="index.html">∑ <span>Mathematical ML</span></a><nav aria-label="Enlaces rápidos"><a href="setup.html">Comenzar</a><a href="index.html#lectures">Lecciones</a><button id="theme" aria-label="Cambiar tema de color">◐</button></nav><nav class="languages" aria-label="Idioma"><a href="../05_text_classification-results.html" lang="en" hreflang="en">English</a><a href="05_text_classification-results.html" lang="es" hreflang="es" aria-current="true">Español</a></nav></header><div class="layout"><aside id="sidebar" aria-label="Navegación del curso"><a href="index.html">Presentación del curso</a><h3>Comienza aquí</h3><a href="setup.html">Instalación &amp; primeros pasos</a><a href="first-steps.html">¿Nuevo en aprendizaje automático? Comienza aquí</a><h3>Las lecciones</h3><details><summary><a href="01_regression.html">01 · Regresión</a></summary><a class="sub" href="01_regression-lesson.html">Fundamentos &amp; ejemplos</a></details><details><summary><a href="02_classification.html">02 · Clasificación</a></summary><a class="sub" href="02_classification-lesson.html">Fundamentos &amp; ejemplos</a></details><details><summary><a href="03_xgboost.html">03 · XGBoost</a></summary><a class="sub" href="03_xgboost-lesson.html">Fundamentos &amp; ejemplos</a></details><details><summary><a href="04_imbalanced_learning.html">04 · Aprendizaje con clases desbalanceadas</a></summary><a class="sub" href="04_imbalanced_learning-lesson.html">Fundamentos &amp; ejemplos</a></details><details><summary><a href="05_text_classification.html">05 · Clasificación de texto</a></summary><a class="sub" href="05_text_classification-lesson.html">Fundamentos &amp; ejemplos</a></details><details><summary><a href="06_clustering.html">06 · Agrupamiento</a></summary><a class="sub" href="06_clustering-lesson.html">Fundamentos &amp; ejemplos</a></details><details><summary><a href="07_time_series.html">07 · Pronóstico de series temporales</a></summary><a class="sub" href="07_time_series-lesson.html">Fundamentos &amp; ejemplos</a></details><details><summary><a href="08_deployment.html">08 · Del modelo al servicio</a></summary><a class="sub" href="08_deployment-lesson.html">Fundamentos &amp; ejemplos</a></details><h3>Recursos</h3><a href="results.html">Galerías de resultados ejecutados</a><a href="datasets.html">Conjuntos de datos</a><a href="course-project.html">Proyecto del curso</a><a href="instructor.html">Guía docente</a><a href="verification.html">Verificación</a></aside><main id="main"><p class="translation-note">Versión en español. El código, los datos, las salidas calculadas y las etiquetas dentro de las figuras se conservan en su idioma original. Los cuadernos descargables están en inglés.</p><div class="eyebrow">Lección 05 / Resultados ejecutados</div><h1>Clasificación de texto: resultados</h1><p>Capturados tras ejecutar correctamente el cuaderno proporcionado con datos sintéticos didácticos. Son resultados calculados, distintos de las ilustraciones conceptuales. En cada compilación del sitio se verifican los hashes del código fuente y del conjunto de datos.</p><p><a href="05_text_classification-lesson.html">Lee la explicación y sigue la implementación →</a></p><p class="note"><strong>Qué observar</strong> Inspeccione la pequeña matriz TF-IDF ejecutada antes de leer los resultados con familias de plantillas reservadas. Los sondeos con mensajes nuevos ilustran el comportamiento; no son una estimación independiente de exactitud.</p><h2>Figuras calculadas</h2><section class="gallery-result"><figure class="result-figure"><img loading="lazy" src="../results/05_text_classification-sparse-geometry-code-4.png" alt="Resultado ejecutado: TF-IDF como vector disperso ponderado"><figcaption>2. TF-IDF como vector disperso ponderado · salida capturada del cuaderno</figcaption></figure><a class="result-source" href="05_text_classification-lesson.html#cell-sparse-geometry-code">Celda de origen y explicación →</a></section><h2>Tablas y resultados impresos</h2><section class="gallery-result"><details class="result-text"><summary>1. Cargar los datos y mantener juntas las familias de plantillas · salida calculada</summary><pre>Loaded 480 tickets from 60 template groups.</pre></details><a class="result-source" href="05_text_classification-lesson.html#cell-cell-002">Celda de origen y explicación →</a></section><section class="gallery-result"><details class="result-text"><summary>1. Cargar los datos y mantener juntas las familias de plantillas · salida calculada</summary><pre>  ticket_id category       template_group  \
+0    T-0001  billing  billing-template-01
+1    T-0002  billing  billing-template-01
+2    T-0003  billing  billing-template-01
+
+                                                text
+0  My cloud backup statement lists $18.40 for sea...
+1  My team plan statement lists $42.00 for storag...
+2  My monthly storage statement lists $7.95 for t...</pre></details><a class="result-source" href="05_text_classification-lesson.html#cell-cell-002">Celda de origen y explicación →</a></section><section class="gallery-result"><details class="result-text"><summary>1. Cargar los datos y mantener juntas las familias de plantillas · salida calculada</summary><pre>train     : 320 rows; account_access=64, billing=64, order_status=64, refund_return=64, technical_issue=64
+validation:  80 rows; account_access=16, billing=16, order_status=16, refund_return=16, technical_issue=16
+test      :  80 rows; account_access=16, billing=16, order_status=16, refund_return=16, technical_issue=16</pre></details><a class="result-source" href="05_text_classification-lesson.html#cell-cell-003">Celda de origen y explicación →</a></section><section class="gallery-result"><details class="result-text"><summary>1. Cargar los datos y mantener juntas las familias de plantillas · salida calculada</summary><pre>        template_group category  \
+0  billing-template-01  billing
+1  billing-template-01  billing
+2  billing-template-01  billing
+3  billing-template-01  billing
+
+                                                text
+0  My cloud backup statement lists $18.40 for sea...
+1  My team plan statement lists $42.00 for storag...
+2  My monthly storage statement lists $7.95 for t...
+3  My pro account statement lists $63.20 for the ...</pre></details><a class="result-source" href="05_text_classification-lesson.html#cell-template-siblings-code">Celda de origen y explicación →</a></section><section class="gallery-result"><details class="result-text"><summary>2. TF-IDF como vector disperso ponderado · salida calculada</summary><pre>shape: (320, 598)
+sparse type: csr_matrix
+density: 0.03517454013377926
+norms of first three rows: [1. 1. 1.]
+{&#x27;lowercase&#x27;: True, &#x27;strip_accents&#x27;: None, &#x27;ngram_range&#x27;: (1, 1), &#x27;stop_words&#x27;: None, &#x27;token_pattern&#x27;: &#x27;(?u)\\b\\w\\w+\\b&#x27;, &#x27;use_idf&#x27;: True, &#x27;smooth_idf&#x27;: True, &#x27;sublinear_tf&#x27;: False, &#x27;norm&#x27;: &#x27;l2&#x27;}</pre></details><a class="result-source" href="05_text_classification-lesson.html#cell-cell-005">Celda de origen y explicación →</a></section><section class="gallery-result"><details class="result-text"><summary>2. TF-IDF como vector disperso ponderado · salida calculada</summary><pre>manual smoothed IDF: 2.09861228866811
+scikit-learn stored IDF: 2.09861228866811
+ubiquitous term IDF: 1.0</pre></details><a class="result-source" href="05_text_classification-lesson.html#cell-cell-007">Celda de origen y explicación →</a></section><section class="gallery-result"><details class="result-text"><summary>2. TF-IDF como vector disperso ponderado · salida calculada</summary><pre>                   vocabulary columns  nonzero density  first-row L2 norm
+option
+default                           598           0.0352             1.0000
+min_df=2                          431           0.0476             1.0000
+unigrams+bigrams                 1859           0.0231             1.0000
+max_features=40                    40           0.2727             1.0000
+sublinear_tf=True                 598           0.0352             1.0000
+norm=None                         598           0.0352            16.2972
+smooth_idf=False                  598           0.0352             1.0000</pre></details><a class="result-source" href="05_text_classification-lesson.html#cell-tfidf-option-comparison">Celda de origen y explicación →</a></section><section class="gallery-result"><details class="result-text"><summary>2. TF-IDF como vector disperso ponderado · salida calculada</summary><pre>   count: common  count: rare
+0              1            1
+1              1            1
+2              1            0
+3              1            0
+4              1            0
+5              1            0
+6              1            0
+7              1            0</pre></details><a class="result-source" href="05_text_classification-lesson.html#cell-sparse-geometry-code">Celda de origen y explicación →</a></section><section class="gallery-result"><details class="result-text"><summary>2. TF-IDF como vector disperso ponderado · salida calculada</summary><pre>common    1.000000
+rare      2.098612
+Name: IDF, dtype: float64</pre></details><a class="result-source" href="05_text_classification-lesson.html#cell-sparse-geometry-code">Celda de origen y explicación →</a></section><section class="gallery-result"><details class="result-text"><summary>2. TF-IDF como vector disperso ponderado · salida calculada</summary><pre>   common    rare
+0  0.4302  0.9028
+1  0.4302  0.9028
+2  1.0000  0.0000
+3  1.0000  0.0000
+4  1.0000  0.0000
+5  1.0000  0.0000
+6  1.0000  0.0000
+7  1.0000  0.0000</pre></details><a class="result-source" href="05_text_classification-lesson.html#cell-sparse-geometry-code">Celda de origen y explicación →</a></section><section class="gallery-result"><details class="result-text"><summary>2. TF-IDF como vector disperso ponderado · salida calculada</summary><pre>Cosine(document 0, document 2): 0.430165282498796</pre></details><a class="result-source" href="05_text_classification-lesson.html#cell-sparse-geometry-code">Celda de origen y explicación →</a></section><section class="gallery-result"><details class="result-text"><summary>4. Elegir la regularización en validación y probar una sola vez · salida calculada</summary><pre>       C  macro_f1
+0   0.05  0.542456
+1   0.20  0.540300
+2   1.00  0.549523
+3   5.00  0.523175
+4  20.00  0.512367</pre></details><a class="result-source" href="05_text_classification-lesson.html#cell-cell-010">Celda de origen y explicación →</a></section><section class="gallery-result"><details class="result-text"><summary>4. Elegir la regularización en validación y probar una sola vez · salida calculada</summary><pre>Selected C using validation macro-F1: 1.0</pre></details><a class="result-source" href="05_text_classification-lesson.html#cell-cell-010">Celda de origen y explicación →</a></section><section class="gallery-result"><details class="result-text"><summary>4. Elegir la regularización en validación y probar una sola vez · salida calculada</summary><pre>test accuracy: 0.675
+test macro-F1: 0.6715063520871143
+most-frequent baseline accuracy: 0.2
+most-frequent baseline macro-F1: 0.06666666666666667
+                 precision    recall  f1-score   support
+
+ account_access       0.53      0.50      0.52        16
+        billing       1.00      0.94      0.97        16
+   order_status       0.69      0.56      0.62        16
+  refund_return       0.64      0.88      0.74        16
+technical_issue       0.53      0.50      0.52        16
+
+       accuracy                           0.68        80
+      macro avg       0.68      0.68      0.67        80
+   weighted avg       0.68      0.68      0.67        80
+</pre></details><a class="result-source" href="05_text_classification-lesson.html#cell-cell-011">Celda de origen y explicación →</a></section><section class="gallery-result"><details class="result-text"><summary>4. Elegir la regularización en validación y probar una sola vez · salida calculada</summary><pre>                         predicted: account_access  predicted: billing  \
+actual: account_access                           8                   0
+actual: billing                                  0                  15
+actual: order_status                             7                   0
+actual: refund_return                            0                   0
+actual: technical_issue                          0                   0
+
+                         predicted: order_status  predicted: refund_return  \
+actual: account_access                         1                         0
+actual: billing                                1                         0
+actual: order_status                           9                         0
+actual: refund_return                          2                        14
+actual: technical_issue                        0                         8
+
+                         predicted: technical_issue
+actual: account_access                            7
+actual: billing                                   0
+actual: order_status                              0
+actual: refund_return                             0
+actual: technical_issue                           8</pre></details><a class="result-source" href="05_text_classification-lesson.html#cell-cell-011">Celda de origen y explicación →</a></section><section class="gallery-result"><details class="result-text"><summary>5. Analizar errores y coeficientes · salida calculada</summary><pre>26 errors among 80 held-out rows.</pre></details><a class="result-source" href="05_text_classification-lesson.html#cell-cell-013">Celda de origen y explicación →</a></section><section class="gallery-result"><details class="result-text"><summary>5. Analizar errores y coeficientes · salida calculada</summary><pre>   ticket_id               template_group                   actual/predicted  \
+3     T-0060          billing-template-08            billing -&gt; order_status
+24    T-0137   account_access-template-06  account_access -&gt; technical_issue
+25    T-0138   account_access-template-06  account_access -&gt; technical_issue
+26    T-0139   account_access-template-06  account_access -&gt; technical_issue
+27    T-0140   account_access-template-06     account_access -&gt; order_status
+28    T-0141   account_access-template-06  account_access -&gt; technical_issue
+29    T-0142   account_access-template-06  account_access -&gt; technical_issue
+30    T-0143   account_access-template-06  account_access -&gt; technical_issue
+31    T-0144   account_access-template-06  account_access -&gt; technical_issue
+40    T-0249  technical_issue-template-08   technical_issue -&gt; refund_return
+41    T-0250  technical_issue-template-08   technical_issue -&gt; refund_return
+42    T-0251  technical_issue-template-08   technical_issue -&gt; refund_return
+
+                                                 text
+3   I was billed a second workspace after removing...
+24  The one-time code arrives after it has already...
+25  The one-time code arrives after it has already...
+26  The one-time code arrives after it has already...
+27  The one-time code arrives after it has already...
+28  The one-time code arrives after it has already...
+29  The one-time code arrives after it has already...
+30  The one-time code arrives after it has already...
+31  The one-time code arrives after it has already...
+40  Keyboard shortcut Ctrl+K used to open search, ...
+41  Keyboard shortcut Alt+Enter used to open calen...
+42  Keyboard shortcut Ctrl+Shift+P used to open up...</pre></details><a class="result-source" href="05_text_classification-lesson.html#cell-cell-013">Celda de origen y explicación →</a></section><section class="gallery-result"><details class="result-text"><summary>5. Analizar errores y coeficientes · salida calculada</summary><pre>
+account_access: terms most associated with its logit
+[(&#x27;sign&#x27;, np.float64(1.765)), (&#x27;access&#x27;, np.float64(1.349)), (&#x27;to&#x27;, np.float64(1.234)), (&#x27;example&#x27;, np.float64(1.177)), (&#x27;as&#x27;, np.float64(1.153)), (&#x27;test&#x27;, np.float64(1.138)), (&#x27;my&#x27;, np.float64(1.062)), (&#x27;form&#x27;, np.float64(1.0))]
+terms lowering its logit: [(&#x27;order&#x27;, np.float64(-0.542)), (&#x27;of&#x27;, np.float64(-0.525)), (&#x27;00&#x27;, np.float64(-0.523)), (&#x27;return&#x27;, np.float64(-0.5)), (&#x27;invoice&#x27;, np.float64(-0.469))]
+
+billing: terms most associated with its logit
+[(&#x27;invoice&#x27;, np.float64(1.879)), (&#x27;00&#x27;, np.float64(1.379)), (&#x27;month&#x27;, np.float64(0.984)), (&#x27;card&#x27;, np.float64(0.981)), (&#x27;cycle&#x27;, np.float64(0.978)), (&#x27;team&#x27;, np.float64(0.89)), (&#x27;uses&#x27;, np.float64(0.836)), (&#x27;bill&#x27;, np.float64(0.836))]
+terms lowering its logit: [(&#x27;return&#x27;, np.float64(-0.616)), (&#x27;has&#x27;, np.float64(-0.601)), (&#x27;refund&#x27;, np.float64(-0.599)), (&#x27;to&#x27;, np.float64(-0.543)), (&#x27;delivery&#x27;, np.float64(-0.514))]
+
+order_status: terms most associated with its logit
+[(&#x27;delivery&#x27;, np.float64(1.771)), (&#x27;order&#x27;, np.float64(1.591)), (&#x27;tracking&#x27;, np.float64(1.534)), (&#x27;from&#x27;, np.float64(1.351)), (&#x27;is&#x27;, np.float64(1.191)), (&#x27;arrival&#x27;, np.float64(1.186)), (&#x27;or&#x27;, np.float64(1.153)), (&#x27;has&#x27;, np.float64(1.13))]
+terms lowering its logit: [(&#x27;00&#x27;, np.float64(-0.552)), (&#x27;refund&#x27;, np.float64(-0.523)), (&#x27;return&#x27;, np.float64(-0.521)), (&#x27;and&#x27;, np.float64(-0.491)), (&#x27;card&#x27;, np.float64(-0.464))]
+
+refund_return: terms most associated with its logit
+[(&#x27;return&#x27;, np.float64(2.137)), (&#x27;refund&#x27;, np.float64(2.056)), (&#x27;send&#x27;, np.float64(1.257)), (&#x27;product&#x27;, np.float64(1.221)), (&#x27;wrong&#x27;, np.float64(1.124)), (&#x27;returned&#x27;, np.float64(1.089)), (&#x27;item&#x27;, np.float64(1.085)), (&#x27;would&#x27;, np.float64(1.059))]
+terms lowering its logit: [(&#x27;in&#x27;, np.float64(-0.88)), (&#x27;says&#x27;, np.float64(-0.808)), (&#x27;from&#x27;, np.float64(-0.617)), (&#x27;my&#x27;, np.float64(-0.596)), (&#x27;has&#x27;, np.float64(-0.497))]
+
+technical_issue: terms most associated with its logit
+[(&#x27;whenever&#x27;, np.float64(1.208)), (&#x27;text&#x27;, np.float64(1.123)), (&#x27;with&#x27;, np.float64(1.046)), (&#x27;since&#x27;, np.float64(0.972)), (&#x27;app&#x27;, np.float64(0.928)), (&#x27;exported&#x27;, np.float64(0.801)), (&#x27;opens&#x27;, np.float64(0.801)), (&#x27;file&#x27;, np.float64(0.801))]
+terms lowering its logit: [(&#x27;is&#x27;, np.float64(-1.086)), (&#x27;my&#x27;, np.float64(-0.866)), (&#x27;but&#x27;, np.float64(-0.778)), (&#x27;says&#x27;, np.float64(-0.724)), (&#x27;can&#x27;, np.float64(-0.677))]</pre></details><a class="result-source" href="05_text_classification-lesson.html#cell-cell-014">Celda de origen y explicación →</a></section><section class="gallery-result"><details class="result-text"><summary>5. Analizar errores y coeficientes · salida calculada</summary><pre>Stored nonzeros: [4 0]</pre></details><a class="result-source" href="05_text_classification-lesson.html#cell-fresh-text-code">Celda de origen y explicación →</a></section><section class="gallery-result"><details class="result-text"><summary>5. Analizar errores y coeficientes · salida calculada</summary><pre>                                  account_access  billing  order_status  \
+Please help me reset my password           0.422    0.189         0.142
+zzzzunseenword987654321                    0.164    0.221         0.154
+
+                                  refund_return  technical_issue
+Please help me reset my password          0.123            0.124
+zzzzunseenword987654321                   0.178            0.283</pre></details><a class="result-source" href="05_text_classification-lesson.html#cell-fresh-text-code">Celda de origen y explicación →</a></section><details class="contents"><summary>Entorno de ejecución y procedencia</summary><pre>{
+  &quot;python&quot;: &quot;3.12.10&quot;,
+  &quot;numpy&quot;: &quot;2.5.4&quot;,
+  &quot;pandas&quot;: &quot;2.3.3&quot;,
+  &quot;scikit_learn&quot;: &quot;1.9.1&quot;,
+  &quot;xgboost&quot;: &quot;3.4.1&quot;
+}</pre><a href="../results/manifest.json">Hashes de origen y manifiesto de resultados</a></details></main></div><footer>Mathematical ML · Ocho lecciones prácticas para matemáticos<br>Python legible · Experimentos reproducibles · Datos sintéticos didácticos</footer></body></html>

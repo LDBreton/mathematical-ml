@@ -12,6 +12,7 @@ from pygments.formatters import HtmlFormatter
 from pygments.lexers import PythonLexer, get_lexer_by_name
 from pygments.util import ClassNotFound
 from export_lesson_results import source_hashes
+from localize_site import build_spanish
 
 ROOT = Path(__file__).resolve().parents[1]
 SITE = ROOT / "site"
@@ -233,10 +234,11 @@ with the mechanism that generated the observations—and explain where your conc
 <a class="button" href="course-project.html">Explore the course project →</a></section><div class="note"><strong>Before you begin.</strong> Bring basic Python, linear algebra, calculus, and probability. Start at lecture 01 and work through 08. No GPU or service account is required. <a href="instructor.html">Teaching this course?</a></div>
 <script>
 document.querySelector('#search').addEventListener('input', event => {
-  const query = event.target.value.toLowerCase().trim();
+  const normalize = text => text.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  const query = normalize(event.target.value).trim();
   let count = 0;
   document.querySelectorAll('.card').forEach(card => {
-    card.hidden = !card.dataset.search.includes(query);
+    card.hidden = !normalize(card.textContent + " " + card.dataset.search).includes(query);
     if (!card.hidden) count++;
   });
   document.querySelector('#empty').hidden = count !== 0;
@@ -268,9 +270,10 @@ document.querySelector('#search').addEventListener('input', event => {
         if filename == "verification.html":
             shutil.copy2(ROOT / "docs/course-preview.png", SITE / "course-preview.png")
         (SITE / filename).write_text(page(source.stem, f'<article class="reading">{body}</article>'), encoding="utf-8")
+    build_spanish(SITE)
     # Bundle only authored teaching sources, never local environments or runtime state.
     files = [ROOT / name for name in ["README.md", "pyproject.toml", "requirements-lock.txt", "Dockerfile", ".dockerignore", ".gitignore", "CONTRIBUTING.md"]]
-    for directory in ["lectures", "data", "src", "tests", "scripts", "docs", ".github"]:
+    for directory in ["lectures", "data", "src", "tests", "scripts", "docs", "translations", ".github"]:
         files.extend(p for p in (ROOT / directory).rglob("*") if p.is_file() and "__pycache__" not in p.parts)
     with zipfile.ZipFile(SITE / "downloads/course.zip", "w", zipfile.ZIP_DEFLATED) as archive:
         for path in sorted(files):
