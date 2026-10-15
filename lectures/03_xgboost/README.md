@@ -1,38 +1,15 @@
-# Lecture 03 — XGBoost for regression
+# 03 — XGBoost for regression
 
-This lesson develops gradient-boosted trees from functional gradient descent, derives the regularized second-order tree objective, and compares XGBoost with a mean predictor and a random forest on hourly bike-demand scenarios.
+This lesson derives gradient-boosted trees as stagewise optimization in function space, then connects the regularized second-order objective to XGBoost's leaf and split controls. Its guided implementation compares XGBoost with a mean predictor and random forest on generated hourly bike-demand scenarios.
 
-## Files
+The route moves from residual fitting under squared loss to gradient/Hessian sums, regularized leaf values, and split gain. A parameter table explains settings used by the fitted model and how their effects depend on the objective. For squared-error regression, each row contributes unit Hessian under the conventional half-squared loss, so `min_child_weight` resembles a minimum child row count. Under logistic loss, Hessians depend on predicted probabilities. A small controlled example varies only `reg_lambda` to show how L2 changes leaf updates.
 
-- `lesson.ipynb` — guided theory, implementation, diagnostics, and interpretation.
-- `exercises.ipynb` — runnable setup followed by exercises with safe-to-run TODO cells.
-- `solutions.ipynb` — complete worked answers to the exercises.
+The scenarios are independent generated samples, not a chronological time series. A random train/validation/test split supports this teaching comparison, while the results do not estimate future-date performance. Validation drives early stopping; the final test partition is evaluated once afterward.
 
-## Data and setup
+## Open and run
 
-The notebooks locate `data/bike_demand.csv` by checking the current working directory and its parent directories. Run Jupyter from the repository root or open the notebooks in `lectures/03_xgboost`. The CSV must contain `temperature_c`, `humidity`, `wind_kmh`, `hour`, `weekday`, `season`, and `rentals`.
+Follow setup in the repository [README](../../README.md), then open `lesson.ipynb` in JupyterLab with the **Mathematical ML** kernel. It searches parent folders for `data/bike_demand.csv`, so it works from the repository root or this lecture directory.
 
-From the repository root, install the course and its declared dependencies using the setup in the root README:
+![Teaching figure for XGBoost](../../docs/figures/03_xgboost.svg)
 
-```powershell
-python -m pip install -e .
-```
-
-The rows represent independently generated hourly scenarios. They are not observations in a continuous chronological time series. We therefore use a reproducible random train/validation/test split and do not claim that these scores measure forecasting performance on future dates.
-
-The three models receive the same training and held-out test rows. XGBoost uses a separate validation subset of the training partition for early stopping. The test partition is evaluated only after fitting and is never used to choose the number of boosting rounds or tune other settings. XGBoost's `early_stopping_rounds` is passed to `XGBRegressor` at construction, as expected by current XGBoost's scikit-learn API.
-
-## Learning goals
-
-By the end, you should be able to explain stagewise function-space boosting, derive the optimal regularized leaf value and split gain from a second-order Taylor approximation, interpret the regularization controls, and design an evaluation split that keeps model selection separate from final assessment.
-
-The gain formula is a local approximation to the chosen objective. Its interpretation depends on the loss, Hessian weights, regularization convention, and tree constraints. A positive training split gain is not evidence of improved generalization; use held-out validation and test results for that question.
-
-
-## Visual guide and study route
-
-![Teaching figure for xgboost](../../docs/figures/03_xgboost.svg)
-
-*An actual shallow tree fitted to an illustrative one-dimensional sample. Notice constant predictions inside each leaf.*
-
-New to the libraries? Start with [the first-experiment walkthrough](../../docs/first-steps.md). Read the guided lesson, attempt the exercises, then consult solutions. Allow about 2–3 hours for a first reading; running experiments and completing exercises may require another session.
+*An actual shallow tree fitted to an illustrative one-dimensional sample. Each leaf returns a constant.*

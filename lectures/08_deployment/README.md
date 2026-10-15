@@ -89,7 +89,7 @@ The API accepts a small validated JSON record and has no authentication, authori
 
 ## Work through the lesson
 
-Open `lesson.ipynb` to derive the probability model and inspect training, metrics, persistence, and API behavior. Complete the questions in `exercises.ipynb`; check your reasoning against `solutions.ipynb`. The notebooks discover the repository root from their own location and use temporary output paths, so running them does not overwrite the shared model artifact. They use FastAPI's in-process `TestClient` rather than starting a blocking server.
+Run `lesson.ipynb` from top to bottom. Follow the same fitted pipeline and validation-selected threshold through final assessment, serialization, reload, and the `/predict` request. Before each code block, predict what state it reads or changes; then compare the output across the in-memory model, loaded artifact, and API response. The notebook discovers the repository root and writes its unique artifact under ignored `.verification/deployment-core`, so it does not overwrite the command-line model. Its FastAPI `TestClient` exercises the route without starting a blocking server.
 
 To build the container from the repository root and publish its API only on the local machine:
 
@@ -107,6 +107,6 @@ The root Dockerfile installs the course package, trains on the bundled synthetic
 
 *Conceptual serving workflow. The same saved preprocessing is applied to each validated incoming record.*
 
-New to the libraries? Start with [the first-experiment walkthrough](../../docs/first-steps.md). Read the guided lesson, attempt the exercises, then consult solutions. Allow about 2–3 hours for a first reading; running experiments and completing exercises may require another session.
+New to the libraries? Start with [the first-experiment walkthrough](../../docs/first-steps.md). Use the guided notebook to trace how fitting, validation policy selection, artifact loading, and request validation affect the returned prediction. MLflow and Docker are optional extensions; preserve the notebook's saved pipeline and threshold when following the server instructions. Allow about 2–3 hours for a first reading and running the notebook.
 
 Core route: saved model → validated request → prediction response. Treat MLflow and Docker as optional extensions on a first pass.

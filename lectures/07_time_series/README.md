@@ -28,8 +28,6 @@ The lesson also shows expanding-window folds on development data before the fina
 ## Files
 
 - `lesson.ipynb` — theory, leakage-free feature construction, model selection, final test comparison, and development backtest.
-- `exercises.ipynb` — runnable data and boundary setup with forecasting questions.
-- `solutions.ipynb` — complete executable calculations and explanations.
 - `../../data/daily_sales.csv` — deterministic synthetic daily series; see [`../../data/sales_dataset.md`](../../data/sales_dataset.md).
 
 ## Run
@@ -40,7 +38,7 @@ From the repository root:
 .\.venv\Scripts\python.exe scripts\check_notebooks.py --lecture 07_time_series
 ```
 
-Or start Jupyter from the repository root or this lecture directory and run the notebooks from top to bottom. Their data lookup checks the current directory and parent directories for `data/daily_sales.csv`.
+Or start Jupyter from the repository root or this lecture directory and run `lesson.ipynb` from top to bottom. Its data lookup checks the current directory and parent directories for `data/daily_sales.csv`.
 
 ## Limits
 
@@ -55,4 +53,4 @@ The more complex model need not beat seasonal persistence. Tree ensembles make p
 
 *The supplied synthetic series with illustrative 70/15/15 boundaries on raw rows. The notebook splits usable lagged rows, so its exact boundaries differ.*
 
-New to the libraries? Start with [the first-experiment walkthrough](../../docs/first-steps.md). Read the guided lesson, attempt the exercises, then consult solutions. Allow about 2–3 hours for a first reading; running experiments and completing exercises may require another session.
+New to the libraries? Start with [the first-experiment walkthrough](../../docs/first-steps.md). Then run `lesson.ipynb` from top to bottom: pause at each explanation to predict how the feature or parameter affects a forecast, and compare that prediction with the displayed table or plot. Allow about 2–3 hours for a first reading; repeating the guided experiment with another lag or window can take another session.

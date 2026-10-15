@@ -81,11 +81,11 @@ def page(title: str, body: str) -> str:
     navigation += '<a href="first-steps.html">New to ML? Start here</a><h3>The lectures</h3>'
     for folder, number, name, _ in LECTURES:
         navigation += f'<details><summary><a href="{folder}.html">{number} · {name}</a></summary>'
-        for kind in ["lesson", "exercises", "solutions"]:
-            navigation += f'<a class="sub" href="{folder}-{kind}.html">{kind.title()}</a>'
+        for kind in ["lesson"]:
+            navigation += f'<a class="sub" href="{folder}-{kind}.html">Foundations &amp; examples</a>'
         navigation += '</details>'
     navigation += '<h3>Resources</h3><a href="results.html">Executed result galleries</a><a href="datasets.html">Datasets</a><a href="course-project.html">Course project</a><a href="instructor.html">Teaching guide</a><a href="verification.html">Verification</a>'
-    return f'''<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Eight guided machine learning lectures for mathematicians: theory, readable Python, exercises and worked solutions."><title>{html.escape(title)} · Mathematical ML</title><link rel="stylesheet" href="style.css"><script defer src="site.js"></script><script>window.MathJax={{tex:{{inlineMath:[['$','$'],['\\\\(','\\\\)']]}}}};</script><script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script></head><body><a class="skip" href="#main">Skip to content</a><header><button class="menu" aria-controls="sidebar" aria-expanded="false" aria-label="Toggle course navigation">☰</button><a class="brand" href="index.html">∑ <span>Mathematical ML</span></a><nav aria-label="Quick links"><a href="setup.html">Get started</a><a href="index.html#lectures">Lectures</a><button id="theme" aria-label="Switch color theme">◐</button></nav></header><div class="layout"><aside id="sidebar" aria-label="Course navigation">{navigation}</aside><main id="main">{body}</main></div><footer>Mathematical ML · Eight practical lectures for mathematicians<br>Readable Python · Reproducible experiments · Synthetic teaching data</footer></body></html>'''
+    return f'''<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Eight guided machine learning lectures for mathematicians: mathematical foundations, software options, and guided Python examples."><title>{html.escape(title)} · Mathematical ML</title><link rel="stylesheet" href="style.css"><script defer src="site.js"></script><script>window.MathJax={{tex:{{inlineMath:[['$','$'],['\\\\(','\\\\)']]}}}};</script><script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script></head><body><a class="skip" href="#main">Skip to content</a><header><button class="menu" aria-controls="sidebar" aria-expanded="false" aria-label="Toggle course navigation">☰</button><a class="brand" href="index.html">∑ <span>Mathematical ML</span></a><nav aria-label="Quick links"><a href="setup.html">Get started</a><a href="index.html#lectures">Lectures</a><button id="theme" aria-label="Switch color theme">◐</button></nav></header><div class="layout"><aside id="sidebar" aria-label="Course navigation">{navigation}</aside><main id="main">{body}</main></div><footer>Mathematical ML · Eight practical lectures for mathematicians<br>Readable Python · Reproducible experiments · Synthetic teaching data</footer></body></html>'''
 
 
 def rewrite_links(body: str, folder: str | None = None) -> str:
@@ -94,6 +94,7 @@ def rewrite_links(body: str, folder: str | None = None) -> str:
     body = body.replace('../lectures/', 'lectures/')
     for directory, _, _, _ in LECTURES:
         body = body.replace(f'lectures/{directory}/README.md', f'{directory}.html')
+        body = body.replace(f'../{directory}/lesson.ipynb', f'{directory}-lesson.html')
     body = body.replace('data/README.md', 'datasets.html').replace('docs/instructor-guide.md', 'instructor.html')
     body = body.replace('docs/verification.md', 'verification.html')
     body = body.replace('docs/course-project.md', 'course-project.html')
@@ -109,7 +110,7 @@ def rewrite_links(body: str, folder: str | None = None) -> str:
         body = body.replace(f'href="{source}"', f'href="{rendered}"')
         body = body.replace(f'href="../../data/{source}"', f'href="{rendered}"')
     if folder:
-        for kind in ["lesson", "exercises", "solutions"]:
+        for kind in ["lesson"]:
             body = body.replace(f'href="{kind}.ipynb"', f'href="{folder}-{kind}.html"')
     return body
 
@@ -132,6 +133,10 @@ def build() -> None:
     if result_manifest["source_hashes"] != source_hashes():
         raise ValueError("Result snapshots are stale. Execute notebooks, then run scripts/export_lesson_results.py")
     SITE.mkdir(exist_ok=True)
+    for folder, _, _, _ in LECTURES:
+        for retired in ("exercises", "solutions"):
+            (SITE / f"{folder}-{retired}.html").unlink(missing_ok=True)
+            (SITE / "downloads" / folder / f"{retired}.ipynb").unlink(missing_ok=True)
     (SITE / "style.css").write_text(CSS, encoding="utf-8")
     (SITE / "site.js").write_text(SCRIPT, encoding="utf-8")
     shutil.copytree(ROOT / "docs/figures", SITE / "figures", dirs_exist_ok=True)
@@ -143,7 +148,7 @@ def build() -> None:
         target = SITE / "downloads" / folder
         target.mkdir(parents=True, exist_ok=True)
         links = []
-        for kind in ["lesson", "exercises", "solutions"]:
+        for kind in ["lesson"]:
             notebook = nbformat.read(source / f"{kind}.ipynb", as_version=4)
             cells = []
             for cell in notebook.cells:
@@ -170,13 +175,10 @@ def build() -> None:
             body = f'<div class="eyebrow">Lecture {number} / {kind}</div><div class="actions"><a href="{folder}.html">← Lecture guide</a><a href="{download}" download>Download notebook</a></div><p class="note">This page is a reading view. To execute Python, download the complete course and open this notebook in Jupyter. <a href="first-steps.html">First notebook walkthrough →</a></p>' + toc + '<article class="reading">' + rewrite_links(contents, folder) + '</article>'
             if kind == "lesson":
                 body += f'<p><a href="{folder}-results.html">Explore this lecture’s executed result gallery →</a></p>'
-                body += f'<p><a class="button" href="{folder}-exercises.html">Next: attempt the exercises →</a></p>'
-            elif kind == "exercises":
-                body += f'<p>After writing your own answers, <a href="{folder}-solutions.html">compare with the worked solutions →</a></p>'
             body += lecture_navigation(folder)
             (SITE / filename).write_text(page(f"{title}: {kind}", body), encoding="utf-8")
             shutil.copy2(source / f"{kind}.ipynb", target)
-            links.append(f'<a class="button" href="{filename}">{kind.title()}</a>')
+            links.append(f'<a class="button" href="{filename}">Foundations &amp; examples</a>')
         guide = rewrite_links(render_markdown((source / "README.md").read_text(encoding="utf-8")), folder)
         links.append(f'<a href="{folder}-results.html">Executed results →</a>')
         body = f'<div class="eyebrow">Lecture {number}</div><h1>{title}</h1><p class="intro">{description}</p><div class="actions">' + "".join(links) + f'</div><article class="reading">{guide}</article>'
@@ -211,7 +213,7 @@ def build() -> None:
 <p class="intro">Turn linear algebra, probability, and optimization into working models.
 Follow each mathematical idea into readable Python, test it on data, and understand what the result actually means.</p>
 <div class="actions"><a class="button" href="first-steps.html">Start learning →</a><a class="button secondary" href="setup.html">Set up Python</a><a class="button secondary" href="downloads/course.zip" download>Download the course</a></div>
-<p class="meta">8 lectures &nbsp; · &nbsp; 24 notebooks &nbsp; · &nbsp; 7 datasets &nbsp; · &nbsp; CPU-friendly</p>
+<p class="meta">8 lectures &nbsp; · &nbsp; 8 guided notebooks &nbsp; · &nbsp; 7 datasets &nbsp; · &nbsp; CPU-friendly</p>
 <p><a href="results.html">See the experiments: plots, tables, and computed results →</a></p>
 </section>
 <figure class="course-figure"><img src="figures/course-atlas.svg" alt="Three learning tasks: a fitted response curve, a logistic probability curve with a threshold, and a two-dimensional view of clusters." width="1200" height="370"><figcaption>Three questions, three mathematical objects. Curves are illustrative; the cluster projection uses the supplied synthetic customer data.</figcaption></figure>
@@ -219,7 +221,7 @@ Follow each mathematical idea into readable Python, test it on data, and underst
 <div class="eyebrow">An idea becomes an experiment</div><h2>Follow the mathematics into code.</h2>
 <div class="stages"><div><span>01 / FORMULATE</span><strong>Choose an objective</strong><code>minimize empirical risk</code><p>Projection, likelihood,<br>regularization.</p></div><b aria-hidden="true">→</b><div><span>02 / LEARN</span><strong>Fit a model</strong><code>pipeline.fit(X, y)</code><p>Linear models, trees,<br>text, and clusters.</p></div><b aria-hidden="true">→</b><div><span>03 / QUESTION</span><strong>Test the assumptions</strong><code>evaluate on held-out data</code><p>Leakage, uncertainty,<br>costs, and drift.</p></div></div>
 <p class="caption">A conceptual roadmap. Each lecture makes the objective, implementation, and evaluation explicit.</p></section>
-<section class="orientation"><h2>A course built for mathematical minds</h2><p>You already know how to reason about an equation. Here you learn how to turn that reasoning into a reliable experiment.</p><div class="features"><div><h3>Understand the model</h3><p>Derive the objective and connect its assumptions to the quantities the code computes.</p></div><div><h3>Work through the details</h3><p>Run a guided notebook, change the experiment, then compare your work with explained solutions.</p></div><div><h3>Make a defensible decision</h3><p>Compare baselines, select metrics, and distinguish a good score from a useful model.</p></div></div></section>
+<section class="orientation"><h2>A course built for mathematical minds</h2><p>You already know how to reason about an equation. Here you learn how to turn that reasoning into a reliable experiment.</p><div class="features"><div><h3>Understand the model</h3><p>Derive the objective and connect its assumptions to the quantities the code computes.</p></div><div><h3>Work through the details</h3><p>Follow annotated examples, inspect software options, and connect parameter changes to the mathematics.</p></div><div><h3>Make a defensible decision</h3><p>Compare baselines, select metrics, and distinguish a good score from a useful model.</p></div></div></section>
 <h2 id="lectures">Explore the lectures</h2>
 <label for="search">Filter by topic</label><br>
 <input class="search" id="search" type="search" placeholder="Try likelihood, trees, or service">

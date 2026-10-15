@@ -9,14 +9,14 @@
     "data/fraud.csv": "0fc3407b8f618cc136f559e3d2bed9c4a6722a539c70d905aab85be77d5b729c",
     "data/housing.csv": "3060b3b4b03447362e5991f955f165a8f6c72e1723345e9afa18777ab79e605b",
     "data/support_tickets.csv": "9cc2d324b6bb391dfeb2c7e30a40faa176e0d91bb9e109c98105f1ae9d9b07ce",
-    "lectures/01_regression/lesson.ipynb": "3c6fbfa4d9132ec625ffc31855f84bbdfb35fa5db2b6b6a45f278771bd4e061d",
-    "lectures/02_classification/lesson.ipynb": "dd6de024982c24f140663d9faa94655463656cab816319e47eb176b3b9213c3a",
-    "lectures/03_xgboost/lesson.ipynb": "9d8c745333bd093cfcc2be3d2c3483624e4e0e8d3ff5b2d9f395508f90b0462e",
-    "lectures/04_imbalanced_learning/lesson.ipynb": "8f12327cd4cde2d0c38f34efd70edd04840d6764598d4449c1dd0d131a40d61c",
-    "lectures/05_text_classification/lesson.ipynb": "9cd7eb7e9dadc44c4ea8ae8e21ef0226a1c92822fc625a9f835054b40ec5f4aa",
-    "lectures/06_clustering/lesson.ipynb": "9b2e67d59a5ad5bacdde2d226c7571bd5aae2ccb5fa7843478f10ad6f1331ac7",
-    "lectures/07_time_series/lesson.ipynb": "a3e8c2a1b62c59b2493725d35866b4403199353718d171848938c31f1e76db16",
-    "lectures/08_deployment/lesson.ipynb": "410abcde2dacc48510b256c51d2dd679f30e0f8f8eade9bddec1a9749ccfe2b9",
+    "lectures/01_regression/lesson.ipynb": "d82c8477e4e2540fc1d5c4c2a5fac93650172ab2b4ea7015c9b0abc176b47257",
+    "lectures/02_classification/lesson.ipynb": "3ce59a9f22867eb6efad73a32443baa61e9974d3811d48dbd740756f07e58bf0",
+    "lectures/03_xgboost/lesson.ipynb": "38203225d45ddd132aacdf7c1d440129bff319ca99b6f460d9257c54880e3dad",
+    "lectures/04_imbalanced_learning/lesson.ipynb": "00631df32c8c3d1b6a65236be8bf5725e947ee761df4d24706ae8e6e06769834",
+    "lectures/05_text_classification/lesson.ipynb": "fe70ccf47cea7825911535e7d334597bb04f05b9560992a4d5dd6e4da6b97ae6",
+    "lectures/06_clustering/lesson.ipynb": "ff292e0d468a6461e32bbcf5a8a89bd6311f45b13cebd62a3854dc4e31b35836",
+    "lectures/07_time_series/lesson.ipynb": "c52a56322771394bd3a2e92c8b3d0c757c7244e9580d947fbd9bcdfa046aa963",
+    "lectures/08_deployment/lesson.ipynb": "f63f2a612fb0c76c5bffc97c07af3fc873d5c73045abd0a358749259c757764f",
     "src/course_ml/__init__.py": "52c96f271bc75948368fb80c654b7435aa62b5757f45810be6c6d303aae79f18",
     "src/course_ml/app.py": "68ca940c0433f25ae3774bc00d29f52f990749259c9c84b0d091abed05234e6e",
     "src/course_ml/forecasting.py": "69fdf911c877ba40bb657eb65a30bea02a797881d2d8593d7b1f226bdcb95f54",
@@ -46,6 +46,11 @@
         "cell_id": "cell-005",
         "heading": "3. Define target and hold out test rows",
         "text": "Training rows: 900\nHeld-out test rows: 300\n"
+      },
+      {
+        "cell_id": "ridge-alpha-demo",
+        "heading": "Read the pipeline settings through the objective",
+        "text": "   alpha  intercept     slope  training_SSE predictions_at_-1.5_0_1.5\n0    0.1       0.24  1.584158      1.154510     [-2.136, 0.24, 2.616]\n1    1.0       0.24  1.454545      1.363570     [-1.942, 0.24, 2.422]\n2   20.0       0.24  0.533333     12.529778       [-0.56, 0.24, 1.04]"
       },
       {
         "cell_id": "cell-010",
@@ -95,8 +100,13 @@
         "text": "churn\n0    0.768519\n1    0.231481\nName: proportion, dtype: float64"
       },
       {
+        "cell_id": "logistic-c-demo",
+        "heading": "Read the classifier settings through the likelihood",
+        "text": "        C     slope  training_log_loss probabilities_at_-0.5_0.5_1.5\n0    0.05  0.179824           0.603472          [0.38, 0.423, 0.468]\n1    1.00  1.253934           0.359757         [0.238, 0.523, 0.793]\n2  100.00  3.766378           0.252702         [0.037, 0.622, 0.986]"
+      },
+      {
         "cell_id": "cell-009",
-        "heading": "5. Regularization on training rows",
+        "heading": "Read the classifier settings through the likelihood",
         "text": "Selected C: 3.0\nMean training-fold ROC-AUC: 0.771\n"
       },
       {
@@ -140,6 +150,11 @@
         "cell_id": "hand-split-code",
         "heading": "3. Split gain and its limits",
         "text": "{'left_leaf': np.float64(1.0), 'right_leaf': np.float64(-1.0), 'split_gain': np.float64(2.8)}\n"
+      },
+      {
+        "cell_id": "xgb-lambda-demo",
+        "heading": "Read XGBoost settings through gradients and Hessians",
+        "text": "   reg_lambda  training_RMSE  \\\n0         0.0       0.132732   \n1        20.0       0.415018   \n\n                    predictions_at_-1.5_-0.5_0.5_1.5  \n0  [-0.04600000008940697, -0.8550000190734863, 0....  \n1  [-0.052000001072883606, -0.41200000047683716, ...  "
       },
       {
         "cell_id": "cell-005",
@@ -200,8 +215,13 @@
       },
       {
         "cell_id": "cell-005",
-        "heading": "2a. Why class weights shift the posterior",
+        "heading": "2b. Read the estimator call as a mathematical choice",
         "text": "                         AP  trapezoid_PR_area  ROC_AUC   Brier\nmodel                                                          \nLogistic unweighted  0.0924             0.0838   0.6410  0.0406\nLogistic balanced    0.0910             0.0838   0.6503  0.2199\nXGBoost weighted     0.0618             0.0590   0.6164  0.1349"
+      },
+      {
+        "cell_id": "weighting-option-comparison",
+        "heading": "2b. Read the estimator call as a mathematical choice",
+        "text": "                     average precision  Brier score  \\\nfit objective                                         \nLogistic unweighted             0.0924       0.0406   \nLogistic balanced               0.0910       0.2199   \n\n                     alerts at fixed threshold 0.5  validation cost at 0.5  \nfit objective                                                               \nLogistic unweighted                              0                   860.0  \nLogistic balanced                              335                   733.0  "
       },
       {
         "cell_id": "cell-008",
@@ -259,6 +279,11 @@
         "cell_id": "cell-007",
         "heading": "2. TF-IDF as a weighted sparse vector",
         "text": "manual smoothed IDF: 2.09861228866811\nscikit-learn stored IDF: 2.09861228866811\nubiquitous term IDF: 1.0\n"
+      },
+      {
+        "cell_id": "tfidf-option-comparison",
+        "heading": "2. TF-IDF as a weighted sparse vector",
+        "text": "                   vocabulary columns  nonzero density  first-row L2 norm\noption                                                                   \ndefault                           598           0.0352             1.0000\nmin_df=2                          431           0.0476             1.0000\nunigrams+bigrams                 1859           0.0231             1.0000\nmax_features=40                    40           0.2727             1.0000\nsublinear_tf=True                 598           0.0352             1.0000\nnorm=None                         598           0.0352            16.2972\nsmooth_idf=False                  598           0.0352             1.0000"
       },
       {
         "cell_id": "sparse-geometry-code",
@@ -349,13 +374,18 @@
       },
       {
         "cell_id": "cell-004",
-        "heading": "2. Scaling defines distance",
+        "heading": "2b. K-means options control geometry and search",
         "text": "inertia: 2194.7051247400486\nsizes: [314 277 303 306]\n"
       },
       {
         "cell_id": "cell-004",
-        "heading": "2. Scaling defines distance",
+        "heading": "2b. K-means options control geometry and search",
         "text": "   recency_days  orders_12m  average_order_value  annual_spend  web_share  \\\n0         78.09        2.12               188.37        473.98       0.20   \n1         19.68       15.73               536.44       1471.53       0.78   \n2         29.29       10.69               386.66       1003.75       0.63   \n3        114.05        1.32               105.47        277.82       0.36   \n\n   tenure_months  support_contacts_12m  \n0          29.16                  1.00  \n1          10.48                  2.83  \n2          21.71                  1.50  \n3          47.86                  0.76  "
+      },
+      {
+        "cell_id": "kmeans-restart-comparison-code",
+        "heading": "2b. K-means options control geometry and search",
+        "text": "          inertia  iterations in selected run  ARI vs 30-start fit\nstarts                                                            \n1       2194.7872                           9               0.9913\n30      2194.7051                          15               1.0000"
       },
       {
         "cell_id": "cell-006",
@@ -423,6 +453,11 @@
         "cell_id": "cell-005",
         "heading": "4. Generate features without looking forward",
         "text": "        date    sales\n0 2023-01-01  1084.81\n1 2023-01-02   857.27\n2 2023-01-03   837.36\n3 2023-01-04   824.92\n4 2023-01-05   893.70"
+      },
+      {
+        "cell_id": "0afbc4d6",
+        "heading": "4. Generate features without looking forward",
+        "text": "            target_sales  lag_1  mean_3_full  mean_3_partial\n2025-01-01          10.0    NaN          NaN             NaN\n2025-01-02          12.0   10.0          NaN       10.000000\n2025-01-03          11.0   12.0          NaN       11.000000\n2025-01-04          15.0   11.0    11.000000       11.000000\n2025-01-05          14.0   15.0    12.666667       12.666667"
       },
       {
         "cell_id": "cell-006",
@@ -504,7 +539,7 @@
       {
         "cell_id": "deployment-07",
         "heading": "3. Assess the frozen pipeline and save the same policy",
-        "text": "Saved: churn-181f14b661a6455bb253cd5a3d2eb346.joblib\n"
+        "text": "Saved: churn-c5252101f56d4f1aaea160e1159dbf2a.joblib\n"
       },
       {
         "cell_id": "deployment-07",
@@ -539,7 +574,7 @@
       {
         "cell_id": "deployment-17",
         "heading": "Optional extension: track this exact artifact with MLflow",
-        "text": "Tracked the same saved artifact in run: 4c655f02312e4e7aa20de9c884684f40\n"
+        "text": "Tracked the same saved artifact in run: a71f773c9b6c472fbca003b6684a87c9\n"
       }
     ]
   }

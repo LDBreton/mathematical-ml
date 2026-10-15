@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Eight guided machine learning lectures for mathematicians: theory, readable Python, exercises and worked solutions."><title>first-steps · Mathematical ML</title><link rel="stylesheet" href="style.css"><script defer src="site.js"></script><script>window.MathJax={tex:{inlineMath:[['$','$'],['\\(','\\)']]}};</script><script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script></head><body><a class="skip" href="#main">Skip to content</a><header><button class="menu" aria-controls="sidebar" aria-expanded="false" aria-label="Toggle course navigation">☰</button><a class="brand" href="index.html">∑ <span>Mathematical ML</span></a><nav aria-label="Quick links"><a href="setup.html">Get started</a><a href="index.html#lectures">Lectures</a><button id="theme" aria-label="Switch color theme">◐</button></nav></header><div class="layout"><aside id="sidebar" aria-label="Course navigation"><a href="index.html">Course overview</a><h3>Start here</h3><a href="setup.html">Installation &amp; first steps</a><a href="first-steps.html">New to ML? Start here</a><h3>The lectures</h3><details><summary><a href="01_regression.html">01 · Regression</a></summary><a class="sub" href="01_regression-lesson.html">Lesson</a><a class="sub" href="01_regression-exercises.html">Exercises</a><a class="sub" href="01_regression-solutions.html">Solutions</a></details><details><summary><a href="02_classification.html">02 · Classification</a></summary><a class="sub" href="02_classification-lesson.html">Lesson</a><a class="sub" href="02_classification-exercises.html">Exercises</a><a class="sub" href="02_classification-solutions.html">Solutions</a></details><details><summary><a href="03_xgboost.html">03 · XGBoost</a></summary><a class="sub" href="03_xgboost-lesson.html">Lesson</a><a class="sub" href="03_xgboost-exercises.html">Exercises</a><a class="sub" href="03_xgboost-solutions.html">Solutions</a></details><details><summary><a href="04_imbalanced_learning.html">04 · Imbalanced learning</a></summary><a class="sub" href="04_imbalanced_learning-lesson.html">Lesson</a><a class="sub" href="04_imbalanced_learning-exercises.html">Exercises</a><a class="sub" href="04_imbalanced_learning-solutions.html">Solutions</a></details><details><summary><a href="05_text_classification.html">05 · Text classification</a></summary><a class="sub" href="05_text_classification-lesson.html">Lesson</a><a class="sub" href="05_text_classification-exercises.html">Exercises</a><a class="sub" href="05_text_classification-solutions.html">Solutions</a></details><details><summary><a href="06_clustering.html">06 · Clustering</a></summary><a class="sub" href="06_clustering-lesson.html">Lesson</a><a class="sub" href="06_clustering-exercises.html">Exercises</a><a class="sub" href="06_clustering-solutions.html">Solutions</a></details><details><summary><a href="07_time_series.html">07 · Time-series forecasting</a></summary><a class="sub" href="07_time_series-lesson.html">Lesson</a><a class="sub" href="07_time_series-exercises.html">Exercises</a><a class="sub" href="07_time_series-solutions.html">Solutions</a></details><details><summary><a href="08_deployment.html">08 · From model to service</a></summary><a class="sub" href="08_deployment-lesson.html">Lesson</a><a class="sub" href="08_deployment-exercises.html">Exercises</a><a class="sub" href="08_deployment-solutions.html">Solutions</a></details><h3>Resources</h3><a href="results.html">Executed result galleries</a><a href="datasets.html">Datasets</a><a href="course-project.html">Course project</a><a href="instructor.html">Teaching guide</a><a href="verification.html">Verification</a></aside><main id="main"><article class="reading"><h1>Your first machine-learning experiment</h1>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Eight guided machine learning lectures for mathematicians: mathematical foundations, software options, and guided Python examples."><title>first-steps · Mathematical ML</title><link rel="stylesheet" href="style.css"><script defer src="site.js"></script><script>window.MathJax={tex:{inlineMath:[['$','$'],['\\(','\\)']]}};</script><script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script></head><body><a class="skip" href="#main">Skip to content</a><header><button class="menu" aria-controls="sidebar" aria-expanded="false" aria-label="Toggle course navigation">☰</button><a class="brand" href="index.html">∑ <span>Mathematical ML</span></a><nav aria-label="Quick links"><a href="setup.html">Get started</a><a href="index.html#lectures">Lectures</a><button id="theme" aria-label="Switch color theme">◐</button></nav></header><div class="layout"><aside id="sidebar" aria-label="Course navigation"><a href="index.html">Course overview</a><h3>Start here</h3><a href="setup.html">Installation &amp; first steps</a><a href="first-steps.html">New to ML? Start here</a><h3>The lectures</h3><details><summary><a href="01_regression.html">01 · Regression</a></summary><a class="sub" href="01_regression-lesson.html">Foundations &amp; examples</a></details><details><summary><a href="02_classification.html">02 · Classification</a></summary><a class="sub" href="02_classification-lesson.html">Foundations &amp; examples</a></details><details><summary><a href="03_xgboost.html">03 · XGBoost</a></summary><a class="sub" href="03_xgboost-lesson.html">Foundations &amp; examples</a></details><details><summary><a href="04_imbalanced_learning.html">04 · Imbalanced learning</a></summary><a class="sub" href="04_imbalanced_learning-lesson.html">Foundations &amp; examples</a></details><details><summary><a href="05_text_classification.html">05 · Text classification</a></summary><a class="sub" href="05_text_classification-lesson.html">Foundations &amp; examples</a></details><details><summary><a href="06_clustering.html">06 · Clustering</a></summary><a class="sub" href="06_clustering-lesson.html">Foundations &amp; examples</a></details><details><summary><a href="07_time_series.html">07 · Time-series forecasting</a></summary><a class="sub" href="07_time_series-lesson.html">Foundations &amp; examples</a></details><details><summary><a href="08_deployment.html">08 · From model to service</a></summary><a class="sub" href="08_deployment-lesson.html">Foundations &amp; examples</a></details><h3>Resources</h3><a href="results.html">Executed result galleries</a><a href="datasets.html">Datasets</a><a href="course-project.html">Course project</a><a href="instructor.html">Teaching guide</a><a href="verification.html">Verification</a></aside><main id="main"><article class="reading"><h1>Your first machine-learning experiment</h1>
 <p>You know Python and mathematics. You do not need to know pandas, scikit-learn, or machine-learning terminology before starting here.</p>
 <h2>What are we trying to compute?</h2>
 <p>In supervised learning, one row is an observation. Its measured inputs are <strong>features</strong>, collected in a vector $x_i$. The quantity to predict is the <strong>target</strong> $y_i$. We choose a family of functions $f_\theta$, estimate its parameters from some observations, then measure prediction errors on observations kept out of fitting.</p>
@@ -131,7 +131,7 @@
 <li>Open <code>lectures/01_regression/lesson.ipynb</code>. Select the <strong>Mathematical ML</strong> kernel: the Python process that executes cells and holds their variables.</li>
 <li>Run cells from top to bottom with <strong>Shift+Enter</strong>. Markdown cells explain the reasoning; code cells compute results. A running cell shows <code>[*]</code>.</li>
 <li>When you change an early cell, rerun the dependent cells. Before trusting a result, choose <strong>Kernel → Restart Kernel and Run All Cells</strong> to check that it does not depend on stale variables.</li>
-<li>Attempt <code>exercises.ipynb</code>, writing explanations as well as code. Then consult <code>solutions.ipynb</code>.</li>
+<li>Continue through the guided examples in <code>lesson.ipynb</code>. For each option, connect its software behavior to the stated mathematical effect.</li>
 </ol>
 <p>The website is a static reading view. Its code blocks do not execute Python. Your notebook runs locally, including its plots and printed results. The website labels conceptual illustrations separately from computed result snapshots. Each executed-result gallery links outputs back to the source cells and records the environment used to produce them.</p>
 <h2>Read the estimator API as mathematics</h2>
@@ -178,6 +178,51 @@
 </table>
 <p>A <code>Pipeline</code> composes transformations and an estimator. Its <code>.fit</code> learns each preprocessing stage using the supplied training rows, then fits the final model. A <code>ColumnTransformer</code> applies different transformations to named column groups and joins the resulting numerical features. Neither protects you from a badly chosen split or from preprocessing already fitted outside the pipeline.</p>
 <p>An <strong>epoch</strong> is a full pass through data in some training algorithms; a <strong>boosting round</strong> adds a tree or stage. They are different ideas. A GPU changes how some computations run; it does not change which data are legitimate to use for fitting or evaluation.</p>
+<h2>Read an option before changing it</h2>
+<p>A constructor such as <code>Ridge(alpha=1.0)</code> declares a procedure; it has not fitted coefficients yet. After <code>fit</code>, learned quantities usually have a trailing underscore, such as <code>coef_</code>, <code>mean_</code>, or <code>classes_</code>. <code>get_params()</code> reports configuration, not learned state. <code>set_params(model__alpha=10)</code> changes the named pipeline option; fit again to obtain coefficients for that new objective. It does not update already learned coefficients by itself.</p>
+<p>Separate four kinds of choices:</p>
+<table>
+<thead>
+<tr>
+<th>Kind</th>
+<th>Examples</th>
+<th>Mathematical question</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Representation</td>
+<td>scaling, lag windows, vocabulary</td>
+<td>What map $\phi$ turns observations into model inputs?</td>
+</tr>
+<tr>
+<td>Model and objective</td>
+<td>Ridge <code>alpha</code>, tree depth, class weights</td>
+<td>Which functions are allowed, and which loss is minimized?</td>
+</tr>
+<tr>
+<td>Numerical computation</td>
+<td>solver, tolerance, iteration budget</td>
+<td>How accurately and efficiently do we approximate that minimizer?</td>
+</tr>
+<tr>
+<td>Evaluation and policy</td>
+<td>split, metric, threshold</td>
+<td>What population or future period is assessed, and how do predictions become actions?</td>
+</tr>
+</tbody>
+</table>
+<p>An iteration limit is not a statistical regularization parameter, although stopping an optimization early can affect the fitted answer. Conversely, boosting's number of stages changes the additive model and can act as regularization. The role depends on the algorithm, not on the option's name.</p>
+<p>For each worked example, read it in this order:</p>
+<ol>
+<li>Identify the input rows, column meanings, and array shapes.</li>
+<li>Write the representation and objective in mathematical notation.</li>
+<li>Match each explicit keyword to that representation, objective, numerical algorithm, or evaluation policy.</li>
+<li>Identify what <code>fit</code> stores and what <code>predict</code> reuses.</li>
+<li>Compare a controlled change on training/development data. Explain the result before choosing any setting.</li>
+<li>Freeze the choice before inspecting the final test. A parameter demonstration is not evidence that its setting is universally best.</li>
+</ol>
+<p>Library defaults can change. The lessons state important settings explicitly and link to library references; the environment lock records the versions used for the published outputs. A seed controls certain random choices, but does not promise identical floating-point results across machines or versions.</p>
 <h2>When something goes wrong</h2>
 <table>
 <thead>

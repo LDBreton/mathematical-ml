@@ -4,7 +4,7 @@
 
 Ask students to write the probabilistic assumptions before fitting anything. Distinguish the population risk \(R(f)=\mathbb E[\ell(Y,f(X))]\) from its sample approximation. A numerical optimizer solves the latter; a holdout estimates generalization under assumptions about the sampling process. Neither provides an automatic theorem about future deployment.
 
-Recommended rhythm for each 150-minute class: 25 minutes of theory, 20 minutes exploring the data-generating model, 45 minutes running and discussing the lesson, 45 minutes attempting exercises, and 15 minutes comparing interpretations. Solutions are separate for independent work, but visible in this public teaching repository.
+Recommended rhythm for each 150-minute class: 35 minutes of foundations, 20 minutes exploring the data-generating model, 60 minutes tracing annotated code and software options, and 35 minutes comparing controlled parameter examples and interpreting results. The current course uses one continuous guided notebook per lecture. Exercises and separate solutions are temporarily retired; earlier versions remain recoverable in Git history.
 
 ## 01: Regression
 

@@ -20,7 +20,7 @@ K-means minimizes $\sum_i\|z_i-\mu_{c_i}\|^2$. Nearest-center assignment minimiz
 1. Follow [course setup](../../README.md), then read this guide before opening Jupyter.
 2. Run `lesson.ipynb` in order. First inspect units, then fit clusters in all standardized dimensions.
 3. Use PCA only for the two-dimensional display; inspect the k diagnostics before using any truth label.
-4. Attempt `exercises.ipynb`, then compare with `solutions.ipynb`. The final ARI is post-hoc because this fixture is synthetic.
+4. Compare the controlled restart example, then inspect the selected clustering. The final ARI is post-hoc because this fixture is synthetic.
 
 
 ## Visual guide and study route
@@ -29,4 +29,4 @@ K-means minimizes $\sum_i\|z_i-\mu_{c_i}\|^2$. Nearest-center assignment minimiz
 
 *Illustrative k=4 fit to all supplied customer features after standardization, projected to two principal components. This is not the later selected-k result.*
 
-New to the libraries? Start with [the first-experiment walkthrough](../../docs/first-steps.md). Read the guided lesson, attempt the exercises, then consult solutions. Allow about 2–3 hours for a first reading; running experiments and completing exercises may require another session.
+New to the libraries? Start with [the first-experiment walkthrough](../../docs/first-steps.md). Read the foundations, trace the annotated implementation, then compare the worked parameter examples. Allow about 2–3 hours for a first reading; detailed experiments may require another session.

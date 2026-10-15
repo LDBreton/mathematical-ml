@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Eight guided machine learning lectures for mathematicians: theory, readable Python, exercises and worked solutions."><title>Imbalanced learning: lesson · Mathematical ML</title><link rel="stylesheet" href="style.css"><script defer src="site.js"></script><script>window.MathJax={tex:{inlineMath:[['$','$'],['\\(','\\)']]}};</script><script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script></head><body><a class="skip" href="#main">Skip to content</a><header><button class="menu" aria-controls="sidebar" aria-expanded="false" aria-label="Toggle course navigation">☰</button><a class="brand" href="index.html">∑ <span>Mathematical ML</span></a><nav aria-label="Quick links"><a href="setup.html">Get started</a><a href="index.html#lectures">Lectures</a><button id="theme" aria-label="Switch color theme">◐</button></nav></header><div class="layout"><aside id="sidebar" aria-label="Course navigation"><a href="index.html">Course overview</a><h3>Start here</h3><a href="setup.html">Installation &amp; first steps</a><a href="first-steps.html">New to ML? Start here</a><h3>The lectures</h3><details><summary><a href="01_regression.html">01 · Regression</a></summary><a class="sub" href="01_regression-lesson.html">Lesson</a><a class="sub" href="01_regression-exercises.html">Exercises</a><a class="sub" href="01_regression-solutions.html">Solutions</a></details><details><summary><a href="02_classification.html">02 · Classification</a></summary><a class="sub" href="02_classification-lesson.html">Lesson</a><a class="sub" href="02_classification-exercises.html">Exercises</a><a class="sub" href="02_classification-solutions.html">Solutions</a></details><details><summary><a href="03_xgboost.html">03 · XGBoost</a></summary><a class="sub" href="03_xgboost-lesson.html">Lesson</a><a class="sub" href="03_xgboost-exercises.html">Exercises</a><a class="sub" href="03_xgboost-solutions.html">Solutions</a></details><details><summary><a href="04_imbalanced_learning.html">04 · Imbalanced learning</a></summary><a class="sub" href="04_imbalanced_learning-lesson.html">Lesson</a><a class="sub" href="04_imbalanced_learning-exercises.html">Exercises</a><a class="sub" href="04_imbalanced_learning-solutions.html">Solutions</a></details><details><summary><a href="05_text_classification.html">05 · Text classification</a></summary><a class="sub" href="05_text_classification-lesson.html">Lesson</a><a class="sub" href="05_text_classification-exercises.html">Exercises</a><a class="sub" href="05_text_classification-solutions.html">Solutions</a></details><details><summary><a href="06_clustering.html">06 · Clustering</a></summary><a class="sub" href="06_clustering-lesson.html">Lesson</a><a class="sub" href="06_clustering-exercises.html">Exercises</a><a class="sub" href="06_clustering-solutions.html">Solutions</a></details><details><summary><a href="07_time_series.html">07 · Time-series forecasting</a></summary><a class="sub" href="07_time_series-lesson.html">Lesson</a><a class="sub" href="07_time_series-exercises.html">Exercises</a><a class="sub" href="07_time_series-solutions.html">Solutions</a></details><details><summary><a href="08_deployment.html">08 · From model to service</a></summary><a class="sub" href="08_deployment-lesson.html">Lesson</a><a class="sub" href="08_deployment-exercises.html">Exercises</a><a class="sub" href="08_deployment-solutions.html">Solutions</a></details><h3>Resources</h3><a href="results.html">Executed result galleries</a><a href="datasets.html">Datasets</a><a href="course-project.html">Course project</a><a href="instructor.html">Teaching guide</a><a href="verification.html">Verification</a></aside><main id="main"><div class="eyebrow">Lecture 04 / lesson</div><div class="actions"><a href="04_imbalanced_learning.html">← Lecture guide</a><a href="downloads/04_imbalanced_learning/lesson.ipynb" download>Download notebook</a></div><p class="note">This page is a reading view. To execute Python, download the complete course and open this notebook in Jupyter. <a href="first-steps.html">First notebook walkthrough →</a></p><details class="contents"><summary>On this page</summary><nav aria-label="Page contents"><a href="#section-1">Read counts before reading a metric</a><a href="#section-2">1. Why accuracy can mislead</a><a href="#section-3">2. Logistic risk and class weights</a><a href="#section-4">2a. Why class weights shift the posterior</a><a href="#section-5">3. PR and ROC metrics</a><a href="#section-6">Precision depends on prevalence</a><a href="#section-7">4. Validation cost and final test</a><a href="#section-8">Inspect the validation tradeoff before freezing the policy</a><a href="#section-9">Final-test reference policy</a><a href="#section-10">Limits</a></nav></details><article class="reading"><section class="cell" id="cell-cell-000"><h1>Lecture 04 — Imbalanced learning: rare events and decisions</h1>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Eight guided machine learning lectures for mathematicians: mathematical foundations, software options, and guided Python examples."><title>Imbalanced learning: lesson · Mathematical ML</title><link rel="stylesheet" href="style.css"><script defer src="site.js"></script><script>window.MathJax={tex:{inlineMath:[['$','$'],['\\(','\\)']]}};</script><script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script></head><body><a class="skip" href="#main">Skip to content</a><header><button class="menu" aria-controls="sidebar" aria-expanded="false" aria-label="Toggle course navigation">☰</button><a class="brand" href="index.html">∑ <span>Mathematical ML</span></a><nav aria-label="Quick links"><a href="setup.html">Get started</a><a href="index.html#lectures">Lectures</a><button id="theme" aria-label="Switch color theme">◐</button></nav></header><div class="layout"><aside id="sidebar" aria-label="Course navigation"><a href="index.html">Course overview</a><h3>Start here</h3><a href="setup.html">Installation &amp; first steps</a><a href="first-steps.html">New to ML? Start here</a><h3>The lectures</h3><details><summary><a href="01_regression.html">01 · Regression</a></summary><a class="sub" href="01_regression-lesson.html">Foundations &amp; examples</a></details><details><summary><a href="02_classification.html">02 · Classification</a></summary><a class="sub" href="02_classification-lesson.html">Foundations &amp; examples</a></details><details><summary><a href="03_xgboost.html">03 · XGBoost</a></summary><a class="sub" href="03_xgboost-lesson.html">Foundations &amp; examples</a></details><details><summary><a href="04_imbalanced_learning.html">04 · Imbalanced learning</a></summary><a class="sub" href="04_imbalanced_learning-lesson.html">Foundations &amp; examples</a></details><details><summary><a href="05_text_classification.html">05 · Text classification</a></summary><a class="sub" href="05_text_classification-lesson.html">Foundations &amp; examples</a></details><details><summary><a href="06_clustering.html">06 · Clustering</a></summary><a class="sub" href="06_clustering-lesson.html">Foundations &amp; examples</a></details><details><summary><a href="07_time_series.html">07 · Time-series forecasting</a></summary><a class="sub" href="07_time_series-lesson.html">Foundations &amp; examples</a></details><details><summary><a href="08_deployment.html">08 · From model to service</a></summary><a class="sub" href="08_deployment-lesson.html">Foundations &amp; examples</a></details><h3>Resources</h3><a href="results.html">Executed result galleries</a><a href="datasets.html">Datasets</a><a href="course-project.html">Course project</a><a href="instructor.html">Teaching guide</a><a href="verification.html">Verification</a></aside><main id="main"><div class="eyebrow">Lecture 04 / lesson</div><div class="actions"><a href="04_imbalanced_learning.html">← Lecture guide</a><a href="downloads/04_imbalanced_learning/lesson.ipynb" download>Download notebook</a></div><p class="note">This page is a reading view. To execute Python, download the complete course and open this notebook in Jupyter. <a href="first-steps.html">First notebook walkthrough →</a></p><details class="contents"><summary>On this page</summary><nav aria-label="Page contents"><a href="#section-1">Read counts before reading a metric</a><a href="#section-2">1. Why accuracy can mislead</a><a href="#section-3">2. Logistic risk and class weights</a><a href="#section-4">2a. Why class weights shift the posterior</a><a href="#section-5">2b. Read the estimator call as a mathematical choice</a><a href="#section-6">XGBoost's tree controls in the weighted fit</a><a href="#section-7">3. PR and ROC metrics</a><a href="#section-8">Precision depends on prevalence</a><a href="#section-9">4. Validation cost and final test</a><a href="#section-10">Inspect the validation tradeoff before freezing the policy</a><a href="#section-11">Final-test reference policy</a><a href="#section-12">Limits</a></nav></details><article class="reading"><section class="cell" id="cell-cell-000"><h1>Lecture 04 — Imbalanced learning: rare events and decisions</h1>
 <p>A synthetic transaction example separates ranking, probability scale, and threshold policy.</p></section><section class="cell" id="cell-beginner-bridge"><p><img alt="Teaching figure for imbalanced learning" src="figures/04_imbalanced_learning.svg" /></p>
 <p><em>Counts computed from the complete supplied fraud dataset, before splitting. The minority count explains why accuracy alone is insufficient.</em></p>
 <h2 id="section-1">Read counts before reading a metric</h2>
@@ -65,7 +65,140 @@
 sizes: 3000 1000 1000</pre></details></section><section class="cell" id="cell-cell-003"><h2 id="section-3">2. Logistic risk and class weights</h2>
 <p>For $p=\sigma(\eta)$ and $\eta=x^T\beta$, Bernoulli negative log likelihood is $\ell=\log(1+e^\eta)-y\eta$. Its gradient is $(p-y)x$; Hessian is $p(1-p)xx^T\succeq0$. An L2 penalty adds curvature and shrinks slopes.</p>
 <p>Weighting multiplies loss by $w_y$. Under ideal constant class weights, the weighted optimum satisfies $q/(1-q)=(w_1/w_0)p/(1-p)$, so weighting shifts posterior odds and probability scale. It may also change finite-sample ranking, but it does not guarantee calibrated natural probabilities.</p></section><section class="cell" id="cell-cell-004"><h2 id="section-4">2a. Why class weights shift the posterior</h2>
-<p>At fixed features $x$, let the natural positive probability be $p$. The conditional weighted Bernoulli risk for a proposed probability $q$ is $R(q|x)=-w_1p\log q-w_0(1-p)\log(1-q)$. Its derivative is $-w_1p/q+w_0(1-p)/(1-q)$. Setting this to zero gives $q/(1-q)=(w_1/w_0)p/(1-p)$. Thus weighting shifts odds even with an ideal learner; fitted weighted probabilities should not automatically be read as natural risk.</p></section><section class="cell" id="cell-cell-005"><div class="cell-label">Python · run in the notebook</div><div class="highlight"><pre><span></span><span class="n">negative</span><span class="p">,</span> <span class="n">positive</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">bincount</span><span class="p">(</span><span class="n">y_train</span><span class="p">,</span> <span class="n">minlength</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<p>At fixed features $x$, let the natural positive probability be $p$. The conditional weighted Bernoulli risk for a proposed probability $q$ is $R(q|x)=-w_1p\log q-w_0(1-p)\log(1-q)$. Its derivative is $-w_1p/q+w_0(1-p)/(1-q)$. Setting this to zero gives $q/(1-q)=(w_1/w_0)p/(1-p)$. Thus weighting shifts odds even with an ideal learner; fitted weighted probabilities should not automatically be read as natural risk.</p>
+<p>For sample weights $w_i$ and slope vector $\beta$, the binary weighted L2 objective can be written</p>
+<p>$$\min_{\beta,b}\;\sum_i w_i\,\ell(y_i, x_i^T\beta+b)+\frac{\|\beta\|_2^2}{2C},$$</p>
+<p>with an unpenalized intercept $b$ for the <code>lbfgs</code> solver. For <code>class_weight="balanced"</code> with two classes, each example in class $c$ receives $w_i=n/(2n_c)$, where $n_c$ is the number of training rows in its class. Thus the aggregate weight of each class is equal. The weighted odds calculation above describes the unregularized conditional optimum; finite samples and the regularization term also affect the fitted model. See the official <a href="https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html">LogisticRegression documentation</a> for <code>C</code> and class-weight definitions.</p></section><section class="cell" id="cell-software-options"><h2 id="section-5">2b. Read the estimator call as a mathematical choice</h2>
+<p>An estimator is an object that stores options and, after <code>fit</code>, learned quantities. <code>fit(X_train, y_train)</code> estimates scaler means and scales, logistic coefficients, and intercepts using training rows. A <code>Pipeline</code> calls each step in order: <code>StandardScaler</code> learns its coordinate transformation, then <code>LogisticRegression</code> minimizes its regularized weighted or unweighted empirical loss on the transformed training matrix. At prediction time, the same fitted scaler is applied before the classifier. <code>predict_proba(X)</code> returns one column per class; column 1 is the fitted model's positive-class score here. It is an estimate on the model's probability scale, not automatically a calibrated natural fraud probability.</p>
+<table>
+<thead>
+<tr>
+<th>Option used here</th>
+<th style="text-align: right;">Library default</th>
+<th style="text-align: right;">This lesson selects</th>
+<th>Mathematical or software effect</th>
+<th>Tradeoff</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>StandardScaler()</code></td>
+<td style="text-align: right;">Center and scale each feature</td>
+<td style="text-align: right;">Default explicitly embodied by the step</td>
+<td>Replaces each training coordinate by $(x_j-\bar x_j)/s_j$; pipeline applies those fitted values to validation and test</td>
+<td>Puts features on comparable units; can be sensitive to outliers</td>
+</tr>
+<tr>
+<td><code>LogisticRegression(C=...)</code></td>
+<td style="text-align: right;"><code>C=1.0</code></td>
+<td style="text-align: right;"><code>C=1</code></td>
+<td>Inverse regularization strength; smaller <code>C</code> penalizes coefficient size more strongly</td>
+<td>Shrinkage can stabilize correlated predictors but can underfit when too strong</td>
+</tr>
+<tr>
+<td><code>class_weight</code></td>
+<td style="text-align: right;"><code>None</code></td>
+<td style="text-align: right;"><code>None</code> and <code>'balanced'</code></td>
+<td>Multiplies each class's loss contribution; <code>'balanced'</code> uses inverse class-frequency weights computed from the labels passed to <code>fit</code></td>
+<td>Raises attention to rare positives, while shifting fitted probability scale</td>
+</tr>
+<tr>
+<td>XGBoost <code>scale_pos_weight</code></td>
+<td style="text-align: right;"><code>1</code></td>
+<td style="text-align: right;">Training negative/positive count ratio</td>
+<td>Scales positive examples' gradient and Hessian contributions during tree fitting</td>
+<td>Changes split and leaf updates without changing which rows were sampled</td>
+</tr>
+<tr>
+<td><code>max_iter</code></td>
+<td style="text-align: right;"><code>100</code></td>
+<td style="text-align: right;"><code>2000</code></td>
+<td>Upper bound on optimizer iterations, not a model-complexity parameter</td>
+<td>Allows convergence; costs more computation if the optimizer needs it</td>
+</tr>
+<tr>
+<td>LogisticRegression <code>random_state</code></td>
+<td style="text-align: right;"><code>None</code></td>
+<td style="text-align: right;"><code>14</code></td>
+<td>Controls shuffling only for stochastic solvers; it has no effect with this lesson's <code>lbfgs</code> solver</td>
+<td>A seed helps reproduce stochastic fits, while solver and platform details still matter</td>
+</tr>
+</tbody>
+</table>
+<p><code>class_weight='balanced'</code> and <code>scale_pos_weight</code> are fitting choices in the logistic and XGBoost objectives. A probability calibrator instead learns a mapping from scores to observed frequencies on separate calibration data or cross-validation folds. A threshold then maps a score to an action. These three operations answer different questions: which errors influence fitting, whether a number represents natural risk, and when to act. A threshold cannot calibrate probabilities, and calibration does not choose the operational cost policy.</p>
+<p>The weighting and <code>C</code> controls must be read together. Class or sample weights multiply observations' loss contributions, while <code>C</code> controls the penalty relative to the data-fit term in scikit-learn's regularized objective. Thus changing weights can change the balance between fit and penalty even when <code>C</code> stays fixed; compare weighting choices with the same <code>C</code> first, as the next cell does. XGBoost's <code>scale_pos_weight=negative/positive</code> similarly scales positive examples' gradient and Hessian contributions when trees are built. It changes how the objective drives splits and leaf values; it does not duplicate or remove rows.</p>
+<h3 id="section-6">XGBoost's tree controls in the weighted fit</h3>
+<p>These values are passed explicitly in the <code>XGBClassifier</code> call below. For the tree booster, the defaults below are documented by XGBoost; changing one setting at a time makes its role easier to interpret.</p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th style="text-align: right;">Default</th>
+<th style="text-align: right;">Lesson choice</th>
+<th>Effect in this fit</th>
+<th>Tradeoff</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>max_depth</code></td>
+<td style="text-align: right;"><code>6</code></td>
+<td style="text-align: right;"><code>3</code></td>
+<td>Caps the number of split levels in each tree</td>
+<td>Shallower trees express simpler interactions; deeper trees add capacity and can overfit</td>
+</tr>
+<tr>
+<td><code>learning_rate</code> (<code>eta</code>)</td>
+<td style="text-align: right;"><code>0.3</code></td>
+<td style="text-align: right;"><code>0.06</code></td>
+<td>Shrinks each boosting update</td>
+<td>Smaller steps are more conservative and often need more trees</td>
+</tr>
+<tr>
+<td><code>min_child_weight</code></td>
+<td style="text-align: right;"><code>1</code></td>
+<td style="text-align: right;"><code>4</code></td>
+<td>Requires a child node to have at least this sum of instance-weighted Hessians</td>
+<td>Larger values discourage splits supported by little local curvature</td>
+</tr>
+<tr>
+<td><code>reg_lambda</code></td>
+<td style="text-align: right;"><code>1</code></td>
+<td style="text-align: right;"><code>2</code></td>
+<td>L2 penalty on leaf scores in the tree objective</td>
+<td>More shrinkage makes leaf updates conservative</td>
+</tr>
+<tr>
+<td><code>scale_pos_weight</code></td>
+<td style="text-align: right;"><code>1</code></td>
+<td style="text-align: right;">Training negative/positive count ratio</td>
+<td>Scales positive-class contributions to the objective's gradients and Hessians</td>
+<td>Alters split and leaf calculations; it does not resample observations</td>
+</tr>
+<tr>
+<td><code>subsample</code></td>
+<td style="text-align: right;"><code>1</code></td>
+<td style="text-align: right;"><code>0.85</code></td>
+<td>Samples 85% of training rows for each boosting iteration</td>
+<td>Adds fitting randomness and can reduce overfit; uses fewer rows per tree</td>
+</tr>
+<tr>
+<td><code>colsample_bytree</code></td>
+<td style="text-align: right;"><code>1</code></td>
+<td style="text-align: right;"><code>0.9</code></td>
+<td>Samples 90% of feature columns for each tree</td>
+<td>Adds feature-level randomness; a tree may miss a useful predictor</td>
+</tr>
+<tr>
+<td><code>n_estimators</code></td>
+<td style="text-align: right;"><code>100</code></td>
+<td style="text-align: right;"><code>180</code></td>
+<td>Builds 180 sequential trees</td>
+<td>More rounds add capacity and runtime; tree count works together with the learning rate</td>
+</tr>
+</tbody>
+</table>
+<p>The official <a href="https://xgboost.readthedocs.io/en/stable/parameter.html">XGBoost tree parameter reference</a> defines these defaults and effects. The two weighting parameters in this lesson affect optimization contributions. Neither creates additional positive examples.</p></section><section class="cell" id="cell-cell-005"><div class="cell-label">Python · run in the notebook</div><div class="highlight"><pre><span></span><span class="n">negative</span><span class="p">,</span> <span class="n">positive</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">bincount</span><span class="p">(</span><span class="n">y_train</span><span class="p">,</span> <span class="n">minlength</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
 <span class="n">ratio</span> <span class="o">=</span> <span class="n">negative</span> <span class="o">/</span> <span class="n">positive</span>
 <span class="n">models</span> <span class="o">=</span> <span class="p">{</span>
     <span class="s2">"Logistic unweighted"</span><span class="p">:</span> <span class="n">make_pipeline</span><span class="p">(</span>
@@ -110,13 +243,38 @@ sizes: 3000 1000 1000</pre></details></section><section class="cell" id="cell-ce
     <span class="p">)</span>
 <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">rows</span><span class="p">)</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s2">"model"</span><span class="p">)</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span>
 </pre></div>
-<details class="result-text"><summary>2a. Why class weights shift the posterior · computed output</summary><pre>                         AP  trapezoid_PR_area  ROC_AUC   Brier
+<details class="result-text"><summary>2b. Read the estimator call as a mathematical choice · computed output</summary><pre>                         AP  trapezoid_PR_area  ROC_AUC   Brier
 model
 Logistic unweighted  0.0924             0.0838   0.6410  0.0406
 Logistic balanced    0.0910             0.0838   0.6503  0.2199
-XGBoost weighted     0.0618             0.0590   0.6164  0.1349</pre></details></section><section class="cell" id="cell-cell-006"><h2 id="section-5">3. PR and ROC metrics</h2>
+XGBoost weighted     0.0618             0.0590   0.6164  0.1349</pre></details></section><section class="cell" id="cell-weighting-readout"><p>The next comparison holds the split, logistic model family, scaler, and <code>C</code> fixed while changing only <code>class_weight</code>. The validation rows show how that fitting change affects ranking metrics, raw probability scale, and a fixed 0.5 action rule. The 0.5 comparison is diagnostic only; it is not a selected threshold. The later cost table chooses a separate validation policy.</p>
+<p>A lower Brier score evaluates squared probability error on these validation rows, but one split cannot establish calibration for future prevalence. If natural probabilities are needed, fit a calibration mapping with data kept separate from threshold selection or with a cross-validation calibration procedure. Then choose a threshold from stated costs, capacity, or another operational constraint. Here we use the validation scores to illustrate both steps conceptually; we do not fit a calibrator or use the test set to choose a policy.</p></section><section class="cell" id="cell-weighting-option-comparison"><div class="cell-label">Python · run in the notebook</div><div class="highlight"><pre><span></span><span class="c1"># Controlled validation comparison: only the logistic class_weight setting changes.</span>
+<span class="n">fixed_threshold</span> <span class="o">=</span> <span class="mf">0.5</span>
+<span class="n">comparison_C_FN</span><span class="p">,</span> <span class="n">comparison_C_FP</span> <span class="o">=</span> <span class="mf">20.0</span><span class="p">,</span> <span class="mf">1.0</span>
+<span class="n">weighting_rows</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">"Logistic unweighted"</span><span class="p">,</span> <span class="s2">"Logistic balanced"</span><span class="p">]:</span>
+    <span class="n">scores</span> <span class="o">=</span> <span class="n">valid_scores</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+    <span class="n">predicted</span> <span class="o">=</span> <span class="n">scores</span> <span class="o">&gt;=</span> <span class="n">fixed_threshold</span>
+    <span class="n">weighting_rows</span><span class="o">.</span><span class="n">append</span><span class="p">({</span>
+        <span class="s2">"fit objective"</span><span class="p">:</span> <span class="n">name</span><span class="p">,</span>
+        <span class="s2">"average precision"</span><span class="p">:</span> <span class="n">average_precision_score</span><span class="p">(</span><span class="n">y_valid</span><span class="p">,</span> <span class="n">scores</span><span class="p">),</span>
+        <span class="s2">"Brier score"</span><span class="p">:</span> <span class="n">brier_score_loss</span><span class="p">(</span><span class="n">y_valid</span><span class="p">,</span> <span class="n">scores</span><span class="p">),</span>
+        <span class="s2">"alerts at fixed threshold 0.5"</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">predicted</span><span class="o">.</span><span class="n">sum</span><span class="p">()),</span>
+        <span class="s2">"validation cost at 0.5"</span><span class="p">:</span> <span class="n">empirical_cost</span><span class="p">(</span><span class="n">y_valid</span><span class="p">,</span> <span class="n">scores</span><span class="p">,</span> <span class="n">fixed_threshold</span><span class="p">,</span> <span class="n">comparison_C_FN</span><span class="p">,</span> <span class="n">comparison_C_FP</span><span class="p">),</span>
+    <span class="p">})</span>
+<span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">weighting_rows</span><span class="p">)</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s2">"fit objective"</span><span class="p">)</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span>
+</pre></div>
+<details class="result-text"><summary>2b. Read the estimator call as a mathematical choice · computed output</summary><pre>                     average precision  Brier score  \
+fit objective
+Logistic unweighted             0.0924       0.0406
+Logistic balanced               0.0910       0.2199
+
+                     alerts at fixed threshold 0.5  validation cost at 0.5
+fit objective
+Logistic unweighted                              0                   860.0
+Logistic balanced                              335                   733.0</pre></details></section><section class="cell" id="cell-cell-006"><h2 id="section-7">3. PR and ROC metrics</h2>
 <p>No-skill expected precision is prevalence. Average precision weights precision by recall increments; trapezoid area linearly interpolates curve points and generally differs. ROC-AUC summarizes ranking over false-positive rates, but high ROC-AUC does not guarantee useful alert precision at rare prevalence. None chooses a threshold.</p>
-<p>For recall levels ordered from strict to loose thresholds, $\operatorname{AP}=\sum_j(R_j-R_{j-1})P_j$. This weights each attained precision by the additional recall. The prevalence line is a population no-skill precision reference; finite-sample average precision for random rankings need not equal it exactly.</p></section><section class="cell" id="cell-cell-007"><h2 id="section-6">Precision depends on prevalence</h2>
+<p>For recall levels ordered from strict to loose thresholds, $\operatorname{AP}=\sum_j(R_j-R_{j-1})P_j$. This weights each attained precision by the additional recall. The prevalence line is a population no-skill precision reference; finite-sample average precision for random rankings need not equal it exactly.</p></section><section class="cell" id="cell-cell-007"><h2 id="section-8">Precision depends on prevalence</h2>
 <p>At a fixed threshold, let TPR be recall and FPR be the false-positive rate. Bayes' rule gives</p>
 <p>$$\operatorname{Precision}=\frac{\pi\,\operatorname{TPR}}{\pi\,\operatorname{TPR}+(1-\pi)\,\operatorname{FPR}}.$$</p>
 <p>When prevalence $\pi$ is small, even a modest FPR can create many false alerts. This identity explains why ROC ranking can look strong while precision at a useful recall remains limited.</p></section><section class="cell" id="cell-cell-008"><div class="cell-label">Python · run in the notebook</div><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">roc_curve</span>
@@ -141,7 +299,7 @@ XGBoost weighted     0.0618             0.0590   0.6164  0.1349</pre></details><
     <span class="n">axis</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
 </pre></div>
-<figure class="result-figure"><img loading="lazy" src="results/04_imbalanced_learning-cell-008-0.png" alt="Executed result: Precision depends on prevalence"><figcaption>Precision depends on prevalence · captured notebook output</figcaption></figure></section><section class="cell" id="cell-cell-009"><h2 id="section-7">4. Validation cost and final test</h2>
+<figure class="result-figure"><img loading="lazy" src="results/04_imbalanced_learning-cell-008-0.png" alt="Executed result: Precision depends on prevalence"><figcaption>Precision depends on prevalence · captured notebook output</figcaption></figure></section><section class="cell" id="cell-cell-009"><h2 id="section-9">4. Validation cost and final test</h2>
 <p>With calibrated natural probability $p$ and constant costs, predict positive when $C_{FP}(1-p)\le C_{FN}p$, giving $p\ge C_{FP}/(C_{FP}+C_{FN})$. This assumes calibrated risk and unconstrained actions. We choose empirical thresholds on validation scores using stated costs, freeze them, and evaluate test once.</p></section><section class="cell" id="cell-cell-010"><div class="cell-label">Python · run in the notebook</div><div class="highlight"><pre><span></span><span class="n">C_FN</span><span class="p">,</span> <span class="n">C_FP</span> <span class="o">=</span> <span class="mf">20.0</span><span class="p">,</span> <span class="mf">1.0</span>
 <span class="n">grid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">r_</span><span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.01</span><span class="p">,</span> <span class="mf">0.99</span><span class="p">,</span> <span class="mi">197</span><span class="p">),</span> <span class="mf">1.0</span><span class="p">])</span>
 <span class="n">thresholds</span> <span class="o">=</span> <span class="p">{}</span>
@@ -162,7 +320,7 @@ XGBoost weighted     0.0618             0.0590   0.6164  0.1349</pre></details><
 <details class="result-text"><summary>4. Validation cost and final test · computed output</summary><pre>                 Logistic unweighted  Logistic balanced  XGBoost weighted
 threshold                      0.030              0.410             0.335
 validation_cost              706.000            667.000           705.000
-alert_rate                     0.581              0.542             0.370</pre></details></section><section class="cell" id="cell-threshold-tradeoff"><h3 id="section-8">Inspect the validation tradeoff before freezing the policy</h3>
+alert_rate                     0.581              0.542             0.370</pre></details></section><section class="cell" id="cell-threshold-tradeoff"><h3 id="section-10">Inspect the validation tradeoff before freezing the policy</h3>
 <p>The first minimum returned by <code>np.argmin</code> wins; because thresholds are sorted ascending, equal-cost ties choose the smallest threshold. This tends to send more alerts among tied policies. Costs are illustrative units with false-negative cost 20 and false-positive cost 1. Both panels use validation rows only.</p></section><section class="cell" id="cell-threshold-tradeoff-code"><div class="cell-label">Python · run in the notebook</div><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
 <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">scores</span> <span class="ow">in</span> <span class="n">valid_scores</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
     <span class="n">costs</span> <span class="o">=</span> <span class="p">[</span><span class="n">empirical_cost</span><span class="p">(</span><span class="n">y_valid</span><span class="p">,</span> <span class="n">scores</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">C_FN</span><span class="p">,</span> <span class="n">C_FP</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">grid</span><span class="p">]</span>
@@ -177,7 +335,7 @@ alert_rate                     0.581              0.542             0.370</pre><
 <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 </pre></div>
-<figure class="result-figure"><img loading="lazy" src="results/04_imbalanced_learning-threshold-tradeoff-code-0.png" alt="Executed result: 4. Validation cost and final test"><figcaption>4. Validation cost and final test · captured notebook output</figcaption></figure></section><section class="cell" id="cell-cell-011"><h3 id="section-9">Final-test reference policy</h3>
+<figure class="result-figure"><img loading="lazy" src="results/04_imbalanced_learning-threshold-tradeoff-code-0.png" alt="Executed result: 4. Validation cost and final test"><figcaption>4. Validation cost and final test · captured notebook output</figcaption></figure></section><section class="cell" id="cell-cell-011"><h3 id="section-11">Final-test reference policy</h3>
 <p>The always-negative policy has no alerts and misses every positive. Its accuracy is one minus test prevalence. Compare the frozen models below against this reference; neither the reference nor the model test results are used to tune a threshold.</p></section><section class="cell" id="cell-cell-012"><div class="cell-label">Python · run in the notebook</div><div class="highlight"><pre><span></span><span class="n">test_negative</span><span class="p">,</span> <span class="n">test_positive</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">bincount</span><span class="p">(</span><span class="n">y_test</span><span class="p">,</span> <span class="n">minlength</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
 <span class="n">baseline</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
     <span class="p">[</span>
@@ -235,5 +393,5 @@ model
 Logistic unweighted   0.5944  838.0            0.587
 Logistic balanced     0.5973  818.0            0.546
 XGBoost weighted      0.5371  824.0            0.363
-Always negative          NaN  860.0            0.000</pre></details></section><section class="cell" id="cell-cell-014"><h2 id="section-10">Limits</h2>
-<p>Threshold search can overfit validation. Weighted outputs need not be calibrated to natural prevalence. No resampling is performed, and splitting precedes all fitting. This controlled synthetic data cannot support operational claims.</p></section></article><p><a href="04_imbalanced_learning-results.html">Explore this lecture’s executed result gallery →</a></p><p><a class="button" href="04_imbalanced_learning-exercises.html">Next: attempt the exercises →</a></p><nav class="actions" aria-label="Study sequence"><a href="03_xgboost.html">← 03: XGBoost</a><a href="index.html#lectures">All lectures</a><a href="05_text_classification.html">05: Text classification →</a></nav></main></div><footer>Mathematical ML · Eight practical lectures for mathematicians<br>Readable Python · Reproducible experiments · Synthetic teaching data</footer></body></html>
+Always negative          NaN  860.0            0.000</pre></details></section><section class="cell" id="cell-cell-014"><h2 id="section-12">Limits</h2>
+<p>Threshold search can overfit validation. Weighted outputs need not be calibrated to natural prevalence. No resampling is performed, and splitting precedes all fitting. This controlled synthetic data cannot support operational claims.</p></section></article><p><a href="04_imbalanced_learning-results.html">Explore this lecture’s executed result gallery →</a></p><nav class="actions" aria-label="Study sequence"><a href="03_xgboost.html">← 03: XGBoost</a><a href="index.html#lectures">All lectures</a><a href="05_text_classification.html">05: Text classification →</a></nav></main></div><footer>Mathematical ML · Eight practical lectures for mathematicians<br>Readable Python · Reproducible experiments · Synthetic teaching data</footer></body></html>

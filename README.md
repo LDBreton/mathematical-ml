@@ -33,7 +33,7 @@ If PowerShell blocks activation, use `.venv\Scripts\python.exe` in place of `pyt
 | [07: Time-series forecasting](lectures/07_time_series/README.md) | How do we forecast tomorrow's sales? | Information sets, lagged features, rolling-origin evaluation | Seasonal baseline and XGBoost one-step forecasts |
 | [08: Deployment](lectures/08_deployment/README.md) | How does a fitted model become a service? | Statistical versus software contracts, reproducibility | Tracked training and a validated prediction API |
 
-For each lecture, read its README, run `lesson.ipynb` in order, attempt `exercises.ipynb`, then compare with `solutions.ipynb`. Exercise notebooks contain runnable scaffolding; successful execution alone does not mean an exercise is answered. Work through the written questions and replace the indicated student work. Plan roughly 2–3 hours per lecture plus exercises.
+For each lecture, read its README and run `lesson.ipynb` in order. Each lesson connects mathematical foundations with software options and guided code examples. Read the explanation, predict what a parameter changes, then inspect the computed result. Plan roughly 2–3 hours per lecture, with additional time for the extended examples.
 
 ## Course website
 
@@ -54,7 +54,7 @@ python scripts/build_site.py
 python scripts/check_site.py
 ```
 
-The notebook runner executes all lessons, exercises, and solutions using separate kernels and writes results under ignored `.verification/`. It checks execution, not completion of student answers. The committed notebooks keep clean outputs so students generate their own figures. `export_lesson_results.py` copies checked lesson outputs into `docs/results/` with source/data hashes and dependency versions. Commit those snapshots after intentional lesson updates; the site build rejects stale snapshots. GitHub Pages builds from committed snapshots and does not execute Python notebooks. The verification workflow independently executes every notebook. See [the galleries](https://ldbreton.github.io/mathematical-ml/results.html).
+The notebook runner executes all eight guided lessons using separate kernels and writes results under ignored `.verification/`. The committed notebooks keep clean outputs so students generate their own figures. `export_lesson_results.py` copies checked lesson outputs into `docs/results/` with source/data hashes and dependency versions. Commit those snapshots after intentional lesson updates; the site build rejects stale snapshots. GitHub Pages builds from committed snapshots and does not execute Python notebooks. The verification workflow independently executes every notebook. See [the galleries](https://ldbreton.github.io/mathematical-ml/results.html).
 
 The latest local checks and their limitations are recorded in [verification.md](docs/verification.md). To validate the website after rebuilding, run `python scripts/check_site.py`.
 

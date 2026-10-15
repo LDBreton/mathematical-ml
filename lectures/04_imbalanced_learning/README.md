@@ -19,8 +19,8 @@ For $p_i=\sigma(x_i^T\beta)$, logistic negative log likelihood is $-\sum_i[y_i\l
 
 1. Read the course [setup](../../README.md), then read this README once before opening Jupyter.
 2. Run `lesson.ipynb` top to bottom. Inspect prevalence before fitting and keep the test partition aside.
-3. In `exercises.ipynb`, derive the weighted-posterior shift and compare metrics before reading solutions.
-4. Use `solutions.ipynb` to compare calculations. Thresholds minimize the stated validation cost; test is evaluated once.
+3. Trace the weighted-posterior derivation, then inspect the controlled weighting comparison and its cost interpretation.
+4. Follow validation threshold selection; assess the frozen policy once on test data.
 
 
 ## Visual guide and study route
@@ -29,4 +29,4 @@ For $p_i=\sigma(x_i^T\beta)$, logistic negative log likelihood is $-\sum_i[y_i\l
 
 *Counts computed from the complete supplied fraud dataset, before splitting. The minority count explains why accuracy alone is insufficient.*
 
-New to the libraries? Start with [the first-experiment walkthrough](../../docs/first-steps.md). Read the guided lesson, attempt the exercises, then consult solutions. Allow about 2–3 hours for a first reading; running experiments and completing exercises may require another session.
+New to the libraries? Start with [the first-experiment walkthrough](../../docs/first-steps.md). Read the foundations, trace the annotated implementation, then compare the worked parameter examples. Allow about 2–3 hours for a first reading; detailed experiments may require another session.

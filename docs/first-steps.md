@@ -84,7 +84,7 @@ This is a deliberately fixed, two-model demonstration with no hyperparameter sel
 3. Open `lectures/01_regression/lesson.ipynb`. Select the **Mathematical ML** kernel: the Python process that executes cells and holds their variables.
 4. Run cells from top to bottom with **Shift+Enter**. Markdown cells explain the reasoning; code cells compute results. A running cell shows `[*]`.
 5. When you change an early cell, rerun the dependent cells. Before trusting a result, choose **Kernel → Restart Kernel and Run All Cells** to check that it does not depend on stale variables.
-6. Attempt `exercises.ipynb`, writing explanations as well as code. Then consult `solutions.ipynb`.
+6. Continue through the guided examples in `lesson.ipynb`. For each option, connect its software behavior to the stated mathematical effect.
 
 The website is a static reading view. Its code blocks do not execute Python. Your notebook runs locally, including its plots and printed results. The website labels conceptual illustrations separately from computed result snapshots. Each executed-result gallery links outputs back to the source cells and records the environment used to produce them.
 
@@ -102,6 +102,32 @@ The website is a static reading view. Its code blocks do not execute Python. You
 A `Pipeline` composes transformations and an estimator. Its `.fit` learns each preprocessing stage using the supplied training rows, then fits the final model. A `ColumnTransformer` applies different transformations to named column groups and joins the resulting numerical features. Neither protects you from a badly chosen split or from preprocessing already fitted outside the pipeline.
 
 An **epoch** is a full pass through data in some training algorithms; a **boosting round** adds a tree or stage. They are different ideas. A GPU changes how some computations run; it does not change which data are legitimate to use for fitting or evaluation.
+
+## Read an option before changing it
+
+A constructor such as `Ridge(alpha=1.0)` declares a procedure; it has not fitted coefficients yet. After `fit`, learned quantities usually have a trailing underscore, such as `coef_`, `mean_`, or `classes_`. `get_params()` reports configuration, not learned state. `set_params(model__alpha=10)` changes the named pipeline option; fit again to obtain coefficients for that new objective. It does not update already learned coefficients by itself.
+
+Separate four kinds of choices:
+
+| Kind | Examples | Mathematical question |
+|---|---|---|
+| Representation | scaling, lag windows, vocabulary | What map $\phi$ turns observations into model inputs? |
+| Model and objective | Ridge `alpha`, tree depth, class weights | Which functions are allowed, and which loss is minimized? |
+| Numerical computation | solver, tolerance, iteration budget | How accurately and efficiently do we approximate that minimizer? |
+| Evaluation and policy | split, metric, threshold | What population or future period is assessed, and how do predictions become actions? |
+
+An iteration limit is not a statistical regularization parameter, although stopping an optimization early can affect the fitted answer. Conversely, boosting's number of stages changes the additive model and can act as regularization. The role depends on the algorithm, not on the option's name.
+
+For each worked example, read it in this order:
+
+1. Identify the input rows, column meanings, and array shapes.
+2. Write the representation and objective in mathematical notation.
+3. Match each explicit keyword to that representation, objective, numerical algorithm, or evaluation policy.
+4. Identify what `fit` stores and what `predict` reuses.
+5. Compare a controlled change on training/development data. Explain the result before choosing any setting.
+6. Freeze the choice before inspecting the final test. A parameter demonstration is not evidence that its setting is universally best.
+
+Library defaults can change. The lessons state important settings explicitly and link to library references; the environment lock records the versions used for the published outputs. A seed controls certain random choices, but does not promise identical floating-point results across machines or versions.
 
 ## When something goes wrong
 

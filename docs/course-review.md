@@ -14,7 +14,7 @@ The course is stronger on mathematical qualifications and evaluation discipline 
 - Added an executed transformed-row inspection in lecture 01: raw rows, scaled and encoded columns, and fitted training means.
 - Explained the provisional k=4 clustering figure and why descriptive segmentation fits the observed population.
 - Labeled the deployment threshold of 0.4 as an illustrative software-contract policy, rather than implying it carries forward validation selection.
-- Added anchored contents on notebook reading pages, an explicit static-reading notice, and lesson → exercises → solutions navigation.
+- Added anchored contents on notebook reading pages, an explicit static-reading notice, and the original lesson → exercises → solutions navigation (superseded by the guided-lecture revision).
 
 ## Follow-up implementation
 
