@@ -1,0 +1,122 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>From model to service: lesson · Mathematical ML</title><link rel="stylesheet" href="style.css"><script>window.MathJax={tex:{inlineMath:[['$','$'],['\\(','\\)']]}};</script><script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script></head><body><a class="skip" href="#main">Skip to content</a><header><a href="index.html">∑ Mathematical ML</a><nav aria-label="Course"><a href="index.html#lectures">Lectures</a><a href="setup.html">Getting started</a><a href="datasets.html">Datasets</a><a href="instructor.html">Teaching guide</a></nav></header><main id="main"><div class="eyebrow">Lecture 08 / lesson</div><div class="actions"><a href="08_deployment.html">← Lecture guide</a><a href="downloads/08_deployment/lesson.ipynb" download>Download notebook</a></div><article class="reading"><section class="cell"><h1>Lecture 08 — From a fitted model to a service</h1>
+<p>A model is useful only when the transformation from raw fields to a decision is reproducible. We will package preprocessing and logistic regression together, keep the decision threshold with the fitted model, and call the same model through a validated API. The churn data are synthetic; results are examples, not evidence about real customers.</p></section><section class="cell"><h2>1. Find the project and state the prediction problem</h2>
+<p>The notebook may be opened from a nested directory. We locate the repository by searching parent folders for <code>data/churn.csv</code>, then add <code>src</code> for this checkout’s source layout. The response is <code>churn = 1</code>; the service returns both the probability and the thresholded decision.</p></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>from pathlib import Path
+import sys
+
+HERE = Path.cwd().resolve()
+ROOT = next((p for p in (HERE, *HERE.parents) if (p / &quot;data&quot; / &quot;churn.csv&quot;).is_file()), None)
+if ROOT is None:
+    raise FileNotFoundError(&quot;Could not locate data/churn.csv from the current directory&quot;)
+sys.path.insert(0, str(ROOT / &quot;src&quot;))
+DATA = ROOT / &quot;data&quot; / &quot;churn.csv&quot;
+print(&quot;Project root:&quot;, ROOT)
+print(&quot;Data:&quot;, DATA)
+</code></pre></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>import pandas as pd
+
+data = pd.read_csv(DATA)
+print(data.shape)
+data.head()</code></pre></section><section class="cell"><p>We model \(p(x)=\Pr(Y=1\mid X=x)=\sigma(\beta_0+\beta^T z(x))\), where \(\sigma(t)=(1+e^{-t})^{-1}\) and \(z\) is a learned feature transformation. Numeric standardization centers and rescales each quantitative feature. One-hot encoding gives each contract category its own indicator; this avoids imposing an arbitrary numeric spacing between contract types.</p></section><section class="cell"><h2>2. Train and evaluate once on a held-out sample</h2>
+<p>The fitting routine uses a stratified random split, fitting preprocessing only on the training part. The held-out rows estimate performance on data not used to choose coefficients. Accuracy measures total correctness, precision is the fraction of predicted churners who churn, recall is the fraction of churners found, F1 balances precision and recall, and ROC AUC measures ranking across cutoffs.</p></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>import tempfile
+from course_ml.train import train_model
+
+with tempfile.TemporaryDirectory() as tmp:
+    artifact_path = Path(tmp) / &quot;churn.joblib&quot;
+    metadata = train_model(DATA, artifact_path, threshold=0.5)
+    print(&quot;Artifact exists:&quot;, artifact_path.is_file())
+    display(pd.Series(metadata[&quot;metrics&quot;], name=&quot;held-out metric&quot;))
+    print(&quot;Rows:&quot;, metadata[&quot;train_rows&quot;], &quot;train +&quot;, metadata[&quot;test_rows&quot;], &quot;test&quot;)</code></pre></section><section class="cell"><h2>3. Probability is not the decision</h2>
+<p>The model estimates probabilities. A separate cutoff \(\tau\) maps them to actions: \(\hat y=1\{p(x)\geq\tau\}\). If missing a churner costs more than contacting a customer who would stay, a smaller cutoff may be appropriate. That cutoff must be selected against a validation set and explicit costs; changing it changes precision and recall without changing the fitted probability model.</p></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>from sklearn.metrics import f1_score, precision_score, recall_score
+from sklearn.model_selection import train_test_split
+from course_ml.train import _load_data, build_pipeline
+
+# First reserve the same 25% final test split used by train_model. Then split
+# only the remaining development data into fitting and validation subsets.
+x, y = _load_data(DATA)
+x_development, x_final_test, y_development, y_final_test = train_test_split(
+    x, y, test_size=0.25, random_state=42, stratify=y
+)
+x_fit, x_validation, y_fit, y_validation = train_test_split(
+    x_development, y_development, test_size=0.20, random_state=17, stratify=y_development
+)
+validation_pipeline = build_pipeline().fit(x_fit, y_fit)
+validation_probabilities = validation_pipeline.predict_proba(x_validation)[:, 1]
+thresholds = (0.30, 0.50, 0.70)
+validation_table = pd.DataFrame([
+    {
+        &quot;threshold&quot;: threshold,
+        &quot;precision&quot;: precision_score(y_validation, validation_probabilities &gt;= threshold, zero_division=0),
+        &quot;recall&quot;: recall_score(y_validation, validation_probabilities &gt;= threshold, zero_division=0),
+        &quot;f1&quot;: f1_score(y_validation, validation_probabilities &gt;= threshold, zero_division=0),
+    }
+    for threshold in thresholds
+]).set_index(&quot;threshold&quot;)
+display(validation_table)
+print(&quot;Final test rows are held aside:&quot;, len(x_final_test))</code></pre></section><section class="cell"><p>Each row uses the same validation probabilities and applies a different policy cutoff. Choose a threshold on validation data using the relative cost of missed churn and unnecessary contact. Once the choices are fixed, evaluate once on a separate final test set. A threshold table computed from test labels would leak test information into the model-selection process.</p></section><section class="cell"><h2>4. Inspect the packaged contract</h2>
+<p>The artifact stores a fitted pipeline and metadata together. The pipeline ensures that serving applies the exact learned scaling and category encoding used at training. Metadata makes the expected schema and decision rule inspectable. The artifact should be treated as executable input because joblib uses pickle serialization.</p></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>import joblib
+
+with tempfile.TemporaryDirectory() as tmp:
+    artifact_path = Path(tmp) / &quot;churn.joblib&quot;
+    train_model(DATA, artifact_path)
+    artifact = joblib.load(artifact_path)
+    artifact[&quot;metadata&quot;]</code></pre></section><section class="cell"><h2>5. Exercise the HTTP contract without starting a server</h2>
+<p>FastAPI validates the request before model scoring. <code>TestClient</code> invokes the app in process, so the notebook finishes normally and does not leave a server running. A real HTTP client would send the same JSON to a running Uvicorn process.</p></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>import os
+import tempfile
+from fastapi.testclient import TestClient
+from course_ml import app as api
+
+previous_model_path_present = &quot;MODEL_PATH&quot; in os.environ
+previous_model_path = os.environ.get(&quot;MODEL_PATH&quot;)
+try:
+    with tempfile.TemporaryDirectory() as tmp:
+        artifact_path = Path(tmp) / &quot;churn.joblib&quot;
+        train_model(DATA, artifact_path, threshold=0.4)
+        os.environ[&quot;MODEL_PATH&quot;] = str(artifact_path)
+        api._load_artifact.cache_clear()
+        client = TestClient(api.app)
+        health = client.get(&quot;/health&quot;)
+        valid = client.post(&quot;/predict&quot;, json={
+            &quot;tenure_months&quot;: 8, &quot;monthly_charge&quot;: 92.0,
+            &quot;support_calls&quot;: 4, &quot;contract&quot;: &quot;monthly&quot;
+        })
+        invalid = client.post(&quot;/predict&quot;, json={
+            &quot;tenure_months&quot;: 8, &quot;monthly_charge&quot;: 92.0,
+            &quot;support_calls&quot;: 4, &quot;contract&quot;: &quot;quarterly&quot;
+        })
+        print(&quot;health:&quot;, health.status_code, health.json())
+        print(&quot;prediction:&quot;, valid.status_code, valid.json())
+        print(&quot;unknown contract:&quot;, invalid.status_code, invalid.json())
+finally:
+    api._load_artifact.cache_clear()
+    if previous_model_path_present:
+        os.environ[&quot;MODEL_PATH&quot;] = previous_model_path
+    else:
+        os.environ.pop(&quot;MODEL_PATH&quot;, None)</code></pre></section><section class="cell"><h2>6. Record and inspect a local experiment</h2>
+<p>The next cell records an MLflow run in <code>.verification/tracking-demo/mlflow.db</code> and writes the model artifact beside it. The ignored directory keeps this demonstration from filling the repository with committed experiment files. It logs parameters, held-out metrics, the joblib artifact, a model signature and example input, the CSV SHA-256 digest, and Python/numerical-library versions. The code restores both the prior <code>MLFLOW_TRACKING_URI</code> environment variable and MLflow tracking setting when it finishes. Re-running adds another run to this local experiment.</p>
+<p>For the default project tracking database, run <code>python -m course_ml.train --data data/churn.csv --output artifacts/churn.joblib --track</code>; MLflow writes to <code>mlflow.db</code> by default. The course environment already includes MLflow.</p></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>import mlflow
+import os
+
+previous_uri = mlflow.get_tracking_uri()
+previous_env_present = &quot;MLFLOW_TRACKING_URI&quot; in os.environ
+previous_env_uri = os.environ.get(&quot;MLFLOW_TRACKING_URI&quot;)
+tracking_dir = ROOT / &quot;.verification&quot; / &quot;tracking-demo&quot;
+tracking_dir.mkdir(parents=True, exist_ok=True)
+database = (tracking_dir / &quot;mlflow.db&quot;).as_posix()
+tracking_uri = f&quot;sqlite:///{database}&quot;
+try:
+    os.environ[&quot;MLFLOW_TRACKING_URI&quot;] = tracking_uri
+    mlflow.set_tracking_uri(tracking_uri)
+    artifact_path = tracking_dir / &quot;churn.joblib&quot;
+    train_model(DATA, artifact_path, track=True)
+    experiment = mlflow.get_experiment_by_name(&quot;churn-deployment-lesson&quot;)
+    runs = mlflow.search_runs([experiment.experiment_id], max_results=5)
+    display(runs[[&quot;params.threshold&quot;, &quot;metrics.roc_auc&quot;, &quot;tags.data_sha256&quot;]])
+finally:
+    if previous_env_present:
+        os.environ[&quot;MLFLOW_TRACKING_URI&quot;] = previous_env_uri
+    else:
+        os.environ.pop(&quot;MLFLOW_TRACKING_URI&quot;, None)
+    mlflow.set_tracking_uri(previous_uri)</code></pre></section><section class="cell"><h2>7. Deployment limits</h2>
+<p>This local teaching API has no authentication, rate limits, TLS setup, audit trail, or privacy controls. Do not expose it publicly or send it real customer records. Even with one shared preprocessing pipeline, live data can differ from training data. A production service should monitor input distributions, missingness, prediction rates, and eventual outcomes; investigate drift before retraining. See the lesson README for the operational and security discussion.</p></section><section class="cell"><h2>8. Statistical estimator and software contract</h2>
+<p>Statistically, a learning procedure maps a sample \(D\) to an estimated parameter set \(\hat\theta\), and the fitted model maps a feature vector to a probability. The API has a separate software contract: required fields, types and allowed values, response fields, and errors callers can expect. A valid statistical estimator can still be unusable if those rules are unclear or change silently.</p>
+<p>Reloading an artifact should preserve predictions for the same inputs in a compatible software environment; our round-trip test checks that property. Reproducing a fit is stronger. It also requires the same data bytes, preprocessing and split rules, random seeds, package versions, and compatible numerical behavior. When hardware or numerical libraries differ, compare fitted predictions with a stated floating-point tolerance.</p>
+<p>Covariate shift assumes the feature distribution \(P(X)\) changes while the conditional relationship \(P(Y\mid X)\) stays stable. Under that assumption, monitoring the changed input distribution can guide investigation, but it does not establish that prediction quality fell. If the relationship between features and churn changes, covariate-shift methods do not address that change. Reliable outcome labels are needed to measure predictive quality.</p></section></article></main><footer>Four practical lectures for mathematicians · Local, reproducible, CPU-friendly · Synthetic teaching data</footer></body></html>

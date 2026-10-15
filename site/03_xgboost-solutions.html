@@ -1,0 +1,120 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>XGBoost: solutions · Mathematical ML</title><link rel="stylesheet" href="style.css"><script>window.MathJax={tex:{inlineMath:[['$','$'],['\\(','\\)']]}};</script><script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script></head><body><a class="skip" href="#main">Skip to content</a><header><a href="index.html">∑ Mathematical ML</a><nav aria-label="Course"><a href="index.html#lectures">Lectures</a><a href="setup.html">Getting started</a><a href="datasets.html">Datasets</a><a href="instructor.html">Teaching guide</a></nav></header><main id="main"><div class="eyebrow">Lecture 03 / solutions</div><div class="actions"><a href="03_xgboost.html">← Lecture guide</a><a href="downloads/03_xgboost/solutions.ipynb" download>Download notebook</a></div><article class="reading"><section class="cell"><h1>Worked solutions — XGBoost and model evaluation</h1>
+<p>These answers correspond to the exercises in <code>exercises.ipynb</code>. The bike rows are independent generated hourly scenarios, so results describe scenario interpolation/generalization under a random split, not forecasting across calendar time.</p></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>from pathlib import Path
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn.model_selection import train_test_split
+from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import OneHotEncoder
+from sklearn.pipeline import make_pipeline
+from sklearn.dummy import DummyRegressor
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+from xgboost import XGBRegressor
+
+SEED = 42
+FEATURES = [&quot;temperature_c&quot;, &quot;humidity&quot;, &quot;wind_kmh&quot;, &quot;hour&quot;, &quot;weekday&quot;, &quot;season&quot;]
+TARGET = &quot;rentals&quot;
+
+def find_data_file(filename=&quot;bike_demand.csv&quot;):
+    # In Jupyter, cwd is commonly the repository root or this notebook&#x27;s folder.
+    for start in (Path.cwd(), *Path.cwd().parents):
+        candidate = start / &quot;data&quot; / filename
+        if candidate.is_file():
+            return candidate
+    raise FileNotFoundError(
+        &quot;Could not find data/&quot; + filename + &quot; in the current directory or its parents. &quot;
+        &quot;Open Jupyter from the repository or place the supplied CSV in data/.&quot;
+    )
+
+data_path = find_data_file()
+df = pd.read_csv(data_path)
+missing = sorted(set(FEATURES + [TARGET]) - set(df.columns))
+if missing:
+    raise ValueError(f&quot;{data_path} is missing required columns: {missing}&quot;)
+df = df[FEATURES + [TARGET]].dropna().copy()
+print(f&quot;Loaded {len(df):,} complete scenario rows from {data_path}&quot;)
+df.head()
+</code></pre></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code># Treat hour and weekday as labels, not measurements with meaningful linear distance.
+# One-hot columns are shared across all models so the comparison uses the same inputs.
+categorical = [&quot;hour&quot;, &quot;weekday&quot;, &quot;season&quot;]
+numeric = [&quot;temperature_c&quot;, &quot;humidity&quot;, &quot;wind_kmh&quot;]
+encoder = ColumnTransformer(
+    [(&quot;numeric&quot;, &quot;passthrough&quot;, numeric),
+     (&quot;categories&quot;, OneHotEncoder(handle_unknown=&quot;ignore&quot;, sparse_output=False), categorical)],
+    verbose_feature_names_out=False,
+)
+X = df[FEATURES]
+y = df[TARGET].astype(float)
+
+# First hold out the final test set. Then split the remaining development rows
+# into model-fit and early-stopping validation subsets.
+X_dev, X_test, y_dev, y_test = train_test_split(
+    X, y, test_size=0.20, random_state=SEED
+)
+X_train, X_val, y_train, y_val = train_test_split(
+    X_dev, y_dev, test_size=0.1875, random_state=SEED
+)  # 0.1875 * 0.80 = 0.15 of all rows
+print(f&quot;train={len(X_train)}, validation={len(X_val)}, test={len(X_test)}&quot;)
+</code></pre></section><section class="cell"><h2>Exercise 1 — Regularized leaf value</h2>
+<p>For \(H+\lambda&gt;0\), the smooth quadratic has slope \(G+(H+\lambda)w\). The L1 term contributes subgradient \(\alpha\operatorname{sgn}(w)\) for nonzero \(w\), and interval \([-\alpha,\alpha]\) at zero. If \(G&gt;\alpha\), the minimizer is negative and satisfies \(G+(H+\lambda)w-\alpha=0\); if \(G&lt;-\alpha\), it is positive and satisfies \(G+(H+\lambda)w+\alpha=0\). If \(|G|\le\alpha\), zero satisfies the subgradient condition. Therefore</p>
+<p>\[
+w^*=-\frac{\operatorname{sgn}(G)(|G|-\alpha)_+}{H+\lambda}.
+\]</p>
+<p>Increasing \(\lambda\) shrinks the magnitude toward zero. The threshold \(\alpha\) can make the update exactly zero.</p></section><section class="cell"><h2>Exercise 2 — Approximate split gain</h2>
+<p>The scores are \(S_L=64/12\), \(S_R=25/10\), and \(S_P=9/20\). Hence</p>
+<p>\[
+\tfrac12(S_L+S_R-S_P)-\gamma
+=\tfrac12(5.3333+2.5-0.45)-0.4\approx3.2917.
+\]</p>
+<p>It is positive, so the split reduces this regularized second-order training approximation. That says nothing by itself about held-out generalization, stability, or usefulness under a different loss or data distribution.</p></section><section class="cell"><h2>Exercise 3 — Fit and compare</h2>
+<p>The following code fits all models on the same encoded training rows. Only XGBoost sees validation rows during fitting. The final metrics are calculated on the untouched test rows.</p></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code># Fit preprocessing only on training rows, then use that same representation everywhere.
+X_train_enc = encoder.fit_transform(X_train)
+X_val_enc = encoder.transform(X_val)
+X_test_enc = encoder.transform(X_test)
+
+dummy = DummyRegressor(strategy=&quot;mean&quot;).fit(X_train_enc, y_train)
+forest = RandomForestRegressor(
+    n_estimators=400, min_samples_leaf=2, max_features=0.9,
+    random_state=SEED, n_jobs=-1,
+).fit(X_train_enc, y_train)
+
+# Validation data controls early stopping. The test data is untouched until scoring.
+xgb = XGBRegressor(
+    objective=&quot;reg:squarederror&quot;, eval_metric=&quot;rmse&quot;,
+    n_estimators=2000, learning_rate=0.04, max_depth=4,
+    min_child_weight=5, subsample=0.85, colsample_bytree=0.9,
+    reg_lambda=3.0, reg_alpha=0.0, gamma=0.0,
+    early_stopping_rounds=50,
+    random_state=SEED, n_jobs=-1,
+)
+xgb.fit(X_train_enc, y_train, eval_set=[(X_val_enc, y_val)], verbose=False)
+print(&quot;XGBoost best iteration:&quot;, xgb.best_iteration)
+</code></pre></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>def metric_row(name, model):
+    pred = model.predict(X_test_enc)
+    return {&quot;model&quot;: name,
+            &quot;RMSE&quot;: mean_squared_error(y_test, pred) ** 0.5,
+            &quot;MAE&quot;: mean_absolute_error(y_test, pred),
+            &quot;R²&quot;: r2_score(y_test, pred)}
+
+results = pd.DataFrame([
+    metric_row(&quot;Training-mean baseline&quot;, dummy),
+    metric_row(&quot;Random forest&quot;, forest),
+    metric_row(&quot;XGBoost&quot;, xgb),
+]).sort_values(&quot;RMSE&quot;).reset_index(drop=True)
+results
+</code></pre></section><section class="cell"><p>Read this table as a final comparison of the three prespecified models. Do not use the test scores to choose a model or keep changing parameters; make any such choice from validation data, then evaluate the selected procedure on a new untouched test set.</p></section><section class="cell"><h2>Exercise 4 — Residual diagnostics and scope</h2>
+<p>The plot below shows the XGBoost predictions on test examples. Residual summaries by hour can reveal structured errors that an overall score hides.</p></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>pred = xgb.predict(X_test_enc)
+fig, axes = plt.subplots(1, 2, figsize=(11, 4))
+axes[0].scatter(y_test, pred, alpha=0.35, s=14)
+limits = [min(y_test.min(), pred.min()), max(y_test.max(), pred.max())]
+axes[0].plot(limits, limits, &quot;k--&quot;, linewidth=1)
+axes[0].set(xlabel=&quot;actual rentals&quot;, ylabel=&quot;predicted rentals&quot;, title=&quot;XGBoost test predictions&quot;)
+test_view = X_test.copy()
+test_view[&quot;residual&quot;] = y_test.to_numpy() - pred
+by_hour = test_view.groupby(&quot;hour&quot;)[&quot;residual&quot;].agg([&quot;mean&quot;, &quot;std&quot;])
+axes[1].errorbar(by_hour.index, by_hour[&quot;mean&quot;], yerr=by_hour[&quot;std&quot;], fmt=&quot;o&quot;, capsize=2)
+axes[1].axhline(0, color=&quot;black&quot;, linewidth=1)
+axes[1].set(xlabel=&quot;hour&quot;, ylabel=&quot;residual mean ± SD&quot;, title=&quot;Test residuals by hour&quot;)
+plt.tight_layout()
+by_hour</code></pre></section><section class="cell"><p>A suitable interpretation should describe the observed pattern in your run, for example whether residual means remain near zero across hours or show systematic underprediction at peak demand. Since rows are independent scenarios and there is no date ordering in the split, this result does not establish performance on later dates; a true forecasting study needs chronological splits and an explicitly time-indexed dataset.</p></section></article></main><footer>Four practical lectures for mathematicians · Local, reproducible, CPU-friendly · Synthetic teaching data</footer></body></html>

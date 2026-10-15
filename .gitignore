@@ -1,0 +1,12 @@
+.venv/
+__pycache__/
+.pytest_cache/
+.ipynb_checkpoints/
+artifacts/
+mlruns/
+*.db
+*.db-shm
+*.db-wal
+build/
+*.egg-info/
+.verification/

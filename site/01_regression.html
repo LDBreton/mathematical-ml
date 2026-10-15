@@ -1,0 +1,24 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Regression · Mathematical ML</title><link rel="stylesheet" href="style.css"><script>window.MathJax={tex:{inlineMath:[['$','$'],['\\(','\\)']]}};</script><script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script></head><body><a class="skip" href="#main">Skip to content</a><header><a href="index.html">∑ Mathematical ML</a><nav aria-label="Course"><a href="index.html#lectures">Lectures</a><a href="setup.html">Getting started</a><a href="datasets.html">Datasets</a><a href="instructor.html">Teaching guide</a></nav></header><main id="main"><div class="eyebrow">Lecture 01</div><h1>Regression</h1><p class="intro">Projection, empirical risk, and prediction</p><div class="actions"><a class="button" href="01_regression-lesson.html">Lesson</a><a class="button" href="01_regression-exercises.html">Exercises</a><a class="button" href="01_regression-solutions.html">Solutions</a></div><article class="reading"><h1>01 — Regression: predicting a numerical response</h1>
+<p>This lecture builds a regression workflow around a generated housing dataset. The examples are synthetic and do not describe real homes or a real market.</p>
+<h2>Learning objectives</h2>
+<p>After this lecture, you should be able to:</p>
+<ul>
+<li>Derive why the conditional mean minimizes population squared-error risk.</li>
+<li>Derive the least-squares normal equations and explain how design-matrix rank affects coefficient uniqueness.</li>
+<li>Explain how Ridge regularization changes the linear system and why the intercept is not penalized.</li>
+<li>Build a preprocessing and regression pipeline for numerical and categorical features without leakage.</li>
+<li>Compare held-out errors with a baseline and use residual plots as diagnostics rather than causal evidence.</li>
+</ul>
+<h2>Mathematical route</h2>
+<p>For any fixed feature value $X=x$,</p>
+<p>$$\mathbb E[(Y-a)^2\mid X=x]=\operatorname{Var}(Y\mid X=x)+(a-\mathbb E[Y\mid X=x])^2,$$</p>
+<p>so the population squared-loss minimizer is $f^*(x)=\mathbb E[Y\mid X=x]$. With design matrix $A$, least squares projects $y$ onto the column space of $A$. At an optimum the residual is orthogonal to every column, hence $A^TA\hat\beta=A^Ty$. Full column rank makes $A^TA$ invertible and the coefficient vector unique. If columns are dependent, fitted values can still be uniquely projected while coefficients are not unique.</p>
+<p>Ridge minimizes $\|y-A\beta\|_2^2+\alpha\|\beta\|_2^2$. For $\alpha&gt;0$, the penalized coefficient system is invertible. Scikit-learn fits the intercept as a separate unpenalized term; scaling predictors makes the slope penalty comparable across units. Do not add a duplicate constant feature when also fitting an intercept.</p>
+<h2>Study steps</h2>
+<ol>
+<li>Follow the environment setup in the repository <a href="setup.html">README</a>. Open JupyterLab from the repository root and select the <strong>Mathematical ML</strong> kernel.</li>
+<li>Read <code>lesson.ipynb</code> from top to bottom. It searches parent folders for <code>data/housing.csv</code>, so it also works when Jupyter starts inside this lecture directory.</li>
+<li>Attempt the written prompts and marked code in <code>exercises.ipynb</code>.</li>
+<li>Compare your derivations, metrics, and diagnostics with <code>solutions.ipynb</code>.</li>
+</ol>
+<p>The test partition is held out before fitting and model selection. Cross-validation selects the Ridge penalty from training rows only. Imputation, scaling, and category encoding are fit within the pipeline. MAE and RMSE are in the synthetic target units; $R^2$ is a relative squared-error comparison, not a causal or explanatory fraction.</p></article></main><footer>Four practical lectures for mathematicians · Local, reproducible, CPU-friendly · Synthetic teaching data</footer></body></html>

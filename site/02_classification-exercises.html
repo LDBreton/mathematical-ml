@@ -1,0 +1,164 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Classification: exercises · Mathematical ML</title><link rel="stylesheet" href="style.css"><script>window.MathJax={tex:{inlineMath:[['$','$'],['\\(','\\)']]}};</script><script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script></head><body><a class="skip" href="#main">Skip to content</a><header><a href="index.html">∑ Mathematical ML</a><nav aria-label="Course"><a href="index.html#lectures">Lectures</a><a href="setup.html">Getting started</a><a href="datasets.html">Datasets</a><a href="instructor.html">Teaching guide</a></nav></header><main id="main"><div class="eyebrow">Lecture 02 / exercises</div><div class="actions"><a href="02_classification.html">← Lecture guide</a><a href="downloads/02_classification/exercises.ipynb" download>Download notebook</a></div><article class="reading"><section class="cell"><h1>02 — Exercises: binary classification</h1>
+<p>The churn examples are synthetic. Complete the written analysis as well as the code. These notebooks use separate training, validation, and final test sets: do not choose a model setting or threshold by looking at final test outcomes.</p></section><section class="cell"><h2>Setup</h2>
+<p>Training data fit the model, validation data support choices, and the final test set is reserved for one assessment after the model and threshold are frozen.</p></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>from pathlib import Path
+
+import numpy as np
+import pandas as pd
+from sklearn.compose import ColumnTransformer
+from sklearn.dummy import DummyClassifier
+from sklearn.impute import SimpleImputer
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import (
+    accuracy_score,
+    confusion_matrix,
+    f1_score,
+    precision_score,
+    recall_score,
+    roc_auc_score,
+)
+from sklearn.model_selection import train_test_split
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import OneHotEncoder, StandardScaler
+
+
+def find_data_file(filename):
+    for directory in (Path.cwd(), *Path.cwd().parents):
+        data_path = directory / &quot;data&quot; / filename
+        if data_path.is_file():
+            return data_path
+    raise FileNotFoundError(f&quot;Could not find data/{filename}&quot;)
+
+
+customer_data = pd.read_csv(find_data_file(&quot;churn.csv&quot;))
+feature_data = customer_data.drop(columns=&quot;churn&quot;)
+churn_response = customer_data[&quot;churn&quot;].astype(int)
+
+(
+    development_features,
+    final_test_features,
+    development_response,
+    final_test_response,
+) = train_test_split(
+    feature_data,
+    churn_response,
+    test_size=0.20,
+    random_state=19,
+    stratify=churn_response,
+)
+(
+    training_features,
+    validation_features,
+    training_response,
+    validation_response,
+) = train_test_split(
+    development_features,
+    development_response,
+    test_size=0.25,
+    random_state=20,
+    stratify=development_response,
+)
+numeric_columns = [&quot;tenure_months&quot;, &quot;monthly_charge&quot;, &quot;support_calls&quot;]
+categorical_columns = [&quot;contract&quot;]
+preprocessing = ColumnTransformer(
+    transformers=[
+        (
+            &quot;numeric&quot;,
+            Pipeline(
+                steps=[
+                    (&quot;impute&quot;, SimpleImputer(strategy=&quot;median&quot;)),
+                    (&quot;scale&quot;, StandardScaler()),
+                ]
+            ),
+            numeric_columns,
+        ),
+        (
+            &quot;category&quot;,
+            Pipeline(
+                steps=[
+                    (&quot;impute&quot;, SimpleImputer(strategy=&quot;most_frequent&quot;)),
+                    (&quot;one_hot&quot;, OneHotEncoder(handle_unknown=&quot;ignore&quot;)),
+                ]
+            ),
+            categorical_columns,
+        ),
+    ]
+)
+print(&quot;Training class proportions:&quot;)
+print(training_response.value_counts(normalize=True).sort_index().round(3))
+print(f&quot;Training rows: {len(training_features)}&quot;)
+print(f&quot;Validation rows: {len(validation_features)}&quot;)
+print(f&quot;Final test rows: {len(final_test_features)}&quot;)</code></pre></section><section class="cell"><h2>Exercise 1 — Baseline and logistic model</h2>
+<p>Fit the starter logistic pipeline and report validation accuracy, precision, recall, F1, ROC-AUC, and confusion matrix at threshold 0.5. Compare accuracy with the most-frequent baseline. Why can that baseline look respectable while detecting no churners?</p></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code># Fit the starter logistic model on training rows.
+classification_model = Pipeline(
+    steps=[
+        (&quot;preprocessing&quot;, preprocessing),
+        (&quot;model&quot;, LogisticRegression(max_iter=2000)),
+    ]
+)
+classification_model.fit(training_features, training_response)
+validation_probabilities = classification_model.predict_proba(validation_features)[:, 1]
+validation_predictions = (validation_probabilities &gt;= 0.5).astype(int)
+
+majority_baseline = DummyClassifier(strategy=&quot;most_frequent&quot;)
+majority_baseline.fit(training_features, training_response)
+baseline_predictions = majority_baseline.predict(validation_features)
+
+print(&quot;Validation baseline accuracy:&quot;, accuracy_score(validation_response, baseline_predictions))
+print(&quot;Validation confusion matrix:&quot;)
+print(confusion_matrix(validation_response, validation_predictions))
+print(&quot;Validation accuracy:&quot;, accuracy_score(validation_response, validation_predictions))
+validation_precision = precision_score(
+    validation_response, validation_predictions, zero_division=0
+)
+validation_recall = recall_score(
+    validation_response, validation_predictions, zero_division=0
+)
+validation_f1 = f1_score(
+    validation_response, validation_predictions, zero_division=0
+)
+print(&quot;Validation precision:&quot;, validation_precision)
+print(&quot;Validation recall:&quot;, validation_recall)
+print(&quot;Validation F1:&quot;, validation_f1)
+print(&quot;Validation ROC-AUC:&quot;, roc_auc_score(validation_response, validation_probabilities))</code></pre></section><section class="cell"><h2>Exercise 2 — Cost and threshold on validation</h2>
+<p>Suppose a false positive costs 1 and a missed churn case costs 5, with zero cost for correct decisions. For calibrated probability $p$, derive the cost-optimal rule by comparing $C_{FP}(1-p)$ with $C_{FN}p$. Calculate the theoretical cutoff, then compare candidate thresholds using <strong>validation</strong> rows only. The starter table selects its minimum validation cost and applies that frozen threshold for one final test evaluation. Explain why the test results must not be used to revise the threshold.</p></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>false_positive_cost = 1.0
+false_negative_cost = 5.0
+threshold_candidates = [0.10, 0.17, 0.25, 0.35, 0.50, 0.65, 0.80]
+validation_cost_rows = []
+
+for threshold in threshold_candidates:
+    validation_decisions = (validation_probabilities &gt;= threshold).astype(int)
+    true_negative, false_positive, false_negative, true_positive = confusion_matrix(
+        validation_response, validation_decisions, labels=[0, 1]
+    ).ravel()
+    validation_cost_rows.append(
+        {
+            &quot;threshold&quot;: threshold,
+            &quot;false_positives&quot;: false_positive,
+            &quot;false_negatives&quot;: false_negative,
+            &quot;estimated_cost&quot;: (false_positive_cost * false_positive
+                               + false_negative_cost * false_negative),
+        }
+    )
+
+validation_cost_table = pd.DataFrame(validation_cost_rows).sort_values(
+    [&quot;estimated_cost&quot;, &quot;threshold&quot;]
+)
+print(&quot;Choose the threshold from this validation table:&quot;)
+print(validation_cost_table.to_string(index=False))
+
+# Freeze the validation-selected threshold before the one final test evaluation.
+selected_threshold = float(validation_cost_table.iloc[0][&quot;threshold&quot;])
+final_test_probabilities = classification_model.predict_proba(final_test_features)[:, 1]
+final_test_predictions = (final_test_probabilities &gt;= selected_threshold).astype(int)
+print(f&quot;Frozen validation threshold: {selected_threshold:.2f}&quot;)
+print(&quot;Final test confusion matrix:&quot;)
+print(confusion_matrix(final_test_response, final_test_predictions))
+print(&quot;Final test ROC-AUC:&quot;, roc_auc_score(final_test_response, final_test_probabilities))</code></pre></section><section class="cell"><h2>Exercise 3 — Explain metrics</h2>
+<p>Define precision and recall in words. Give one example where high recall is preferred and one where high precision is preferred. Explain why ROC-AUC does not determine the threshold by itself.</p></section><section class="cell"><h2>Exercise 4 — Cross-validation</h2>
+<p>Compare <code>C</code> values <code>[0.03, 0.1, 0.3, 1, 3, 10]</code> by stratified five-fold ROC-AUC on training rows. Keep preprocessing inside the pipeline. Update the fitted model with the selected setting, recompute validation probabilities, and repeat your threshold selection. Evaluate the frozen model and threshold on final test data once.</p></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>from sklearn.model_selection import GridSearchCV, StratifiedKFold
+
+# TODO: compare candidate C values with folds from training data only.
+# Keep `preprocessing` inside the pipeline so each fold learns its own transforms.
+print(&quot;Candidate C values:&quot;, [0.03, 0.1, 0.3, 1.0, 3.0, 10.0])
+print(&quot;Validation is reserved for the threshold choice; test is reserved for final evaluation.&quot;)</code></pre></section><section class="cell"><h2>Exercise 5 — Limits</h2>
+<p>Name two reasons why an association between support calls and churn in generated data may fail to guide a real intervention. Consider omitted causes, measurement, privacy, fairness, or behavior change.</p></section></article></main><footer>Four practical lectures for mathematicians · Local, reproducible, CPU-friendly · Synthetic teaching data</footer></body></html>

@@ -1,0 +1,91 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>From model to service: solutions · Mathematical ML</title><link rel="stylesheet" href="style.css"><script>window.MathJax={tex:{inlineMath:[['$','$'],['\\(','\\)']]}};</script><script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script></head><body><a class="skip" href="#main">Skip to content</a><header><a href="index.html">∑ Mathematical ML</a><nav aria-label="Course"><a href="index.html#lectures">Lectures</a><a href="setup.html">Getting started</a><a href="datasets.html">Datasets</a><a href="instructor.html">Teaching guide</a></nav></header><main id="main"><div class="eyebrow">Lecture 08 / solutions</div><div class="actions"><a href="08_deployment.html">← Lecture guide</a><a href="downloads/08_deployment/solutions.ipynb" download>Download notebook</a></div><article class="reading"><section class="cell"><h1>Lecture 08 — Exercise solutions</h1>
+<p>These are model answers with executable checks. Alternative explanations are welcome when they state their assumptions.</p></section><section class="cell"><h2>Notebook setup</h2>
+<p>The setup finds <code>data/churn.csv</code> from this notebook’s directory and adds the course source package. Model files and service checks use temporary paths.</p></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>from pathlib import Path
+import sys
+
+HERE = Path.cwd().resolve()
+ROOT = next((p for p in (HERE, *HERE.parents) if (p / &quot;data&quot; / &quot;churn.csv&quot;).is_file()), None)
+if ROOT is None:
+    raise FileNotFoundError(&quot;Could not locate data/churn.csv from the current directory&quot;)
+sys.path.insert(0, str(ROOT / &quot;src&quot;))
+DATA = ROOT / &quot;data&quot; / &quot;churn.csv&quot;
+print(&quot;Project root:&quot;, ROOT)</code></pre></section><section class="cell"><h2>Exercise 1: Derive the threshold decision</h2>
+<p>At threshold 0.5, the labels are <code>[0, 0, 1, 1]</code>. At threshold 0.4, they are <code>[0, 1, 1, 1]</code>. The probability 0.43 changes decision because it crosses the cutoff. The fitted model still assigns the same probabilities; only the decision rule changes.</p></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>probabilities = [0.18, 0.43, 0.51, 0.86]
+labels_at_050 = [int(p &gt;= 0.50) for p in probabilities]
+labels_at_040 = [int(p &gt;= 0.40) for p in probabilities]
+assert labels_at_050 == [0, 0, 1, 1]
+assert labels_at_040 == [0, 1, 1, 1]
+print(&quot;threshold 0.50:&quot;, labels_at_050)
+print(&quot;threshold 0.40:&quot;, labels_at_040)</code></pre></section><section class="cell"><h2>Exercise 2: A simple cost calculation</h2>
+<p>If we contact, expected cost is 1. If we do not contact, expected cost is \(4p\), where \(p\) is the probability of churn. Contact when \(1&lt;4p\), or \(p&gt;1/4\); the tie is at threshold 0.25. This assumes contact prevents churn with certainty, costs are fixed, and these are the only costs. If intervention effectiveness is \(q&lt;1\), expected benefit is \(4pq\), so contact when \(4pq&gt;1\).</p></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>contact_cost = 1.0
+missed_churn_cost = 4.0
+tie_threshold = contact_cost / missed_churn_cost
+assert tie_threshold == 0.25
+print(f&quot;Tie threshold: {tie_threshold:.2f}; contact when p &gt; {tie_threshold:.2f}&quot;)
+
+effectiveness = 0.75
+effective_threshold = contact_cost / (missed_churn_cost * effectiveness)
+print(f&quot;At intervention effectiveness q={effectiveness:.2f}, contact when p &gt; {effective_threshold:.3f}&quot;)</code></pre></section><section class="cell"><h2>Exercise 3: Keep the transformation with the estimator</h2>
+<p>A scaler fitted before splitting uses test-set means and variances, so training indirectly sees held-out distribution information. A pipeline fits the scaler and encoder only on its training rows, then applies those stored transformations at prediction time. The saved artifact includes the fitted pipeline.</p></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>import joblib
+import pandas as pd
+import tempfile
+from course_ml.train import FEATURES, train_model
+
+with tempfile.TemporaryDirectory() as tmp:
+    artifact_path = Path(tmp) / &quot;churn.joblib&quot;
+    train_model(DATA, artifact_path)
+    fitted = joblib.load(artifact_path)[&quot;pipeline&quot;]
+    probe = pd.DataFrame(
+        [{&quot;tenure_months&quot;: 8, &quot;monthly_charge&quot;: 92.0, &quot;support_calls&quot;: 4, &quot;contract&quot;: &quot;monthly&quot;}],
+        columns=FEATURES,
+    )
+    before_reload = fitted.predict_proba(probe)
+    reloaded = joblib.load(artifact_path)[&quot;pipeline&quot;]
+    after_reload = reloaded.predict_proba(probe)
+    assert (before_reload == after_reload).all()
+    print(&quot;Probability before and after reload:&quot;, before_reload[0, 1])</code></pre></section><section class="cell"><h2>Exercise 4: Exercise the request boundary</h2>
+<p>With the model configured, a valid record returns 200. Unknown contract labels, negative tenure, missing required fields, and unexpected fields return 422. Rejecting extra fields catches misspelled or stale client fields instead of silently ignoring them.</p></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>import os
+from fastapi.testclient import TestClient
+from course_ml import app as api
+from course_ml.train import train_model
+
+previous_present = &quot;MODEL_PATH&quot; in os.environ
+previous_value = os.environ.get(&quot;MODEL_PATH&quot;)
+try:
+    with tempfile.TemporaryDirectory() as tmp:
+        artifact_path = Path(tmp) / &quot;churn.joblib&quot;
+        train_model(DATA, artifact_path)
+        os.environ[&quot;MODEL_PATH&quot;] = str(artifact_path)
+        api._load_artifact.cache_clear()
+        client = TestClient(api.app)
+        valid = {&quot;tenure_months&quot;: 8, &quot;monthly_charge&quot;: 92.0, &quot;support_calls&quot;: 4, &quot;contract&quot;: &quot;monthly&quot;}
+        cases = {
+            &quot;valid&quot;: (valid, 200),
+            &quot;unknown contract&quot;: ({**valid, &quot;contract&quot;: &quot;quarterly&quot;}, 422),
+            &quot;negative tenure&quot;: ({**valid, &quot;tenure_months&quot;: -1}, 422),
+            &quot;missing field&quot;: ({k: v for k, v in valid.items() if k != &quot;contract&quot;}, 422),
+            &quot;extra field&quot;: ({**valid, &quot;admin&quot;: True}, 422),
+        }
+        results = {name: client.post(&quot;/predict&quot;, json=payload).status_code for name, (payload, _) in cases.items()}
+        for name, status in results.items():
+            print(f&quot;{name}: HTTP {status}&quot;)
+        assert all(results[name] == expected for name, (_, expected) in cases.items())
+finally:
+    api._load_artifact.cache_clear()
+    if previous_present:
+        os.environ[&quot;MODEL_PATH&quot;] = previous_value
+    else:
+        os.environ.pop(&quot;MODEL_PATH&quot;, None)</code></pre></section><section class="cell"><h2>Exercise 5: Name a monitoring signal</h2>
+<p>Compare contract proportions in a reference training sample and an incoming batch. A large change can signal a customer-mix shift or a data-pipeline issue. This detects a distribution change; it does not prove that prediction quality fell. Outcome labels are needed to assess quality.</p></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>data = pd.read_csv(DATA)
+reference_contract_share = data[&quot;contract&quot;].value_counts(normalize=True)
+
+# Simulate an incoming batch with a changed contract mix for demonstration.
+live_batch = data.sample(frac=0.20, random_state=17).copy()
+live_batch[&quot;contract&quot;] = &quot;monthly&quot;
+live_contract_share = live_batch[&quot;contract&quot;].value_counts(normalize=True)
+monitor = pd.DataFrame({
+    &quot;reference_share&quot;: reference_contract_share,
+    &quot;live_share&quot;: live_contract_share,
+}).fillna(0.0)
+monitor[&quot;absolute_change&quot;] = (monitor[&quot;live_share&quot;] - monitor[&quot;reference_share&quot;]).abs()
+display(monitor.sort_values(&quot;absolute_change&quot;, ascending=False))</code></pre></section></article></main><footer>Four practical lectures for mathematicians · Local, reproducible, CPU-friendly · Synthetic teaching data</footer></body></html>

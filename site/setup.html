@@ -1,0 +1,66 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>README · Mathematical ML</title><link rel="stylesheet" href="style.css"><script>window.MathJax={tex:{inlineMath:[['$','$'],['\\(','\\)']]}};</script><script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script></head><body><a class="skip" href="#main">Skip to content</a><header><a href="index.html">∑ Mathematical ML</a><nav aria-label="Course"><a href="index.html#lectures">Lectures</a><a href="setup.html">Getting started</a><a href="datasets.html">Datasets</a><a href="instructor.html">Teaching guide</a></nav></header><main id="main"><article class="reading"><p><a class="button" href="downloads/course.zip" download>Download the complete course</a></p><h1>Machine learning for mathematicians</h1>
+<p>Four hands-on lectures connecting probability, optimization, and linear algebra to readable Python and a working prediction service. Start with <strong>01 → 02 → 03 → 08</strong>; numbering reserves space for future lectures.</p>
+<p>Prerequisites: basic Python functions and arrays, linear algebra, derivatives, conditional probability, and elementary statistics. No prior machine-learning experience is assumed. All datasets are small, synthetic, included locally, and documented in <a href="datasets.html">datasets.html</a>. No accounts, paid APIs, GPU, or downloads of external data are needed.</p>
+<h2>Setup once</h2>
+<p>Use Python 3.11 or 3.12. In a terminal opened at the repository root:</p>
+<pre><code class="language-powershell">python -m venv .venv
+.venv\Scripts\Activate.ps1
+python -m pip install -e .
+python -m ipykernel install --user --name mathematical-ml --display-name &quot;Mathematical ML&quot;
+python -m jupyterlab
+</code></pre>
+<p>If PowerShell blocks activation, use <code>.venv\Scripts\python.exe</code> in place of <code>python</code> for every command; activation is optional. On macOS/Linux activate with <code>source .venv/bin/activate</code>. In Jupyter select the <strong>Mathematical ML</strong> kernel. All later terminal commands assume this environment.</p>
+<h2>Study route</h2>
+<table>
+<thead>
+<tr>
+<th>Lecture</th>
+<th>Question</th>
+<th>Mathematical foundation</th>
+<th>Practical output</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="01_regression.html">01: Regression</a></td>
+<td>How do we estimate house prices?</td>
+<td>Empirical risk, least squares, regularization</td>
+<td>A preprocessing and regression pipeline</td>
+</tr>
+<tr>
+<td><a href="02_classification.html">02: Classification</a></td>
+<td>Who may leave a service?</td>
+<td>Bernoulli likelihood, logistic regression, decision costs</td>
+<td>Probabilities and a defensible threshold</td>
+</tr>
+<tr>
+<td><a href="03_xgboost.html">03: XGBoost</a></td>
+<td>Can trees capture nonlinear demand?</td>
+<td>Additive models, functional gradients, second-order tree objectives</td>
+<td>A baseline-controlled boosting experiment</td>
+</tr>
+<tr>
+<td><a href="08_deployment.html">08: Deployment</a></td>
+<td>How does a fitted model become a service?</td>
+<td>Statistical versus software contracts, reproducibility</td>
+<td>Tracked training and a validated prediction API</td>
+</tr>
+</tbody>
+</table>
+<p>For each lecture, read its README, run <code>lesson.ipynb</code> in order, attempt <code>exercises.ipynb</code>, then compare with <code>solutions.ipynb</code>. Exercise notebooks contain runnable scaffolding; successful execution alone does not mean an exercise is answered. Work through the written questions and replace the indicated student work. Plan roughly 2–3 hours per lecture plus exercises.</p>
+<h2>Course website</h2>
+<pre><code class="language-powershell">python scripts/build_site.py
+python -m http.server 8000 --bind 127.0.0.1
+</code></pre>
+<p>Open <strong>http://127.0.0.1:8000/site/</strong>. The navigator includes rendered theory and code, lecture instructions, and notebook downloads. Math rendering uses MathJax from a CDN when online; the local notebooks remain the offline mathematics reference. Press Ctrl+C to stop the server. The generated website can be hosted through GitHub Pages using the included manual workflow.</p>
+<h2>Verify the course</h2>
+<pre><code class="language-powershell">python -m pytest
+python scripts/check_notebooks.py
+</code></pre>
+<p>The notebook runner executes all lessons, exercises, and solutions using separate kernels and writes results under ignored <code>.verification/</code>. It checks execution, not completion of student answers. The committed notebooks keep clean outputs so students generate their own figures.</p>
+<p>The latest local checks and their limitations are recorded in <a href="verification.html">verification.md</a>. To validate the website after rebuilding, run <code>python scripts/check_site.py</code>.</p>
+<h2>Reproducibility and teaching</h2>
+<p>CSV fixtures are committed. Regenerate them with <code>python scripts/generate_data.py</code> only when intentionally updating the classroom inputs. Dependency ranges describe compatible installations; <code>requirements-lock.txt</code> records the environment used for verification. For an exact classroom environment install that file before <code>python -m pip install --no-deps -e .</code>. Lock versions target the verified Python version and platform; CI additionally checks a fresh installation from declared ranges.</p>
+<p>See <a href="instructor.html">instructor guide</a> for learning outcomes, suggested timing, and assessment. Data models are deliberately simplified. Performance on these fixtures does not establish real-world accuracy, causal effects, fairness, or production readiness. The API is a local teaching service.</p>
+<p>This folder is a GitHub-ready source repository. To publish, create an empty GitHub repository, add its remote, and push the local branch. No remote is created or uploaded automatically.</p>
+<p>For GitHub Pages, select <strong>GitHub Actions</strong> as the Pages source in repository settings, then manually run <strong>Publish course navigator</strong> under Actions. The workflow builds the <code>site/</code> directory and publishes it. The verification workflow runs tests and all notebooks on pushes and pull requests. Select a code/content license before distributing the course publicly.</p></article></main><footer>Four practical lectures for mathematicians · Local, reproducible, CPU-friendly · Synthetic teaching data</footer></body></html>

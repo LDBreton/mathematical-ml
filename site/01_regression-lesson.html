@@ -1,0 +1,168 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Regression: lesson · Mathematical ML</title><link rel="stylesheet" href="style.css"><script>window.MathJax={tex:{inlineMath:[['$','$'],['\\(','\\)']]}};</script><script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script></head><body><a class="skip" href="#main">Skip to content</a><header><a href="index.html">∑ Mathematical ML</a><nav aria-label="Course"><a href="index.html#lectures">Lectures</a><a href="setup.html">Getting started</a><a href="datasets.html">Datasets</a><a href="instructor.html">Teaching guide</a></nav></header><main id="main"><div class="eyebrow">Lecture 01 / lesson</div><div class="actions"><a href="01_regression.html">← Lecture guide</a><a href="downloads/01_regression/lesson.ipynb" download>Download notebook</a></div><article class="reading"><section class="cell"><h1>01 — Regression: predicting a numerical response</h1>
+<p>Regression predicts a number. We will predict synthetic home price from physical measurements and neighborhood. The goal is to learn a sound evaluation workflow, not to explain a real housing market.</p></section><section class="cell"><h2>1. Population prediction and empirical least squares</h2>
+<p>Assume $\mathbb E[Y^2]&lt;\infty$. For any fixed feature value $X=x$, expand the conditional squared loss around the conditional mean:</p>
+<p>$$\mathbb E[(Y-a)^2\mid X=x]=\mathbb E[(Y-\mu(x))^2\mid X=x]+(a-\mu(x))^2,$$</p>
+<p>where $\mu(x)=\mathbb E[Y\mid X=x]$. The cross term vanishes because $\mathbb E[Y-\mu(x)\mid X=x]=0$. Therefore the unique squared-loss population target is $f^*(x)=\mathbb E[Y\mid X=x]$ for $P_X$-almost every $x$. A model class restricts which functions can approximate that conditional mean; it does not change the target.</p>
+<p>For a design matrix $A\in\mathbb R^{n\times p}$, ordinary least squares minimizes $\|y-A\beta\|_2^2$. Its gradient is $-2A^T(y-A\beta)$, so a minimizer satisfies the normal equations $A^TA\hat\beta=A^Ty$. Geometrically, $A\hat\beta$ is the orthogonal projection of $y$ onto the column space of $A$. Full column rank makes $A^TA$ invertible and the coefficient vector unique. Under rank deficiency, fitted values remain the unique projection, but multiple coefficient vectors can attain it.</p></section><section class="cell"><h2>2. Load generated data</h2>
+<p>The CSV is synthetic and pedagogical. Its patterns and noise were chosen for demonstration; the fitted results say nothing about actual homes.</p></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>from pathlib import Path
+
+import numpy as np
+import pandas as pd
+
+
+def find_data_file(filename):
+    &quot;&quot;&quot;Search the current directory and its parents for a repository data file.&quot;&quot;&quot;
+    for directory in (Path.cwd(), *Path.cwd().parents):
+        data_path = directory / &quot;data&quot; / filename
+        if data_path.is_file():
+            return data_path
+
+    raise FileNotFoundError(
+        f&quot;Could not find data/{filename}. Start Jupyter at the repository root &quot;
+        &quot;or inside this lecture directory.&quot;
+    )
+
+
+housing_path = find_data_file(&quot;housing.csv&quot;)
+housing_data = pd.read_csv(housing_path)
+print(f&quot;Loaded {len(housing_data)} synthetic rows from {housing_path}&quot;)
+housing_data.head()</code></pre></section><section class="cell"><h2>3. Define target and hold out test rows</h2>
+<p><code>price</code> is the response; all other columns are features. We set aside the test set before fitting transformations or choosing a model. It estimates performance of the selected procedure on unseen rows from a similar data process.</p></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>from sklearn.model_selection import train_test_split
+
+target_column = &quot;price&quot;
+feature_data = housing_data.drop(columns=target_column)
+price_response = housing_data[target_column]
+
+training_features, test_features, training_response, test_response = train_test_split(
+    feature_data,
+    price_response,
+    test_size=0.25,
+    random_state=27,
+)
+
+print(f&quot;Training rows: {len(training_features)}&quot;)
+print(f&quot;Held-out test rows: {len(test_features)}&quot;)</code></pre></section><section class="cell"><p>Random splitting assumes rows are exchangeable. For future prediction over time, or repeated measurements grouped by household, the split should instead reflect that structure.</p></section><section class="cell"><h2>4. Preprocessing and the Ridge objective</h2>
+<p>Numerical columns are standardized and <code>neighborhood</code> is one-hot encoded. <code>handle_unknown="ignore"</code> prevents a runtime error for a future category that was absent in training by encoding that category as all zeros. This pattern was outside the training support, so the encoding does not make its prediction trustworthy. The preprocessing belongs inside the pipeline so a cross-validation fold learns means, scales, medians, and categories from its own fitting rows.</p>
+<p>Ridge solves $\min_{\beta_0,\beta}\sum_i(y_i-\beta_0-x_i^T\beta)^2+\alpha\|\beta\|_2^2$. With $\alpha&gt;0$, the slope system is positive definite even when predictors are linearly dependent. The intercept $\beta_0$ is unpenalized in scikit-learn; for fixed slopes, minimizing over it centers residuals. Standardizing slopes makes a common penalty more comparable across numerical units. Do not add a constant-one feature when the estimator already fits its own intercept.</p></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>from sklearn.compose import ColumnTransformer
+from sklearn.impute import SimpleImputer
+from sklearn.linear_model import Ridge
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import OneHotEncoder, StandardScaler
+
+numeric_columns = [&quot;area_m2&quot;, &quot;bedrooms&quot;, &quot;age_years&quot;, &quot;distance_km&quot;]
+categorical_columns = [&quot;neighborhood&quot;]
+
+numeric_preprocessing = Pipeline(
+    steps=[
+        (&quot;impute&quot;, SimpleImputer(strategy=&quot;median&quot;)),
+        (&quot;scale&quot;, StandardScaler()),
+    ]
+)
+categorical_preprocessing = Pipeline(
+    steps=[
+        (&quot;impute&quot;, SimpleImputer(strategy=&quot;most_frequent&quot;)),
+        (&quot;one_hot&quot;, OneHotEncoder(handle_unknown=&quot;ignore&quot;)),
+    ]
+)
+preprocessing = ColumnTransformer(
+    transformers=[
+        (&quot;numeric&quot;, numeric_preprocessing, numeric_columns),
+        (&quot;category&quot;, categorical_preprocessing, categorical_columns),
+    ]
+)
+regression_pipeline = Pipeline(
+    steps=[(&quot;preprocessing&quot;, preprocessing), (&quot;model&quot;, Ridge())]
+)</code></pre></section><section class="cell"><h2>5. Select penalty inside training data</h2>
+<p>Five-fold CV compares alpha values using only the training partition. The negative scorer convention is used by scikit-learn; negate the reported score to get RMSE.</p></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>from sklearn.model_selection import GridSearchCV, KFold
+
+training_folds = KFold(n_splits=5, shuffle=True, random_state=27)
+regularization_search = GridSearchCV(
+    estimator=regression_pipeline,
+    param_grid={&quot;model__alpha&quot;: [0.01, 0.1, 1.0, 10.0, 100.0]},
+    scoring=&quot;neg_root_mean_squared_error&quot;,
+    cv=training_folds,
+    refit=True,
+)
+regularization_search.fit(training_features, training_response)
+
+selected_alpha = regularization_search.best_params_[&quot;model__alpha&quot;]
+training_cv_rmse = -regularization_search.best_score_
+print(f&quot;Selected Ridge alpha: {selected_alpha}&quot;)
+print(f&quot;Mean training-fold RMSE: {training_cv_rmse:,.0f} price units&quot;)</code></pre></section><section class="cell"><h2>6. One held-out evaluation</h2>
+<p>MAE is average absolute error in the target units. RMSE penalizes large misses more. $R^2$ compares with a constant prediction equal to the test mean; it can be negative. None of these scores alone says whether a model is useful for a particular decision.</p></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>import numpy as np
+import pandas as pd
+from sklearn.dummy import DummyRegressor
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+
+
+def summarize_regression_errors(actual_values, predicted_values):
+    &quot;&quot;&quot;Return three complementary regression metrics.&quot;&quot;&quot;
+    return {
+        &quot;MAE&quot;: mean_absolute_error(actual_values, predicted_values),
+        &quot;RMSE&quot;: mean_squared_error(actual_values, predicted_values) ** 0.5,
+        &quot;R²&quot;: r2_score(actual_values, predicted_values),
+    }
+
+
+best_regression_model = regularization_search.best_estimator_
+test_price_predictions = best_regression_model.predict(test_features)
+
+median_baseline = DummyRegressor(strategy=&quot;median&quot;)
+baseline_training_input = np.zeros((len(training_response), 1))
+baseline_test_input = np.zeros((len(test_response), 1))
+median_baseline.fit(baseline_training_input, training_response)
+baseline_predictions = median_baseline.predict(baseline_test_input)
+
+test_metrics = pd.DataFrame(
+    {
+        &quot;Ridge pipeline&quot;: summarize_regression_errors(test_response, test_price_predictions),
+        &quot;Training-median baseline&quot;: summarize_regression_errors(
+            test_response, baseline_predictions
+        ),
+    }
+).T
+test_metrics.round(2)</code></pre></section><section class="cell"><p>The training median is a deliberately simple reference rule. MAE reports typical absolute miss size in price units, while RMSE gives large misses more influence. $R^2$ compares squared error with predicting the test-set mean and may be negative. The reported test metrics assess this selected modeling procedure on this held-out synthetic sample; they do not estimate real housing-market performance.</p></section><section class="cell"><h2>7. Residual diagnostics</h2>
+<p>Residuals $e_i=y_i-\hat y_i$ can reveal curvature, changing spread, or subgroups with systematically different errors. A plot is a prompt for investigation, not proof that assumptions hold.</p></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>import matplotlib.pyplot as plt
+
+test_residuals = test_response.to_numpy() - test_price_predictions
+figure, axes = plt.subplots(1, 2, figsize=(12, 4))
+
+axes[0].scatter(test_response, test_price_predictions, alpha=0.75)
+plot_limits = [
+    min(test_response.min(), test_price_predictions.min()),
+    max(test_response.max(), test_price_predictions.max()),
+]
+axes[0].plot(plot_limits, plot_limits, color=&quot;black&quot;, linestyle=&quot;--&quot;)
+axes[0].set(
+    xlabel=&quot;Observed price&quot;,
+    ylabel=&quot;Predicted price&quot;,
+    title=&quot;Held-out predictions&quot;,
+)
+
+axes[1].scatter(test_price_predictions, test_residuals, alpha=0.75)
+axes[1].axhline(0, color=&quot;black&quot;, linestyle=&quot;--&quot;)
+axes[1].set(
+    xlabel=&quot;Predicted price&quot;,
+    ylabel=&quot;Observed minus predicted&quot;,
+    title=&quot;Residual check&quot;,
+)
+
+figure.tight_layout()</code></pre></section><section class="cell"><h2>8. Coefficients, cautiously</h2>
+<p>For a scaled numerical input, its coefficient describes a one-standard-deviation change in the fitted prediction, conditional on the other encoded columns. The encoder keeps all category indicators, so each displayed category coefficient is expressed relative to the fitted intercept under Ridge's penalty convention. Pairwise category contrasts are identifiable in this penalized parameterization; individual category values depend on the penalty and coding. Correlation, shrinkage, and omitted factors affect interpretation. These are conditional model associations, not causal effects.</p></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>import pandas as pd
+
+selected_model = regularization_search.best_estimator_
+encoded_feature_names = selected_model.named_steps[&quot;preprocessing&quot;].get_feature_names_out()
+model_coefficients = pd.Series(
+    selected_model.named_steps[&quot;model&quot;].coef_,
+    index=encoded_feature_names,
+)
+model_coefficients.reindex(
+    model_coefficients.abs().sort_values(ascending=False).index
+).head(12).round(2)</code></pre></section><section class="cell"><h2>Takeaways</h2>
+<ul>
+<li>Hold out test data before model selection.</li>
+<li>Keep imputation, scaling, and encoding inside the pipeline.</li>
+<li>Compare against a simple baseline and report errors in meaningful units.</li>
+<li>Use residual plots to ask where errors differ.</li>
+<li>Synthetic-data predictions do not establish real-world accuracy or causation.</li>
+</ul></section></article></main><footer>Four practical lectures for mathematicians · Local, reproducible, CPU-friendly · Synthetic teaching data</footer></body></html>

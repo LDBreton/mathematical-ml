@@ -1,0 +1,8 @@
+.git
+.venv
+.verification
+site
+artifacts
+mlruns
+*.db
+__pycache__

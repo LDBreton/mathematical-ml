@@ -1,0 +1,53 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>From model to service · Mathematical ML</title><link rel="stylesheet" href="style.css"><script>window.MathJax={tex:{inlineMath:[['$','$'],['\\(','\\)']]}};</script><script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script></head><body><a class="skip" href="#main">Skip to content</a><header><a href="index.html">∑ Mathematical ML</a><nav aria-label="Course"><a href="index.html#lectures">Lectures</a><a href="setup.html">Getting started</a><a href="datasets.html">Datasets</a><a href="instructor.html">Teaching guide</a></nav></header><main id="main"><div class="eyebrow">Lecture 08</div><h1>From model to service</h1><p class="intro">Reproducible training and validated inference</p><div class="actions"><a class="button" href="08_deployment-lesson.html">Lesson</a><a class="button" href="08_deployment-exercises.html">Exercises</a><a class="button" href="08_deployment-solutions.html">Solutions</a></div><article class="reading"><h1>Lecture 08 — From a statistical model to a prediction service</h1>
+<p>This lesson turns a binary classifier into a small, inspectable deployment unit. It uses a synthetic customer churn table with features <code>tenure_months</code>, <code>monthly_charge</code>, <code>support_calls</code>, and <code>contract</code>, and a binary target <code>churn</code>. The fitted object is a scikit-learn <code>Pipeline</code>: numeric standardization, categorical one-hot encoding, and logistic regression travel together in one artifact.</p>
+<p>From the repository root, train and save the model with:</p>
+<pre><code class="language-console">python -m course_ml.train --data data/churn.csv --output artifacts/churn.joblib
+</code></pre>
+<p>The command holds out a stratified test set, reports accuracy, precision, recall, F1, and ROC AUC, and saves the pipeline plus metadata. The metadata records the feature schema, target meaning, threshold, split sizes, random seed, and held-out metrics. <code>--threshold 0.35</code> changes the rule that turns probability into a class label. It does not refit the probability model. The default threshold is 0.5.</p>
+<p>To record a local experiment, add <code>--track</code>. MLflow is included in the course environment:</p>
+<pre><code class="language-console">python -m course_ml.train --data data/churn.csv --output artifacts/churn.joblib --track
+</code></pre>
+<p>MLflow stores run parameters and held-out metrics in a local SQLite database named <code>mlflow.db</code>; model files and other artifacts go to its local artifact store. Set <code>MLFLOW_TRACKING_URI</code> to use another tracking store. Each run also records the data file's SHA-256 digest, Python and numerical-library versions, logistic regression settings, a model signature, and a sample input. The digest identifies the exact CSV bytes used for training. Tracking makes experiments easier to compare; it does not establish that the model is statistically sound. Keep the source revision alongside a run when reproducing a result.</p>
+<p>Browse the local experiment database with:</p>
+<pre><code class="language-console">mlflow ui --backend-store-uri sqlite:///mlflow.db --host 127.0.0.1
+</code></pre>
+<p>The UI listens on port 5000 by default. Binding to <code>127.0.0.1</code> keeps this teaching interface on the local machine.</p>
+<p>The FastAPI service reads <code>MODEL_PATH</code>, which defaults to <code>artifacts/churn.joblib</code>. To serve locally, train first and start Uvicorn:</p>
+<pre><code class="language-console">MODEL_PATH=artifacts/churn.joblib python -m uvicorn course_ml.app:app --reload --port 8001
+</code></pre>
+<p>On PowerShell, set the variable for the current shell and run Uvicorn as a module:</p>
+<pre><code class="language-powershell">$env:MODEL_PATH = &quot;artifacts/churn.joblib&quot;
+python -m uvicorn course_ml.app:app --reload --port 8001
+</code></pre>
+<p><code>GET /health</code> checks whether the configured model can load. <code>POST /predict</code> accepts a JSON object with the four feature fields and returns a churn probability, the saved threshold, and the resulting 0/1 decision. The application code never fits a model while serving requests.</p>
+<p>You can exercise the API without opening a network port:</p>
+<pre><code class="language-python">from fastapi.testclient import TestClient
+from course_ml.app import app
+
+client = TestClient(app)
+client.get(&quot;/health&quot;).json()
+client.post(&quot;/predict&quot;, json={
+    &quot;tenure_months&quot;: 8,
+    &quot;monthly_charge&quot;: 92.0,
+    &quot;support_calls&quot;: 4,
+    &quot;contract&quot;: &quot;monthly&quot;,
+}).json()
+</code></pre>
+<h2>Statistical choices and limits</h2>
+<p>For a feature vector \(x\), logistic regression models \(p(x)=\Pr(Y=1\mid X=x)=\sigma(\beta_0+\beta^T z(x))\), where \(z\) is the fitted preprocessing map and \(\sigma(t)=(1+e^{-t})^{-1}\). Standardization puts numeric coordinates on comparable scales. One-hot encoding represents contract categories without pretending that <code>monthly &lt; annual &lt; two_year</code> is a numeric distance. The whole map is fitted on the training subset, so held-out examples do not influence means, variances, or category encoding.</p>
+<p>The default class decision is \(\hat y=1\{p(x)\geq \tau\}\), with \(\tau=0.5\). This cutoff is a policy choice: reducing it generally increases positive calls and recall while potentially reducing precision. Choose a production cutoff using validation data and the costs of false positives and false negatives. Logistic regression is fit without class weighting so its probability estimates are not shifted by a class-weight correction; this alone does not guarantee probability calibration. The held-out metrics here are pedagogical estimates, not guarantees for future traffic. The synthetic data encode a simple artificial relationship and do not establish real customer behavior.</p>
+<h2>Training and serving skew</h2>
+<p>The API uses the same serialized preprocessing pipeline as training, which prevents common mismatches such as scaling with one set of means in the notebook and another in the service. Schema checks also reject missing and unexpected training columns; request validation restricts feature ranges and contract labels. These measures do not detect every shift. Monitor feature distributions, missingness, prediction rates, and eventual outcomes. Compare live inputs to the training population and retrain only after investigating drift and label quality.</p>
+<p>Covariate shift is the assumption that the feature distribution \(P(X)\) changes while the conditional relationship \(P(Y\mid X)\) remains stable. Under that assumption, predictions may still be useful, though high shift can leave parts of the new population poorly represented. If the relationship between features and churn changes, covariate-shift corrections do not solve the problem. Monitoring inputs can reveal distribution changes; outcome labels are needed to assess whether predictive quality changed.</p>
+<h2>Statistical estimator and software contract</h2>
+<p>Statistically, a learning procedure maps a sample \(D\) to an estimated parameter set \(\hat\theta\), and the fitted model maps a feature vector to a probability. In software, the service has a separate contract: which fields a request must contain, their types and allowed values, what a response contains, and which errors callers can expect. A mathematically valid model can still be unusable if those input and output rules are unclear or change silently.</p>
+<p>Reloading a saved artifact should preserve predictions for the same inputs in a compatible software environment; the round-trip test checks this property. Reproducing a fit is a stronger claim. It also requires the same data bytes, preprocessing and split rules, random seeds, package versions, and compatible numerical behavior. Even then, compare floating-point results with a tolerance when platforms or numerical libraries differ.</p>
+<h2>Security and operational boundaries</h2>
+<p>The API accepts a small validated JSON record and has no authentication, authorization, rate limiting, TLS configuration, audit logging, or privacy controls. It is a local teaching service and must not receive real customer data or be exposed publicly as-is. <code>joblib</code> uses Python pickle semantics: load artifacts only from a trusted source, since a malicious artifact can execute code. In a real deployment, pin dependency versions, authenticate callers, protect transport and stored data, limit request rates, and define monitoring, rollback, and artifact provenance.</p>
+<h2>Work through the lesson</h2>
+<p>Open <code>lesson.ipynb</code> to derive the probability model and inspect training, metrics, persistence, and API behavior. Complete the questions in <code>exercises.ipynb</code>; check your reasoning against <code>solutions.ipynb</code>. The notebooks discover the repository root from their own location and use temporary output paths, so running them does not overwrite the shared model artifact. They use FastAPI's in-process <code>TestClient</code> rather than starting a blocking server.</p>
+<p>To build the container from the repository root and publish its API only on the local machine:</p>
+<pre><code class="language-console">docker build -t churn-course-api .
+docker run --rm -p 127.0.0.1:8001:8000 churn-course-api
+</code></pre>
+<p>The root Dockerfile installs the course package, trains on the bundled synthetic <code>data/churn.csv</code>, and starts Uvicorn. Check <code>http://127.0.0.1:8001/health</code> and send prediction requests to <code>http://127.0.0.1:8001/predict</code>. The container listens on all interfaces internally; the host port mapping above exposes it only through loopback.</p></article></main><footer>Four practical lectures for mathematicians · Local, reproducible, CPU-friendly · Synthetic teaching data</footer></body></html>

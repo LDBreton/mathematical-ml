@@ -1,0 +1,165 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Classification: solutions · Mathematical ML</title><link rel="stylesheet" href="style.css"><script>window.MathJax={tex:{inlineMath:[['$','$'],['\\(','\\)']]}};</script><script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script></head><body><a class="skip" href="#main">Skip to content</a><header><a href="index.html">∑ Mathematical ML</a><nav aria-label="Course"><a href="index.html#lectures">Lectures</a><a href="setup.html">Getting started</a><a href="datasets.html">Datasets</a><a href="instructor.html">Teaching guide</a></nav></header><main id="main"><div class="eyebrow">Lecture 02 / solutions</div><div class="actions"><a href="02_classification.html">← Lecture guide</a><a href="downloads/02_classification/solutions.ipynb" download>Download notebook</a></div><article class="reading"><section class="cell"><h1>02 — Worked solutions: binary classification</h1>
+<p>The rows are synthetic; the scores below describe only this generated sample. The worked pipeline selects model regularization by training-fold cross-validation, chooses its threshold on validation data under the stated toy costs, and evaluates the frozen choices on the final test set once.</p></section><section class="cell"><h2>Setup and Exercise 1</h2>
+<p>The setup creates distinct training, validation, and test partitions. The following cell fits a pipeline and selects its regularization using only training rows. Validation metrics at 0.5 are a reference; the final test set is not inspected yet.</p></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>from pathlib import Path
+
+import numpy as np
+import pandas as pd
+from sklearn.compose import ColumnTransformer
+from sklearn.dummy import DummyClassifier
+from sklearn.impute import SimpleImputer
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import (
+    accuracy_score,
+    confusion_matrix,
+    f1_score,
+    precision_score,
+    recall_score,
+    roc_auc_score,
+)
+from sklearn.model_selection import train_test_split
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import OneHotEncoder, StandardScaler
+
+
+def find_data_file(filename):
+    for directory in (Path.cwd(), *Path.cwd().parents):
+        data_path = directory / &quot;data&quot; / filename
+        if data_path.is_file():
+            return data_path
+    raise FileNotFoundError(f&quot;Could not find data/{filename}&quot;)
+
+
+customer_data = pd.read_csv(find_data_file(&quot;churn.csv&quot;))
+feature_data = customer_data.drop(columns=&quot;churn&quot;)
+churn_response = customer_data[&quot;churn&quot;].astype(int)
+
+(
+    development_features,
+    final_test_features,
+    development_response,
+    final_test_response,
+) = train_test_split(
+    feature_data,
+    churn_response,
+    test_size=0.20,
+    random_state=19,
+    stratify=churn_response,
+)
+(
+    training_features,
+    validation_features,
+    training_response,
+    validation_response,
+) = train_test_split(
+    development_features,
+    development_response,
+    test_size=0.25,
+    random_state=20,
+    stratify=development_response,
+)
+numeric_columns = [&quot;tenure_months&quot;, &quot;monthly_charge&quot;, &quot;support_calls&quot;]
+categorical_columns = [&quot;contract&quot;]
+preprocessing = ColumnTransformer(
+    transformers=[
+        (
+            &quot;numeric&quot;,
+            Pipeline(
+                steps=[
+                    (&quot;impute&quot;, SimpleImputer(strategy=&quot;median&quot;)),
+                    (&quot;scale&quot;, StandardScaler()),
+                ]
+            ),
+            numeric_columns,
+        ),
+        (
+            &quot;category&quot;,
+            Pipeline(
+                steps=[
+                    (&quot;impute&quot;, SimpleImputer(strategy=&quot;most_frequent&quot;)),
+                    (&quot;one_hot&quot;, OneHotEncoder(handle_unknown=&quot;ignore&quot;)),
+                ]
+            ),
+            categorical_columns,
+        ),
+    ]
+)
+print(&quot;Training class proportions:&quot;)
+print(training_response.value_counts(normalize=True).sort_index().round(3))
+print(f&quot;Training rows: {len(training_features)}&quot;)
+print(f&quot;Validation rows: {len(validation_features)}&quot;)
+print(f&quot;Final test rows: {len(final_test_features)}&quot;)
+
+from sklearn.model_selection import GridSearchCV, StratifiedKFold
+
+classification_pipeline = Pipeline(
+    steps=[
+        (&quot;preprocessing&quot;, preprocessing),
+        (&quot;model&quot;, LogisticRegression(max_iter=2000)),
+    ]
+)
+regularization_search = GridSearchCV(
+    estimator=classification_pipeline,
+    param_grid={&quot;model__C&quot;: [0.03, 0.1, 0.3, 1.0, 3.0, 10.0]},
+    scoring=&quot;roc_auc&quot;,
+    cv=StratifiedKFold(n_splits=5, shuffle=True, random_state=19),
+    refit=True,
+)
+regularization_search.fit(training_features, training_response)
+best_classifier = regularization_search.best_estimator_
+validation_probabilities = best_classifier.predict_proba(validation_features)[:, 1]
+validation_predictions = (validation_probabilities &gt;= 0.5).astype(int)
+
+majority_baseline = DummyClassifier(strategy=&quot;most_frequent&quot;)
+majority_baseline.fit(training_features, training_response)
+baseline_predictions = majority_baseline.predict(validation_features)
+print(&quot;Selected C:&quot;, regularization_search.best_params_[&quot;model__C&quot;])
+print(&quot;Training-fold ROC-AUC:&quot;, round(regularization_search.best_score_, 3))
+print(&quot;Validation baseline accuracy:&quot;, round(accuracy_score(validation_response, baseline_predictions), 3))
+print(&quot;Validation metrics at 0.5:&quot;, {
+    &quot;accuracy&quot;: round(accuracy_score(validation_response, validation_predictions), 3),
+    &quot;precision&quot;: round(precision_score(validation_response, validation_predictions, zero_division=0), 3),
+    &quot;recall&quot;: round(recall_score(validation_response, validation_predictions, zero_division=0), 3),
+    &quot;F1&quot;: round(f1_score(validation_response, validation_predictions, zero_division=0), 3),
+    &quot;ROC-AUC&quot;: round(roc_auc_score(validation_response, validation_probabilities), 3),
+})
+print(&quot;Validation confusion matrix:\n&quot;, confusion_matrix(validation_response, validation_predictions))</code></pre></section><section class="cell"><p>If the non-churn class is more common, always predicting it can yield high accuracy while recall for churn is zero. This is why accuracy must be interpreted with the class distribution, confusion matrix, and the intended action.</p></section><section class="cell"><h2>Exercise 2 — Cost rule and validation table</h2>
+<p>Predict churn at probability $p$ when its expected false-positive cost $C_{FP}(1-p)$ is no greater than the false-negative cost $C_{FN}p$. Rearranging gives $p\ge C_{FP}/(C_{FP}+C_{FN})$. For costs 1 and 5, the theoretical cutoff is $1/6\approx0.167$, assuming calibrated probabilities and constant known costs.</p></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>false_positive_cost = 1.0
+false_negative_cost = 5.0
+threshold_candidates = [0.10, 0.17, 0.25, 0.35, 0.50, 0.65, 0.80]
+validation_cost_rows = []
+
+for threshold in threshold_candidates:
+    validation_decisions = (validation_probabilities &gt;= threshold).astype(int)
+    true_negative, false_positive, false_negative, true_positive = confusion_matrix(
+        validation_response, validation_decisions, labels=[0, 1]
+    ).ravel()
+    validation_cost_rows.append(
+        {
+            &quot;threshold&quot;: threshold,
+            &quot;false_positives&quot;: false_positive,
+            &quot;false_negatives&quot;: false_negative,
+            &quot;estimated_cost&quot;: (false_positive_cost * false_positive
+                               + false_negative_cost * false_negative),
+        }
+    )
+
+validation_cost_table = pd.DataFrame(validation_cost_rows).sort_values(
+    [&quot;estimated_cost&quot;, &quot;threshold&quot;]
+)
+validation_cost_table</code></pre></section><section class="cell"><p>The lowest cost here is selected from the validation partition. The final test set is used once below after fixing both model and threshold. This split helps prevent optimistic threshold selection; the synthetic costs still do not define any real business policy.</p></section><section class="cell"><h2>Exercise 3 — Metric meaning</h2>
+<p>Precision is the fraction of flagged cases that are positive; recall is the fraction of all positives found. High recall may matter when missing a case is especially harmful and follow-up is cheap. High precision may matter when alerts trigger costly or intrusive actions. ROC-AUC measures ranking across cutoffs but contains no error costs, capacity constraint, or acceptable-risk preference.</p></section><section class="cell"><h2>Exercise 4 — Final test</h2>
+<p>Regularization selection occurs inside cross-validation on training rows. The validation partition chooses the threshold under the assumed cost ratio. The final test partition now gives one assessment of those frozen choices.</p></section><section class="cell"><div class="cell-label">Python · run in the notebook</div><pre><code>selected_threshold = float(validation_cost_table.iloc[0][&quot;threshold&quot;])
+final_test_probabilities = best_classifier.predict_proba(final_test_features)[:, 1]
+final_test_predictions = (final_test_probabilities &gt;= selected_threshold).astype(int)
+
+print(f&quot;Threshold selected on validation: {selected_threshold:.2f}&quot;)
+print(&quot;One final held-out evaluation:&quot;)
+print({
+    &quot;accuracy&quot;: round(accuracy_score(final_test_response, final_test_predictions), 3),
+    &quot;precision&quot;: round(precision_score(final_test_response, final_test_predictions, zero_division=0), 3),
+    &quot;recall&quot;: round(recall_score(final_test_response, final_test_predictions, zero_division=0), 3),
+    &quot;F1&quot;: round(f1_score(final_test_response, final_test_predictions, zero_division=0), 3),
+    &quot;ROC-AUC&quot;: round(roc_auc_score(final_test_response, final_test_probabilities), 3),
+})
+print(&quot;Final test confusion matrix:\n&quot;, confusion_matrix(final_test_response, final_test_predictions))</code></pre></section><section class="cell"><h2>Exercise 5 — Limits</h2>
+<p>Support calls may reflect an omitted product problem that also drives churn; reducing calls would not necessarily change churn. Counts may be measured inconsistently. Generated associations may not transfer to real customers, and an intervention can change the behavior being predicted. A real policy also requires privacy and fairness review. Prediction alone does not identify what action helps.</p></section></article></main><footer>Four practical lectures for mathematicians · Local, reproducible, CPU-friendly · Synthetic teaching data</footer></body></html>
