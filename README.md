@@ -65,20 +65,20 @@ See [instructor guide](docs/instructor-guide.md) for learning outcomes, suggeste
 
 Finish with the [course project](docs/course-project.md), which asks you to justify a complete experiment and an optional software handoff. The deployment API serves churn specifically; other tasks require their own input contract.
 
-This folder is a GitHub-ready source repository. To publish, create an empty GitHub repository, add its remote, and push the local branch. No remote is created or uploaded automatically.
+## Website and repository
 
-For GitHub Pages, select **GitHub Actions** as the Pages source in repository settings, then push to `main` or manually run **Publish course navigator** under Actions. The workflow builds the `site/` directory and publishes it. The verification workflow runs tests and all notebooks on pushes and pull requests. Select a code/content license before distributing the course publicly.
+- [Browse the course](https://ldbreton.github.io/mathematical-ml/)
+- [Source repository](https://github.com/LDBreton/mathematical-ml)
 
-### Your github.io address
+GitHub Pages uses **GitHub Actions** as its publishing source. Pushes to `main`
+automatically build and publish the navigator. You can also run **Publish course
+navigator** manually under Actions. The separate **Verify course** workflow runs
+tests and all notebooks on pushes and pull requests.
 
-A project repository named `mathematical-ml` under `LDBreton` would publish at
-`https://ldbreton.github.io/mathematical-ml/`. This is an example address, not an existing deployment.
-The site uses relative links, so it works under a repository subpath without configuration changes.
+To publish a fork, enable Pages in **Settings → Pages → Build and deployment**,
+choose **GitHub Actions**, and run **Publish course navigator**. Relative site links
+work under your repository's subpath without changes. Update these public links
+for your fork.
 
-1. Create an empty GitHub repository in the intended account.
-2. Add that repository as `origin` and push `main`.
-3. In **Settings → Pages → Build and deployment**, choose **GitHub Actions**.
-4. Run **Publish course navigator** under **Actions** if the initial push happened before Pages was enabled.
-5. Open the URL reported by the completed deployment. Later pushes to `main` update the website.
-
-GitHub Pages serves the course documentation and downloads. Run notebooks and the lecture 08 Python API locally; Pages does not run Python servers.
+GitHub Pages serves the documentation and downloads. Run notebooks and the
+lecture 08 Python API locally; Pages does not run Python servers.

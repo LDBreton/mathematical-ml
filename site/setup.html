@@ -89,17 +89,18 @@ python scripts/check_notebooks.py
 <p>Lectures 04–07 add no dependencies. Text classification uses local sparse TF-IDF features; pretrained embeddings are discussed without requiring model downloads. Forecasting uses genuine chronological data and explicitly evaluates rolling one-step predictions, unlike the independent hourly scenarios in lecture 03.</p>
 <p>See <a href="instructor.html">instructor guide</a> for learning outcomes, suggested timing, and assessment. Data models are deliberately simplified. Performance on these fixtures does not establish real-world accuracy, causal effects, fairness, or production readiness. The API is a local teaching service.</p>
 <p>Finish with the <a href="course-project.html">course project</a>, which asks you to justify a complete experiment and an optional software handoff. The deployment API serves churn specifically; other tasks require their own input contract.</p>
-<p>This folder is a GitHub-ready source repository. To publish, create an empty GitHub repository, add its remote, and push the local branch. No remote is created or uploaded automatically.</p>
-<p>For GitHub Pages, select <strong>GitHub Actions</strong> as the Pages source in repository settings, then push to <code>main</code> or manually run <strong>Publish course navigator</strong> under Actions. The workflow builds the <code>site/</code> directory and publishes it. The verification workflow runs tests and all notebooks on pushes and pull requests. Select a code/content license before distributing the course publicly.</p>
-<h3>Your github.io address</h3>
-<p>A project repository named <code>mathematical-ml</code> under <code>LDBreton</code> would publish at
-<code>https://ldbreton.github.io/mathematical-ml/</code>. This is an example address, not an existing deployment.
-The site uses relative links, so it works under a repository subpath without configuration changes.</p>
-<ol>
-<li>Create an empty GitHub repository in the intended account.</li>
-<li>Add that repository as <code>origin</code> and push <code>main</code>.</li>
-<li>In <strong>Settings → Pages → Build and deployment</strong>, choose <strong>GitHub Actions</strong>.</li>
-<li>Run <strong>Publish course navigator</strong> under <strong>Actions</strong> if the initial push happened before Pages was enabled.</li>
-<li>Open the URL reported by the completed deployment. Later pushes to <code>main</code> update the website.</li>
-</ol>
-<p>GitHub Pages serves the course documentation and downloads. Run notebooks and the lecture 08 Python API locally; Pages does not run Python servers.</p></article></main></div><footer>Mathematical ML · Eight practical lectures for mathematicians<br>Readable Python · Reproducible experiments · Synthetic teaching data</footer></body></html>
+<h2>Website and repository</h2>
+<ul>
+<li><a href="https://ldbreton.github.io/mathematical-ml/">Browse the course</a></li>
+<li><a href="https://github.com/LDBreton/mathematical-ml">Source repository</a></li>
+</ul>
+<p>GitHub Pages uses <strong>GitHub Actions</strong> as its publishing source. Pushes to <code>main</code>
+automatically build and publish the navigator. You can also run <strong>Publish course
+navigator</strong> manually under Actions. The separate <strong>Verify course</strong> workflow runs
+tests and all notebooks on pushes and pull requests.</p>
+<p>To publish a fork, enable Pages in <strong>Settings → Pages → Build and deployment</strong>,
+choose <strong>GitHub Actions</strong>, and run <strong>Publish course navigator</strong>. Relative site links
+work under your repository's subpath without changes. Update these public links
+for your fork.</p>
+<p>GitHub Pages serves the documentation and downloads. Run notebooks and the
+lecture 08 Python API locally; Pages does not run Python servers.</p></article></main></div><footer>Mathematical ML · Eight practical lectures for mathematicians<br>Readable Python · Reproducible experiments · Synthetic teaching data</footer></body></html>
